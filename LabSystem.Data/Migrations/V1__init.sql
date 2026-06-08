@@ -1,0 +1,65 @@
+CREATE TABLE IF NOT EXISTS Patients (
+    PatientId INTEGER PRIMARY KEY AUTOINCREMENT,
+    FullName TEXT NOT NULL,
+    DateOfBirth TEXT,
+    ContactPhone TEXT,
+    ContactEmail TEXT,
+    CreatedAt TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS TestTypes (
+    TypeId INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    Unit TEXT,
+    ReferenceRangeLow REAL,
+    ReferenceRangeHigh REAL,
+    IsActive INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS Staff (
+    StaffId INTEGER PRIMARY KEY AUTOINCREMENT,
+    FullName TEXT NOT NULL,
+    Role TEXT,
+    PinHash TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS TestOrders (
+    OrderId INTEGER PRIMARY KEY AUTOINCREMENT,
+    PatientId INTEGER NOT NULL,
+    OrderedAt TEXT NOT NULL,
+    Status TEXT,
+    Notes TEXT,
+    FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
+);
+
+CREATE TABLE IF NOT EXISTS Results (
+    ResultId INTEGER PRIMARY KEY AUTOINCREMENT,
+    OrderId INTEGER NOT NULL,
+    TypeId INTEGER NOT NULL,
+    Value REAL NOT NULL,
+    RecordedAt TEXT NOT NULL,
+    TechnicianId INTEGER NOT NULL,
+    IsAbnormal INTEGER NOT NULL,
+    FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId),
+    FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId),
+    FOREIGN KEY(TechnicianId) REFERENCES Staff(StaffId)
+);
+
+CREATE TABLE IF NOT EXISTS Reports (
+    ReportId INTEGER PRIMARY KEY AUTOINCREMENT,
+    OrderId INTEGER NOT NULL,
+    FilePath TEXT NOT NULL,
+    GeneratedAt TEXT NOT NULL,
+    FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId)
+);
+
+CREATE TABLE IF NOT EXISTS AuditLogs (
+    LogId INTEGER PRIMARY KEY AUTOINCREMENT,
+    Action TEXT NOT NULL,
+    EntityType TEXT,
+    EntityId INTEGER,
+    UserId INTEGER,
+    Timestamp TEXT NOT NULL,
+    Details TEXT,
+    FOREIGN KEY(UserId) REFERENCES Staff(StaffId)
+);

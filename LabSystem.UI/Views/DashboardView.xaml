@@ -1,0 +1,303 @@
+<UserControl x:Class="LabSystem.UI.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewmodels="clr-namespace:LabSystem.UI.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignHeight="550" d:DesignWidth="800">
+    <Grid>
+        <TabControl materialDesign:ColorZoneAssist.Mode="SecondaryMid" Style="{StaticResource MaterialDesignNavigationRailTabControl}">
+            <!-- Tab 1: Patients -->
+            <TabItem Header="Patients">
+                <Grid Margin="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Left: Patients Grid -->
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="8" Text="Registered Patients" />
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Patients}" SelectedItem="{Binding SelectedPatient}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding PatientId}" Width="Auto" />
+                                    <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
+                                    <DataGridTextColumn Header="Date of Birth" Binding="{Binding DateOfBirth}" Width="Auto" />
+                                    <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
+                                    <DataGridTextColumn Header="Email" Binding="{Binding ContactEmail}" Width="Auto" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Right: Add Patient Card -->
+                    <materialDesign:Card Grid.Column="1" Margin="8 0 0 0" Padding="16">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="Register New Patient" />
+                            
+                            <TextBox materialDesign:HintAssist.Hint="Full Name" Text="{Binding NewPatientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
+                            <DatePicker materialDesign:HintAssist.Hint="Date of Birth" SelectedDate="{Binding NewPatientDOB}" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Margin="0 0 0 12" />
+                            <TextBox materialDesign:HintAssist.Hint="Contact Phone" Text="{Binding NewPatientPhone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
+                            <TextBox materialDesign:HintAssist.Hint="Contact Email" Text="{Binding NewPatientEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 24" />
+                            
+                            <Button Command="{Binding AddPatientCommand}" Content="REGISTER PATIENT" Style="{StaticResource MaterialDesignRaisedButton}" />
+                        </StackPanel>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 2: Orders -->
+            <TabItem Header="Create Orders">
+                <Grid Margin="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="200" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Select Patient -->
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="8" Text="1. Select Patient" />
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Patients}" SelectedItem="{Binding SelectedPatient}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding PatientId}" Width="Auto" />
+                                    <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Middle: Select Tests -->
+                    <materialDesign:Card Grid.Column="1" Margin="8 0 8 0" Padding="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="8" Text="2. Select Tests" />
+                            <ListBox Grid.Row="1" ItemsSource="{Binding TestTypes}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected}" Margin="4">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" Margin="0 0 8 0" />
+                                                <TextBlock Text="(" Foreground="Gray" />
+                                                <TextBlock Text="{Binding Low}" Foreground="Gray" />
+                                                <TextBlock Text=" - " Foreground="Gray" />
+                                                <TextBlock Text="{Binding High}" Foreground="Gray" />
+                                                <TextBlock Text=" " Foreground="Gray" />
+                                                <TextBlock Text="{Binding Unit}" Foreground="Gray" />
+                                                <TextBlock Text=")" Foreground="Gray" />
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Right: Submit Order -->
+                    <materialDesign:Card Grid.Column="2" Margin="8 0 0 0" Padding="16">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="3. Confirm Order" />
+                            
+                            <TextBlock Text="Selected Patient:" Margin="0 0 0 4" Foreground="Gray" />
+                            <TextBlock Text="{Binding SelectedPatient.FullName, TargetNullValue='No patient selected'}" FontWeight="Bold" FontSize="16" Margin="0 0 0 24" TextWrapping="Wrap"/>
+                            
+                            <Button Command="{Binding CreateOrderCommand}" Content="SUBMIT ORDER" Style="{StaticResource MaterialDesignRaisedButton}" />
+                        </StackPanel>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 3: Results -->
+            <TabItem Header="Enter Results">
+                <Grid Margin="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="3*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Orders List -->
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="8" Text="Orders" />
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="Auto" />
+                                    <DataGridTextColumn Header="Patient" Binding="{Binding Patient.FullName}" Width="*" />
+                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="Auto">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <Trigger Property="Text" Value="Pending">
+                                                        <Setter Property="Foreground" Value="Orange" />
+                                                        <Setter Property="FontWeight" Value="Bold" />
+                                                    </Trigger>
+                                                    <Trigger Property="Text" Value="Complete">
+                                                        <Setter Property="Foreground" Value="Green" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Right: Results Entry Grid -->
+                    <materialDesign:Card Grid.Column="1" Margin="8 0 0 0" Padding="16">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Margin="0 0 0 16">
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Result Entry" />
+                                <TextBlock Text="{Binding SelectedOrder.Patient.FullName, StringFormat='Patient: {0}'}" FontSize="14" Foreground="Gray" />
+                                <TextBlock Text="{Binding SelectedOrder.OrderId, StringFormat='Order ID: {0}'}" FontSize="12" Foreground="Gray" />
+                            </StackPanel>
+
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedOrderResults}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Test Name" Binding="{Binding TestName}" Width="*" IsReadOnly="True" />
+                                    <DataGridTextColumn Header="Ref Range" Width="Auto" IsReadOnly="True">
+                                        <!-- Custom binding helper to render ranges cleanly -->
+                                        <DataGridTextColumn.Binding>
+                                            <MultiBinding StringFormat="{}{0} - {1}">
+                                                <Binding Path="Low" TargetNullValue="0" />
+                                                <Binding Path="High" TargetNullValue="0" />
+                                            </MultiBinding>
+                                        </DataGridTextColumn.Binding>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="Auto" IsReadOnly="True" />
+                                    
+                                    <!-- Value Template supporting Editing and Flagging -->
+                                    <DataGridTemplateColumn Header="Value" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <!-- Edit mode: Pending -->
+                                                    <TextBox Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Left" Visibility="Visible">
+                                                        <TextBox.Style>
+                                                            <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBox.Style>
+                                                    </TextBox>
+
+                                                    <!-- Read-only mode: Complete -->
+                                                    <StackPanel Orientation="Horizontal" Visibility="Collapsed">
+                                                        <StackPanel.Style>
+                                                            <Style TargetType="StackPanel">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Style>
+                                                        <TextBlock Text="{Binding ValueText}" VerticalAlignment="Center" FontWeight="Bold" Margin="0 0 8 0" />
+                                                        <TextBlock Text="ABNORMAL" Foreground="Red" FontWeight="Bold" VerticalAlignment="Center" Visibility="Collapsed">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsAbnormal}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Grid.Row="2" Text="{Binding ResultErrorMessage}" Foreground="Red" HorizontalAlignment="Left" Margin="0 8 0 8" />
+
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 8 0 0">
+                                <!-- Save results button (only for Pending) -->
+                                <Button Command="{Binding SaveResultsCommand}" Content="VERIFY &amp; SAVE RESULTS" Margin="0 0 10 0">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Complete">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- Report generation button (only for Complete) -->
+                                <Button Command="{Binding GenerateReportCommand}" Content="GENERATE PDF REPORT">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Complete">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 4: System / Backups -->
+            <TabItem Header="Settings &amp; Backup">
+                <Grid Margin="16">
+                    <materialDesign:Card Padding="32" Width="450" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <StackPanel HorizontalAlignment="Center">
+                            <materialDesign:PackIcon Kind="DatabaseSettings" Width="64" Height="64" HorizontalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" Margin="0 0 0 16" />
+                            <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" Text="System Management" HorizontalAlignment="Center" Margin="0 0 0 8" />
+                            
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 24">
+                                <TextBlock Text="Logged in as: " Foreground="Gray"/>
+                                <TextBlock Text="{Binding CurrentStaffName}" FontWeight="Bold" />
+                            </StackPanel>
+
+                            <TextBlock TextWrapping="Wrap" Text="To secure database integrity, you can trigger a live SQLite database backup. A timestamped copy of your laboratory database will be generated in your project backups directory immediately." 
+                                       TextAlignment="Center" Margin="0 0 0 24" Foreground="DimGray"/>
+
+                            <Button Command="{Binding BackupCommand}" Content="BACKUP LIVE DATABASE NOW" Style="{StaticResource MaterialDesignRaisedButton}" Width="250" />
+                        </StackPanel>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
