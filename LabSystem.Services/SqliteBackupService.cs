@@ -82,13 +82,13 @@ namespace LabSystem.Services
 
                 // Banner
                 wsPatients.Cell(1, 1).Value = "Quality Diagnostics Center - Patient Directory";
-                var rPatientTitle = wsPatients.Range(1, 1, 1, 6);
+                var rPatientTitle = wsPatients.Range(1, 1, 1, 7);
                 rPatientTitle.Merge();
                 StyleTitleRange(rPatientTitle, sidebarDark, headerTextColor);
                 wsPatients.Row(1).Height = 40;
 
                 // Headers
-                string[] pHeaders = { "Patient ID", "Full Name", "Date of Birth", "Contact Phone", "Contact Email", "Registered Date" };
+                string[] pHeaders = { "Patient ID", "Full Name", "Date of Birth", "Gender", "Contact Phone", "Contact Email", "Registered Date" };
                 StyleHeaderRow(wsPatients, 3, pHeaders, patientAccent, headerTextColor, patientBorder);
                 wsPatients.Row(3).Height = 28;
 
@@ -98,11 +98,12 @@ namespace LabSystem.Services
                     wsPatients.Cell(pRow, 1).Value = p.PatientId;
                     wsPatients.Cell(pRow, 2).Value = p.FullName;
                     wsPatients.Cell(pRow, 3).Value = p.DateOfBirth;
-                    wsPatients.Cell(pRow, 4).Value = p.ContactPhone;
-                    wsPatients.Cell(pRow, 5).Value = p.ContactEmail;
-                    wsPatients.Cell(pRow, 6).Value = p.CreatedAt;
+                    wsPatients.Cell(pRow, 4).Value = p.Gender;
+                    wsPatients.Cell(pRow, 5).Value = p.ContactPhone;
+                    wsPatients.Cell(pRow, 6).Value = p.ContactEmail;
+                    wsPatients.Cell(pRow, 7).Value = p.CreatedAt;
 
-                    StyleDataRow(wsPatients, pRow, 6);
+                    StyleDataRow(wsPatients, pRow, 7);
                     pRow++;
                 }
                 wsPatients.Columns().AdjustToContents();
@@ -116,13 +117,13 @@ namespace LabSystem.Services
 
                 // Banner
                 wsOrders.Cell(1, 1).Value = "Quality Diagnostics Center - Test Orders Record";
-                var rOrderTitle = wsOrders.Range(1, 1, 1, 7);
+                var rOrderTitle = wsOrders.Range(1, 1, 1, 8);
                 rOrderTitle.Merge();
                 StyleTitleRange(rOrderTitle, sidebarDark, headerTextColor);
                 wsOrders.Row(1).Height = 40;
 
                 // Headers
-                string[] oHeaders = { "Order ID", "Patient ID", "Patient Name", "Order Date", "Status", "Requested Tests", "Notes" };
+                string[] oHeaders = { "Order ID", "Patient ID", "Patient Name", "Order Date", "Referred By", "Status", "Requested Tests", "Notes" };
                 StyleHeaderRow(wsOrders, 3, oHeaders, orderAccent, headerTextColor, orderBorder);
                 wsOrders.Row(3).Height = 28;
 
@@ -133,14 +134,15 @@ namespace LabSystem.Services
                     wsOrders.Cell(oRow, 2).Value = o.PatientId;
                     wsOrders.Cell(oRow, 3).Value = patientsDict.TryGetValue(o.PatientId, out var p) ? p.FullName : "Unknown Patient";
                     wsOrders.Cell(oRow, 4).Value = o.OrderedAt;
-                    wsOrders.Cell(oRow, 5).Value = o.Status;
-                    wsOrders.Cell(oRow, 6).Value = GetRequestedTestNames(o.Notes, testTypesDict);
-                    wsOrders.Cell(oRow, 7).Value = o.Notes;
+                    wsOrders.Cell(oRow, 5).Value = o.ReferredBy;
+                    wsOrders.Cell(oRow, 6).Value = o.Status;
+                    wsOrders.Cell(oRow, 7).Value = GetRequestedTestNames(o.Notes, testTypesDict);
+                    wsOrders.Cell(oRow, 8).Value = o.Notes;
 
-                    StyleDataRow(wsOrders, oRow, 7);
+                    StyleDataRow(wsOrders, oRow, 8);
                     
                     // Specific formatting for Pending vs Complete status
-                    var statusCell = wsOrders.Cell(oRow, 5);
+                    var statusCell = wsOrders.Cell(oRow, 6);
                     if (o.Status == "Complete")
                     {
                         statusCell.Style.Font.FontColor = XLColor.FromHtml("#00796B");
@@ -262,13 +264,13 @@ namespace LabSystem.Services
 
                 // Banner
                 wsStaff.Cell(1, 1).Value = "Quality Diagnostics Center - Active Staff Directory";
-                var rStaffTitle = wsStaff.Range(1, 1, 1, 3);
+                var rStaffTitle = wsStaff.Range(1, 1, 1, 5);
                 rStaffTitle.Merge();
                 StyleTitleRange(rStaffTitle, sidebarDark, headerTextColor);
                 wsStaff.Row(1).Height = 40;
 
                 // Headers
-                string[] sHeaders = { "Staff ID", "Full Name", "Assigned Role" };
+                string[] sHeaders = { "Staff ID", "Full Name", "Assigned Role", "Failed Attempts", "Lockout End" };
                 StyleHeaderRow(wsStaff, 3, sHeaders, staffAccent, headerTextColor, staffBorder);
                 wsStaff.Row(3).Height = 28;
 
@@ -278,8 +280,10 @@ namespace LabSystem.Services
                     wsStaff.Cell(sRow, 1).Value = staff.StaffId;
                     wsStaff.Cell(sRow, 2).Value = staff.FullName;
                     wsStaff.Cell(sRow, 3).Value = staff.Role;
+                    wsStaff.Cell(sRow, 4).Value = staff.FailedLoginAttempts;
+                    wsStaff.Cell(sRow, 5).Value = staff.LockoutEnd ?? "";
 
-                    StyleDataRow(wsStaff, sRow, 3);
+                    StyleDataRow(wsStaff, sRow, 5);
                     sRow++;
                 }
                 wsStaff.Columns().AdjustToContents();

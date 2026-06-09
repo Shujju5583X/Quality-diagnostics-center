@@ -20,9 +20,6 @@ namespace LabSystem.Services
     public class AuthService : IAuthService
     {
         private readonly IRepository<Staff> _staffRepo;
-        private static readonly Dictionary<int, (int FailedCount, DateTime LockoutEnd)> _lockouts = 
-            new Dictionary<int, (int, DateTime)>();
-        private static readonly object _lock = new object();
         private const int MaxFailedAttempts = 5;
         private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(1);
 
@@ -33,38 +30,34 @@ namespace LabSystem.Services
 
         public async Task<bool> VerifyPinAsync(int staffId, string pin)
         {
-            lock (_lock)
-            {
-                if (_lockouts.TryGetValue(staffId, out var lockout) && lockout.LockoutEnd > DateTime.UtcNow)
-                {
-                    throw new LockoutException(lockout.LockoutEnd);
-                }
-            }
-
             var staff = await _staffRepo.GetByIdAsync(staffId);
             if (staff == null) return false;
-            
-            bool isValid = BCrypt.Net.BCrypt.Verify(pin, staff.PinHash);
 
-            lock (_lock)
+            if (!string.IsNullOrEmpty(staff.LockoutEnd) && DateTime.TryParse(staff.LockoutEnd, null, System.Globalization.DateTimeStyles.RoundtripKind, out var lockoutEnd))
             {
-                if (isValid)
+                if (lockoutEnd > DateTime.UtcNow)
                 {
-                    _lockouts.Remove(staffId);
-                }
-                else
-                {
-                    _lockouts.TryGetValue(staffId, out var lockout);
-                    int newCount = lockout.FailedCount + 1;
-                    DateTime lockoutEnd = DateTime.MinValue;
-                    if (newCount >= MaxFailedAttempts)
-                    {
-                        lockoutEnd = DateTime.UtcNow.Add(LockoutDuration);
-                    }
-                    _lockouts[staffId] = (newCount, lockoutEnd);
+                    throw new LockoutException(lockoutEnd);
                 }
             }
 
+            bool isValid = BCrypt.Net.BCrypt.Verify(pin, staff.PinHash);
+
+            if (isValid)
+            {
+                staff.FailedLoginAttempts = 0;
+                staff.LockoutEnd = null;
+            }
+            else
+            {
+                staff.FailedLoginAttempts++;
+                if (staff.FailedLoginAttempts >= MaxFailedAttempts)
+                {
+                    staff.LockoutEnd = DateTime.UtcNow.Add(LockoutDuration).ToString("O");
+                }
+            }
+
+            await _staffRepo.UpdateAsync(staff);
             return isValid;
         }
 

@@ -24,12 +24,10 @@ namespace LabSystem.Services
             var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId);
             string dateStr = DateTime.Today.ToString("yyyy-MM-dd");
             
-            string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
-            
             Document document = new Document();
             document.Info.Title = "Laboratory Diagnostic Report";
             document.Info.Subject = "Patient Diagnostic Results";
-            document.Info.Author = "Quality Diagnostics Center";
+            document.Info.Author = "Quality Diagnostics Centre";
 
             Section section = document.AddSection();
 
@@ -46,61 +44,41 @@ namespace LabSystem.Services
             style.Font.Name = "Arial";
             style.Font.Size = 9.5;
             
-            // Header table with Logo and Clinic Branding
-            var headerTable = section.AddTable();
-            headerTable.Borders.Width = 0;
-            headerTable.AddColumn("2.5cm");
-            headerTable.AddColumn("14.5cm");
+            // Header
+            var headerPara = section.AddParagraph();
+            headerPara.Format.Alignment = ParagraphAlignment.Center;
+            var titleText = headerPara.AddFormattedText("QUALITY DIAGNOSTICS CENTRE\n", TextFormat.NotBold);
+            titleText.Font.Name = "Times New Roman";
+            titleText.Size = 24;
+            titleText.Color = Colors.Black;
             
-            var headerRow = headerTable.AddRow();
-            if (File.Exists(logoPath))
-            {
-                var img = headerRow.Cells[0].AddImage(logoPath);
-                img.Width = "2cm";
-                img.Height = "2cm";
-            }
-            
-            var titlePara = headerRow.Cells[1].AddParagraph();
-            titlePara.Format.Alignment = ParagraphAlignment.Right;
-            var titleText = titlePara.AddFormattedText("QUALITY DIAGNOSTICS CENTER", TextFormat.Bold);
-            titleText.Size = 20;
-            titleText.Color = Color.FromRgb(48, 63, 159); // Indigo theme
-            titlePara.AddLineBreak();
-            
-            var subtitleText = titlePara.AddFormattedText("Accurate | Caring | Instant", TextFormat.Italic);
-            subtitleText.Size = 9.5;
-            subtitleText.Color = Colors.DarkGray;
-            titlePara.AddLineBreak();
-            
-            var contactText = titlePara.AddFormattedText("105-108, Smart Vision Complex, Healthcare Road, Mumbai\nPhone: 0123456789 | Email: drlogypathlab@drlogy.com | www.drlogy.com", TextFormat.NotBold);
-            contactText.Size = 8.5;
-            contactText.Color = Colors.Gray;
-
-            // Separator Line
-            var separator = section.AddParagraph();
-            separator.Format.Borders.Bottom.Width = 1.5;
-            separator.Format.Borders.Bottom.Color = Color.FromRgb(103, 58, 183); // Accent purple
-            separator.Format.SpaceBefore = "0.2cm";
-            separator.Format.SpaceAfter = "0.4cm";
+            var subtitleText = headerPara.AddFormattedText("MAIN ROAD , VANDE MART BACK SIDE\nBETHAMCHERLA 8639979746", TextFormat.NotBold);
+            subtitleText.Font.Name = "Times New Roman";
+            subtitleText.Size = 10;
+            subtitleText.Color = Colors.Black;
+            headerPara.Format.SpaceAfter = "1.5cm";
 
             // Patient Info Section Table
             var patientTable = section.AddTable();
-            patientTable.Borders.Width = 0.5;
-            patientTable.Borders.Color = Colors.LightGray;
-            patientTable.AddColumn("8.5cm");
-            patientTable.AddColumn("8.5cm");
+            patientTable.Borders.Width = 0; // No borders
+            patientTable.AddColumn("3.0cm"); // Label 1
+            patientTable.AddColumn("0.5cm"); // Colon
+            patientTable.AddColumn("6.5cm"); // Value 1
+            patientTable.AddColumn("2.5cm"); // Label 2
+            patientTable.AddColumn("0.5cm"); // Colon
+            patientTable.AddColumn("5.0cm"); // Value 2
 
             string patientName = order.Patient?.FullName ?? "Unknown Patient";
-            string gender = (patientName.Contains("Jane") || patientName.Contains("Alice") || patientName.Contains("Sarah")) ? "Female" : "Male";
+            string gender = !string.IsNullOrWhiteSpace(order.Patient?.Gender) ? order.Patient.Gender : "Unknown";
             
-            string ageStr = "N/A";
+            string ageStr = "";
             if (!string.IsNullOrEmpty(order.Patient?.DateOfBirth))
             {
                 if (DateTime.TryParse(order.Patient.DateOfBirth, out DateTime dob))
                 {
                     int age = DateTime.Today.Year - dob.Year;
                     if (dob > DateTime.Today.AddYears(-age)) age--;
-                    ageStr = $"{age} Years";
+                    ageStr = age.ToString();
                 }
                 else
                 {
@@ -111,23 +89,35 @@ namespace LabSystem.Services
             string orderedDateStr = order.OrderedAt;
             if (DateTime.TryParse(order.OrderedAt, out DateTime orderedTime))
             {
-                orderedDateStr = orderedTime.ToLocalTime().ToString("yyyy-MM-dd hh:mm tt");
+                orderedDateStr = orderedTime.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt");
             }
 
             var pr1 = patientTable.AddRow();
             pr1.Height = "0.6cm";
-            pr1.Cells[0].AddParagraph($"Patient Name: {patientName}").Format.Font.Bold = true;
-            pr1.Cells[1].AddParagraph($"Patient ID: PID-{order.PatientId}").Format.Font.Bold = true;
+            pr1.Cells[0].AddParagraph("Patient Name").Format.Font.Bold = true;
+            pr1.Cells[1].AddParagraph(":").Format.Font.Bold = true;
+            pr1.Cells[2].AddParagraph(patientName);
+            pr1.Cells[3].AddParagraph("Report.No").Format.Font.Bold = true;
+            pr1.Cells[4].AddParagraph(":").Format.Font.Bold = true;
+            pr1.Cells[5].AddParagraph(order.OrderId.ToString());
 
             var pr2 = patientTable.AddRow();
             pr2.Height = "0.6cm";
-            pr2.Cells[0].AddParagraph($"Age / Gender: {ageStr} / {gender}");
-            pr2.Cells[1].AddParagraph($"Ordered Date: {orderedDateStr}");
+            pr2.Cells[0].AddParagraph("Referred By").Format.Font.Bold = true;
+            pr2.Cells[1].AddParagraph(":").Format.Font.Bold = true;
+            pr2.Cells[2].AddParagraph(!string.IsNullOrWhiteSpace(order.ReferredBy) ? order.ReferredBy : "SELF");
+            pr2.Cells[3].AddParagraph("Age/Gender").Format.Font.Bold = true;
+            pr2.Cells[4].AddParagraph(":").Format.Font.Bold = true;
+            pr2.Cells[5].AddParagraph($"{ageStr} /{gender}");
 
             var pr3 = patientTable.AddRow();
             pr3.Height = "0.6cm";
-            pr3.Cells[0].AddParagraph("Referral Dr:  SELF");
-            pr3.Cells[1].AddParagraph($"Report Date:  {DateTime.Now:yyyy-MM-dd hh:mm tt}");
+            pr3.Cells[0].AddParagraph("Collected On").Format.Font.Bold = true;
+            pr3.Cells[1].AddParagraph(":").Format.Font.Bold = true;
+            pr3.Cells[2].AddParagraph(orderedDateStr);
+            pr3.Cells[3].AddParagraph("");
+            pr3.Cells[4].AddParagraph(":");
+            pr3.Cells[5].AddParagraph("");
 
             section.AddParagraph().Format.SpaceAfter = "0.5cm";
 
@@ -138,68 +128,63 @@ namespace LabSystem.Services
                 .OrderBy(g => g.Key)
                 .ToList();
 
+            // Render Results Table
+            var table = section.AddTable();
+            table.Borders.Width = 0; // No borders outside
+            
+            table.AddColumn("8.0cm"); // TEST DESCRIPTION
+            table.AddColumn("2.5cm"); // RESULT
+            table.AddColumn("2.5cm"); // UNITS
+            table.AddColumn("5.0cm"); // NORMAL
+
+            // Headers row
+            var header = table.AddRow();
+            header.HeadingFormat = true;
+            header.Shading.Color = Colors.LightGray;
+            header.Height = "0.6cm";
+            header.VerticalAlignment = VerticalAlignment.Center;
+
+            var cell0 = header.Cells[0].AddParagraph("TEST DESCRIPTION");
+            cell0.Format.Font.Bold = true;
+            cell0.Format.Font.Color = Colors.Black;
+
+            var cell1 = header.Cells[1].AddParagraph("RESULT");
+            cell1.Format.Font.Bold = true;
+            cell1.Format.Font.Color = Colors.Black;
+
+            var cell2 = header.Cells[2].AddParagraph("UNITS");
+            cell2.Format.Font.Bold = true;
+            cell2.Format.Font.Color = Colors.Black;
+
+            var cell3 = header.Cells[3].AddParagraph("NORMAL");
+            cell3.Format.Font.Bold = true;
+            cell3.Format.Font.Color = Colors.Black;
+
             foreach (var group in groupedResults)
             {
                 string groupName = group.Key;
                 var sortedResults = group.OrderBy(r => r.TestType.SortOrder).ToList();
-                
-                string categoryName = sortedResults.First().TestType.Category ?? "BIOCHEMISTRY";
                 string method = sortedResults.First().TestType.Method ?? "";
                 string interpretation = sortedResults.First().TestType.Interpretation ?? "";
 
-                // Render Category Label (all-caps, small font)
-                var catPara = section.AddParagraph();
-                var catText = catPara.AddFormattedText(categoryName.ToUpper(), TextFormat.Bold);
-                catText.Size = 8.5;
-                catText.Color = Colors.SlateGray;
-                catPara.Format.SpaceBefore = "0.4cm";
-                catPara.Format.SpaceAfter = "0.05cm";
-
-                // Render Test Group Title
-                var groupPara = section.AddParagraph();
-                var groupText = groupPara.AddFormattedText(groupName, TextFormat.Bold);
-                groupText.Size = 13;
-                groupText.Color = Color.FromRgb(48, 63, 159); // Dark Slate Indigo
-                groupPara.Format.SpaceAfter = "0.2cm";
-
-                // Render Results Table
-                var table = section.AddTable();
-                table.Borders.Width = 0.5;
-                table.Borders.Color = Colors.LightGray;
-                
-                table.AddColumn("6.5cm"); // Investigation
-                table.AddColumn("3.0cm"); // Result
-                table.AddColumn("2.0cm"); // Unit
-                table.AddColumn("5.5cm"); // Ref Range
-
-                // Headers row
-                var header = table.AddRow();
-                header.HeadingFormat = true;
-                header.Shading.Color = Color.FromRgb(48, 63, 159);
-                header.Height = "0.6cm";
-
-                var cell0 = header.Cells[0].AddParagraph("Investigation");
-                cell0.Format.Font.Bold = true;
-                cell0.Format.Font.Color = Colors.White;
-
-                var cell1 = header.Cells[1].AddParagraph("Result Value");
-                cell1.Format.Font.Bold = true;
-                cell1.Format.Font.Color = Colors.White;
-
-                var cell2 = header.Cells[2].AddParagraph("Unit");
-                cell2.Format.Font.Bold = true;
-                cell2.Format.Font.Color = Colors.White;
-
-                var cell3 = header.Cells[3].AddParagraph("Reference Range");
-                cell3.Format.Font.Bold = true;
-                cell3.Format.Font.Color = Colors.White;
+                // Group Header Row
+                var groupRow = table.AddRow();
+                groupRow.Height = "0.6cm";
+                groupRow.Shading.Color = Colors.LightGray;
+                groupRow.VerticalAlignment = VerticalAlignment.Center;
+                var groupCell = groupRow.Cells[0];
+                groupCell.MergeRight = 3;
+                var groupPara = groupCell.AddParagraph($".{groupName.ToUpper()}");
+                groupPara.Format.Font.Bold = true;
+                groupPara.Format.Font.Color = Colors.Black;
 
                 foreach (var r in sortedResults)
                 {
                     var row = table.AddRow();
-                    row.Height = "0.55cm";
+                    row.Height = "0.6cm";
+                    row.VerticalAlignment = VerticalAlignment.Center;
                     
-                    row.Cells[0].AddParagraph(r.TestType.Name);
+                    row.Cells[0].AddParagraph(r.TestType.Name.ToUpper());
                     
                     string displayVal = FormatResultValue(r.Value, r.TestType);
                     var valPara = row.Cells[1].AddParagraph();
@@ -230,73 +215,55 @@ namespace LabSystem.Services
                 // Method note underneath table
                 if (!string.IsNullOrEmpty(method))
                 {
-                    var methodPara = section.AddParagraph();
-                    var methodText = methodPara.AddFormattedText($"Method: {method}", TextFormat.Italic);
-                    methodText.Size = 8;
-                    methodText.Color = Colors.DimGray;
-                    methodPara.Format.SpaceBefore = "0.15cm";
-                    methodPara.Format.SpaceAfter = "0.15cm";
+                    var methodRow = table.AddRow();
+                    methodRow.Height = "0.6cm";
+                    var methodCell = methodRow.Cells[0];
+                    methodCell.MergeRight = 3;
+                    var methodPara = methodCell.AddParagraph($"(Method:- {method.ToUpper()})");
+                    methodPara.Format.Font.Color = Colors.Black;
                 }
 
                 // Interpretation block
                 if (!string.IsNullOrEmpty(interpretation))
                 {
-                    var intHeaderPara = section.AddParagraph();
-                    var intHeaderText = intHeaderPara.AddFormattedText("Interpretation / Comments:", TextFormat.Bold);
-                    intHeaderText.Size = 8.5;
-                    intHeaderText.Color = Colors.DarkSlateGray;
-                    intHeaderPara.Format.SpaceBefore = "0.15cm";
-                    intHeaderPara.Format.SpaceAfter = "0.05cm";
+                    var intHeaderRow = table.AddRow();
+                    intHeaderRow.Height = "0.5cm";
+                    intHeaderRow.Shading.Color = Colors.LightGray;
+                    var intHeaderCell = intHeaderRow.Cells[0];
+                    intHeaderCell.MergeRight = 3;
+                    var intHeaderPara = intHeaderCell.AddParagraph("INTERPRETATION");
+                    intHeaderPara.Format.Alignment = ParagraphAlignment.Center;
+                    intHeaderPara.Format.Font.Bold = true;
+                    intHeaderPara.Format.Font.Color = Colors.Black;
+                    intHeaderPara.Format.Font.Size = 8.5;
                     
-                    var intPara = section.AddParagraph();
-                    var intText = intPara.AddFormattedText(interpretation);
-                    intText.Size = 8;
-                    intText.Color = Colors.DimGray;
-                    intPara.Format.SpaceAfter = "0.3cm";
+                    var intRow = table.AddRow();
+                    var intCell = intRow.Cells[0];
+                    intCell.MergeRight = 3;
+                    intRow.Borders.Width = 0.5;
+                    intRow.Borders.Color = Colors.Black;
+
+                    var intPara = intCell.AddParagraph(interpretation);
+                    intPara.Format.Font.Size = 9.5;
+                    intPara.Format.Font.Color = Colors.Black;
+                    intPara.Format.SpaceBefore = "0.2cm";
+                    intPara.Format.SpaceAfter = "0.2cm";
+
+                    // Empty row for spacing
+                    var spaceRow = table.AddRow();
+                    spaceRow.Height = "0.3cm";
+                    spaceRow.Borders.Width = 0;
+                    spaceRow.Borders.Color = Colors.White;
                 }
             }
-
-            // Divider before Signatures
-            var sigDivider = section.AddParagraph();
-            sigDivider.Format.Borders.Bottom.Width = 0.5;
-            sigDivider.Format.Borders.Bottom.Color = Colors.LightGray;
-            sigDivider.Format.SpaceBefore = "1.5cm";
-            sigDivider.Format.SpaceAfter = "0.5cm";
-
-            // Signatures block
-            var sigTable = section.AddTable();
-            sigTable.Borders.Width = 0;
-            sigTable.AddColumn("5.6cm");
-            sigTable.AddColumn("5.6cm");
-            sigTable.AddColumn("5.6cm");
-
-            var sigRow1 = sigTable.AddRow();
-            sigRow1.Height = "1.5cm";
-
-            var sigRow2 = sigTable.AddRow();
-            
-            var p0 = sigRow2.Cells[0].AddParagraph("Medical Lab Technician\n(DMLT, BMLT)");
-            p0.Format.Alignment = ParagraphAlignment.Center;
-            p0.Format.Font.Size = 8.5;
-            p0.Format.Font.Color = Colors.DarkSlateGray;
-
-            var p1 = sigRow2.Cells[1].AddParagraph("Dr. Vimal Shah\n(MD, Pathologist)");
-            p1.Format.Alignment = ParagraphAlignment.Center;
-            p1.Format.Font.Size = 8.5;
-            p1.Format.Font.Color = Colors.DarkSlateGray;
-
-            var p2 = sigRow2.Cells[2].AddParagraph("Dr. Payal Shah\n(MD, Pathologist)");
-            p2.Format.Alignment = ParagraphAlignment.Center;
-            p2.Format.Font.Size = 8.5;
-            p2.Format.Font.Color = Colors.DarkSlateGray;
 
             // End of Report Text
             var endPara = section.AddParagraph();
             endPara.Format.Alignment = ParagraphAlignment.Center;
             endPara.Format.SpaceBefore = "1.0cm";
-            var endText = endPara.AddFormattedText("**** End of Report ****", TextFormat.Bold);
+            var endText = endPara.AddFormattedText("--- End of the Report ---", TextFormat.Bold);
             endText.Size = 9;
-            endText.Color = Colors.Gray;
+            endText.Color = Colors.Black;
 
             // Render Document
             PdfDocumentRenderer renderer = new PdfDocumentRenderer()

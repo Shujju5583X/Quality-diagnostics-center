@@ -8,6 +8,8 @@ using LabSystem.Data.Repositories;
 using LabSystem.Services;
 using SimpleInjector;
 using Serilog;
+using System.Reflection;
+
 
 namespace LabSystem.UI
 {
@@ -51,21 +53,68 @@ namespace LabSystem.UI
                 }
                 catch
                 {
-                    string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "LabSystem.Data", "Migrations", "V1__init.sql");
-                    if (File.Exists(scriptPath))
+                    // Attempt to load from Embedded Resources (Production Failsafe)
+                    string sql = null;
+                    string seedSql = null;
+                    var assembly = Assembly.GetExecutingAssembly();
+                    
+                    using (var stream = assembly.GetManifestResourceStream("LabSystem.UI.Resources.V1__init.sql"))
                     {
-                        var sql = File.ReadAllText(scriptPath);
-                        db.Database.ExecuteSqlCommand(sql);
+                        if (stream != null)
+                        {
+                            using (var reader = new StreamReader(stream))
+                            {
+                                sql = reader.ReadToEnd();
+                            }
+                        }
                     }
                     
-                    // Run seed if provided
-                    string seedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "seed.sql");
-                    if (File.Exists(seedPath))
+                    using (var stream = assembly.GetManifestResourceStream("LabSystem.UI.Resources.seed.sql"))
                     {
-                        var seedSql = File.ReadAllText(seedPath);
+                        if (stream != null)
+                        {
+                            using (var reader = new StreamReader(stream))
+                            {
+                                seedSql = reader.ReadToEnd();
+                            }
+                        }
+                    }
+
+                    // Fallback to relative file path for local development/scaffolding
+                    if (string.IsNullOrEmpty(sql))
+                    {
+                        string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "LabSystem.Data", "Migrations", "V1__init.sql");
+                        if (File.Exists(scriptPath))
+                        {
+                            sql = File.ReadAllText(scriptPath);
+                        }
+                    }
+
+                    if (string.IsNullOrEmpty(seedSql))
+                    {
+                        string seedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "seed.sql");
+                        if (File.Exists(seedPath))
+                        {
+                            seedSql = File.ReadAllText(seedPath);
+                        }
+                    }
+
+                    // Execute schemas if found
+                    if (!string.IsNullOrEmpty(sql))
+                    {
+                        db.Database.ExecuteSqlCommand(sql);
+                    }
+                    if (!string.IsNullOrEmpty(seedSql))
+                    {
                         db.Database.ExecuteSqlCommand(seedSql);
                     }
                 }
+
+                // Dynamically update schema for existing database files to avoid EF exceptions
+                try { db.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN Gender TEXT;"); } catch { }
+                try { db.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN ReferredBy TEXT;"); } catch { }
+                try { db.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN FailedLoginAttempts INTEGER DEFAULT 0;"); } catch { }
+                try { db.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN LockoutEnd TEXT;"); } catch { }
             }
 
             // Setup SimpleInjector
@@ -96,26 +145,6 @@ namespace LabSystem.UI
             var mainWindow = new MainWindow();
             mainWindow.DataContext = Container.GetInstance<ViewModels.MainViewModel>();
             mainWindow.Show();
-        }
-
-        private void SecureConnectionString()
-        {
-            try
-            {
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                ConnectionStringsSection section = config.GetSection("connectionStrings") as ConnectionStringsSection;
-                if (section != null && !section.SectionInformation.IsProtected)
-                {
-                    section.SectionInformation.ProtectSection("DataProtectionConfigurationProvider");
-                    config.Save(ConfigurationSaveMode.Modified);
-                    ConfigurationManager.RefreshSection("connectionStrings");
-                    Log.Information("App.config connectionStrings section secured via DPAPI.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to encrypt connectionStrings configuration section.");
-            }
         }
     }
 }

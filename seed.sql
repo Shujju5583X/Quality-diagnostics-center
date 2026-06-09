@@ -1,12 +1,12 @@
 -- Seed Patients
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt) VALUES ('John Doe', '1980-05-15', '555-1234', 'john@example.com', '2026-06-08T00:00:00Z');
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt) VALUES ('Jane Smith', '1992-11-20', '555-5678', 'jane@example.com', '2026-06-08T00:00:00Z');
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt) VALUES ('Alice Johnson', '1975-02-10', '555-8765', 'alice@example.com', '2026-06-08T00:00:00Z');
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt) VALUES ('Yash M. Patel', '2005-08-25', '0123456789', 'yash@example.com', '2026-06-09T00:00:00Z');
+INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender) VALUES ('John Doe', '1980-05-15', '555-1234', 'john@example.com', '2026-06-08T00:00:00Z', 'Male');
+INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender) VALUES ('Jane Smith', '1992-11-20', '555-5678', 'jane@example.com', '2026-06-08T00:00:00Z', 'Female');
+INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender) VALUES ('Alice Johnson', '1975-02-10', '555-8765', 'alice@example.com', '2026-06-08T00:00:00Z', 'Female');
+INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender) VALUES ('Yash M. Patel', '2005-08-25', '0123456789', 'yash@example.com', '2026-06-09T00:00:00Z', 'Male');
 
 -- Seed Staff (Password is '1234' hashed with BCrypt)
-INSERT INTO Staff (FullName, Role, PinHash) VALUES ('Dr. Robert Brown', 'Admin', '$2a$11$/kj.NC923I71HcIDmIOASeJhA7Il5NLBh6Mb/nO8Thz/J2ooDHwIC');
-INSERT INTO Staff (FullName, Role, PinHash) VALUES ('Tech Sarah', 'Technician', '$2a$11$/kj.NC923I71HcIDmIOASeJhA7Il5NLBh6Mb/nO8Thz/J2ooDHwIC');
+INSERT INTO Staff (FullName, Role, PinHash, FailedLoginAttempts, LockoutEnd) VALUES ('Dr. Robert Brown', 'Admin', '$2a$11$/kj.NC923I71HcIDmIOASeJhA7Il5NLBh6Mb/nO8Thz/J2ooDHwIC', 0, NULL);
+INSERT INTO Staff (FullName, Role, PinHash, FailedLoginAttempts, LockoutEnd) VALUES ('Tech Sarah', 'Technician', '$2a$11$/kj.NC923I71HcIDmIOASeJhA7Il5NLBh6Mb/nO8Thz/J2ooDHwIC', 0, NULL);
 
 -- Seed Test Catalog (TestTypes)
 

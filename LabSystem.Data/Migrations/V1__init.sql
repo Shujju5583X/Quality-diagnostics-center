@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS Patients (
     DateOfBirth TEXT,
     ContactPhone TEXT,
     ContactEmail TEXT,
-    CreatedAt TEXT NOT NULL
+    CreatedAt TEXT NOT NULL,
+    Gender TEXT
 );
 
 CREATE TABLE IF NOT EXISTS TestTypes (
@@ -25,7 +26,9 @@ CREATE TABLE IF NOT EXISTS Staff (
     StaffId INTEGER PRIMARY KEY AUTOINCREMENT,
     FullName TEXT NOT NULL,
     Role TEXT,
-    PinHash TEXT NOT NULL
+    PinHash TEXT NOT NULL,
+    FailedLoginAttempts INTEGER DEFAULT 0,
+    LockoutEnd TEXT
 );
 
 CREATE TABLE IF NOT EXISTS TestOrders (
@@ -34,6 +37,7 @@ CREATE TABLE IF NOT EXISTS TestOrders (
     OrderedAt TEXT NOT NULL,
     Status TEXT,
     Notes TEXT,
+    ReferredBy TEXT,
     FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
 );
 

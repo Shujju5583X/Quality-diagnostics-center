@@ -96,5 +96,63 @@ namespace LabSystem.UI.Views
                 };
             }
         }
+
+        private void CatalogSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox == null || CatalogGrid == null || CatalogGrid.ItemsSource == null) return;
+
+            var filterText = textBox.Text;
+            var cv = CollectionViewSource.GetDefaultView(CatalogGrid.ItemsSource);
+            if (cv == null) return;
+
+            if (string.IsNullOrWhiteSpace(filterText))
+            {
+                cv.Filter = null;
+            }
+            else
+            {
+                cv.Filter = obj =>
+                {
+                    if (obj is TestType testType)
+                    {
+                        return (testType.Name != null && testType.Name.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                               (testType.Category != null && testType.Category.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                               (testType.GroupName != null && testType.GroupName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0);
+                    }
+                    return false;
+                };
+            }
+        }
+
+        private void AuditLogSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox == null || AuditGrid == null || AuditGrid.ItemsSource == null) return;
+
+            var filterText = textBox.Text;
+            var cv = CollectionViewSource.GetDefaultView(AuditGrid.ItemsSource);
+            if (cv == null) return;
+
+            if (string.IsNullOrWhiteSpace(filterText))
+            {
+                cv.Filter = null;
+            }
+            else
+            {
+                cv.Filter = obj =>
+                {
+                    if (obj is AuditLog log)
+                    {
+                        var userName = log.User?.FullName ?? "System";
+                        return (log.Action != null && log.Action.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                               (log.Details != null && log.Details.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                               (userName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                               (log.EntityType != null && log.EntityType.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0);
+                    }
+                    return false;
+                };
+            }
+        }
     }
 }

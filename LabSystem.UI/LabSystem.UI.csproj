@@ -24,4 +24,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\LabSystem.Data\Migrations\V1__init.sql" Link="Resources\V1__init.sql" />
+    <EmbeddedResource Include="..\seed.sql" Link="Resources\seed.sql" />
+  </ItemGroup>
 </Project>

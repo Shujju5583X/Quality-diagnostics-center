@@ -10,5 +10,6 @@ namespace LabSystem.Core.Models
         public string ContactPhone { get; set; }
         public string ContactEmail { get; set; }
         public string CreatedAt { get; set; }
+        public string Gender { get; set; }
     }
 }

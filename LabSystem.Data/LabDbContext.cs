@@ -3,12 +3,13 @@ using System.Data.Entity;
 using System.Data.Entity.Infrastructure.Annotations;
 using System.Data.Entity.ModelConfiguration.Conventions;
 using LabSystem.Core.Models;
+using System.Data.SQLite;
 
 namespace LabSystem.Data
 {
     public class LabDbContext : DbContext
     {
-        public LabDbContext() : base("name=LabDbContext")
+        public LabDbContext() : base(new SQLiteConnection(SecureConfigurationManager.GetLabDbConnectionString()), true)
         {
             // For SQLite
             Database.SetInitializer<LabDbContext>(null);

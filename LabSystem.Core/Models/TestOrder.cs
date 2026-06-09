@@ -10,5 +10,6 @@ namespace LabSystem.Core.Models
         public string OrderedAt { get; set; }
         public string Status { get; set; }
         public string Notes { get; set; }
+        public string ReferredBy { get; set; }
     }
 }
