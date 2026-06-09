@@ -16,4 +16,9 @@
     <UseWPF>true</UseWPF>
     <LangVersion>10.0</LangVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
 </Project>

@@ -21,12 +21,40 @@ namespace LabSystem.Services
             var results = _resultRepo.GetResultsForOrder(order.OrderId);
             string dateStr = DateTime.Today.ToString("yyyy-MM-dd");
             
+            string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
+            
             Document document = new Document();
             Section section = document.AddSection();
-            section.AddParagraph($"Quality Diagnostics Center - {order.Patient?.FullName} - {dateStr}").Format.Font.Size = 16;
+            
+            // Header section with logo and title side-by-side
+            var headerTable = section.AddTable();
+            headerTable.Borders.Width = 0;
+            headerTable.AddColumn("2.5cm");
+            headerTable.AddColumn("13.5cm");
+            
+            var headerRow = headerTable.AddRow();
+            if (File.Exists(logoPath))
+            {
+                var img = headerRow.Cells[0].AddImage(logoPath);
+                img.Width = "2cm";
+                img.Height = "2cm";
+            }
+            
+            var titlePara = headerRow.Cells[1].AddParagraph();
+            titlePara.Format.SpaceBefore = "0.2cm";
+            var titleText = titlePara.AddFormattedText("Quality Diagnostics Center", TextFormat.Bold);
+            titleText.Size = 18;
+            titleText.Color = Colors.DarkSlateBlue;
+            titlePara.AddLineBreak();
+            var subtitleText = titlePara.AddFormattedText($"Patient Report: {order.Patient?.FullName} | Date: {dateStr}", TextFormat.NotBold);
+            subtitleText.Size = 11;
+            subtitleText.Color = Colors.Gray;
+            
+            section.AddParagraph();
             section.AddParagraph($"Patient: {order.Patient?.FullName}");
             section.AddParagraph($"Order ID: {order.OrderId} | Date: {order.OrderedAt}");
             section.AddParagraph();
+
 
             // Example implementation for PDF table using MigraDoc
             var table = section.AddTable();

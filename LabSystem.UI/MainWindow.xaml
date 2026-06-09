@@ -7,7 +7,7 @@
         xmlns:viewmodels="clr-namespace:LabSystem.UI.ViewModels"
         xmlns:views="clr-namespace:LabSystem.UI.Views"
         mc:Ignorable="d"
-        Title="Quality Diagnostic Center" Height="768" Width="1200"
+        Title="Quality Diagnostic Center" Height="768" Width="1200" Icon="logo.png"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
         TextElement.FontSize="13"
@@ -24,7 +24,7 @@
         <materialDesign:ColorZone Mode="PrimaryMid" Padding="16" materialDesign:ElevationAssist.Elevation="Dp4">
             <DockPanel>
                 <StackPanel Orientation="Horizontal" Margin="16 0 0 0" VerticalAlignment="Center">
-                    <materialDesign:PackIcon Kind="Microscope" Width="28" Height="28" Margin="0 0 8 0" VerticalAlignment="Center" />
+                    <Image Source="logo.png" Width="28" Height="28" Margin="0 0 8 0" VerticalAlignment="Center" />
                     <TextBlock VerticalAlignment="Center" Style="{StaticResource MaterialDesignHeadline6TextBlock}">Quality Diagnostic Center</TextBlock>
                 </StackPanel>
                 <Button Command="{Binding BackupCommand}" HorizontalAlignment="Right" DockPanel.Dock="Right" Style="{StaticResource MaterialDesignFlatButton}">
@@ -44,7 +44,9 @@
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="350">
                         <materialDesign:Card Padding="40" Margin="16" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp4">
                             <StackPanel>
-                                <materialDesign:PackIcon Kind="AccountCircle" Width="64" Height="64" HorizontalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" Margin="0 0 0 16" />
+                                <Border CornerRadius="8" ClipToBounds="True" HorizontalAlignment="Center" Margin="0 0 0 16" Width="80" Height="80">
+                                    <Image Source="logo.png" Stretch="Uniform" />
+                                </Border>
                                 <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" HorizontalAlignment="Center" Margin="0 0 0 24">Staff Login</TextBlock>
                                 <PasswordBox materialDesign:HintAssist.Hint="Enter PIN (e.g. 1234)" 
                                              Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
