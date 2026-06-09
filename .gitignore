@@ -1,4 +1,6 @@
+# ==========================================
 # Core build outputs
+# ==========================================
 [Bb]in/
 [Oo]bj/
 [Ww]in32/
@@ -8,7 +10,9 @@
 [Aa][Rr][Mm]64/
 bld/
 
+# ==========================================
 # Visual Studio files
+# ==========================================
 .vs/
 *.suo
 *.user
@@ -18,42 +22,58 @@ bld/
 *.cache
 *.dbmdl
 
+# ==========================================
 # JetBrains Rider & IntelliJ files
+# ==========================================
 .idea/
 *.sln.iml
 
+# ==========================================
 # VS Code files
+# ==========================================
 .vscode/
 
+# ==========================================
 # NuGet Packages
+# ==========================================
 packages/
 project.lock.json
 project.assets.json
 
+# ==========================================
 # Test results
+# ==========================================
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
-# Local databases, journals, and backups
+# ==========================================
+# Local Databases, Logs, Backups, and Reports
+# ==========================================
 *.db
 *.sqlite
 *.sqlite3
 *.db-journal
 *.db-shm
 *.db-wal
-
-# Log files
 *.log
 [Ll]ogs/
+[Bb]ackups/
+[Rr]eports/
 
+# ==========================================
 # OS generated files
+# ==========================================
 .DS_Store
 Thumbs.db
 ehthumbs.db
 
-# Python scripts output
+# ==========================================
+# Python scripts output & virtual envs
+# ==========================================
 __pycache__/
 *.pyc
 *.pyo
 .venv/
 env/
+venv/
+ENV/
