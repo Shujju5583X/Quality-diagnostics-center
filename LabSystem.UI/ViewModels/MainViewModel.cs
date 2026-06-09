@@ -29,7 +29,7 @@ namespace LabSystem.UI.ViewModels
 
             BackupCommand = new RelayCommand(o => {
                 backupService.BackupNow();
-                System.Windows.MessageBox.Show("Backup completed successfully.");
+                System.Windows.MessageBox.Show("Database (SQLite) and technician-friendly report (Excel) backed up successfully to the backups directory!", "Backup Completed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             });
         }
     }

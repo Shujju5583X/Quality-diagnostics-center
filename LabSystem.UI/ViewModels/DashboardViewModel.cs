@@ -470,7 +470,7 @@ namespace LabSystem.UI.ViewModels
             try
             {
                 _backupService.BackupNow();
-                MessageBox.Show("Database backed up successfully to the backups directory!", "Backup Completed", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Database (SQLite) and technician-friendly report (Excel) backed up successfully to the backups directory!", "Backup Completed", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
