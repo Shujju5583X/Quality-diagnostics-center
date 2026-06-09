@@ -12,7 +12,8 @@ namespace LabSystem.Data.Repositories
 
         public IEnumerable<Result> GetResultsForOrder(int orderId)
         {
-            return _dbSet.Include(r => r.TestType)
+            return _dbSet.AsNoTracking()
+                         .Include(r => r.TestType)
                          .Include(r => r.Technician)
                          .Where(r => r.OrderId == orderId)
                          .ToList();

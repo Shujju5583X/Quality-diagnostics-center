@@ -16,6 +16,9 @@ namespace LabSystem.UI
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            // Enable PDFsharp to resolve installed Windows fonts automatically
+            PdfSharp.Fonts.GlobalFontSettings.UseWindowsFontsUnderWindows = true;
+
             // Set SQLite database folder path to output directory
             AppDomain.CurrentDomain.SetData("DataDirectory", AppDomain.CurrentDomain.BaseDirectory);
 

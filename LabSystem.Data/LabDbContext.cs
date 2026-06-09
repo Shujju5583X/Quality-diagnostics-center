@@ -38,6 +38,37 @@ namespace LabSystem.Data
             modelBuilder.Entity<TestOrder>().HasKey(o => o.OrderId);
             modelBuilder.Entity<TestType>().HasKey(t => t.TypeId);
 
+            // Configure foreign key relations explicitly for SQLite compatibility
+            modelBuilder.Entity<AuditLog>()
+                .HasOptional(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId);
+
+            modelBuilder.Entity<TestOrder>()
+                .HasRequired(o => o.Patient)
+                .WithMany()
+                .HasForeignKey(o => o.PatientId);
+
+            modelBuilder.Entity<Result>()
+                .HasRequired(r => r.Order)
+                .WithMany()
+                .HasForeignKey(r => r.OrderId);
+
+            modelBuilder.Entity<Result>()
+                .HasRequired(r => r.TestType)
+                .WithMany()
+                .HasForeignKey(r => r.TypeId);
+
+            modelBuilder.Entity<Result>()
+                .HasRequired(r => r.Technician)
+                .WithMany()
+                .HasForeignKey(r => r.TechnicianId);
+
+            modelBuilder.Entity<Report>()
+                .HasRequired(r => r.Order)
+                .WithMany()
+                .HasForeignKey(r => r.OrderId);
+
             base.OnModelCreating(modelBuilder);
         }
     }

@@ -24,25 +24,30 @@ namespace LabSystem.Data.Repositories
 
         public IEnumerable<T> GetAll()
         {
-            return _dbSet.ToList();
+            return _dbSet.AsNoTracking().ToList();
         }
 
         public void Add(T entity)
         {
             _dbSet.Add(entity);
+            _context.SaveChanges();
         }
 
         public void Update(T entity)
         {
             _dbSet.Attach(entity);
             _context.Entry(entity).State = EntityState.Modified;
+            _context.SaveChanges();
         }
 
         public void Delete(int id)
         {
             var entity = GetById(id);
             if (entity != null)
+            {
                 _dbSet.Remove(entity);
+                _context.SaveChanges();
+            }
         }
     }
 }

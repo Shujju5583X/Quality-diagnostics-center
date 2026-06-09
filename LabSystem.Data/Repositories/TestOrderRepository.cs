@@ -12,14 +12,16 @@ namespace LabSystem.Data.Repositories
 
         public IEnumerable<TestOrder> GetOrdersForPatient(int patientId)
         {
-            return _dbSet.Include(o => o.Patient)
+            return _dbSet.AsNoTracking()
+                         .Include(o => o.Patient)
                          .Where(o => o.PatientId == patientId)
                          .ToList();
         }
 
         public IEnumerable<TestOrder> GetByStatus(string status)
         {
-            return _dbSet.Include(o => o.Patient)
+            return _dbSet.AsNoTracking()
+                         .Include(o => o.Patient)
                          .Where(o => o.Status == status)
                          .ToList();
         }

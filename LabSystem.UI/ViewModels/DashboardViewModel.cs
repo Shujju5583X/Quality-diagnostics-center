@@ -401,17 +401,34 @@ namespace LabSystem.UI.ViewModels
                     _resultService.AddResult(result);
                 }
 
+                int selectedOrderId = SelectedOrder.OrderId;
+
                 // Update order status to Complete
-                _orderService.UpdateOrderStatus(SelectedOrder.OrderId, "Complete");
-                Log.Information("Verified and completed order {OrderId}", SelectedOrder.OrderId);
+                _orderService.UpdateOrderStatus(selectedOrderId, "Complete");
+                Log.Information("Verified and completed order {OrderId}", selectedOrderId);
 
                 // Reload
                 LoadData();
                 
                 // Select the order again to refresh results grid as read-only
-                SelectedOrder = Orders.FirstOrDefault(o => o.OrderId == SelectedOrder.OrderId);
+                SelectedOrder = Orders.FirstOrDefault(o => o.OrderId == selectedOrderId);
                 
                 MessageBox.Show("Results verified and saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Generate and open the PDF report immediately
+                try
+                {
+                    if (SelectedOrder != null)
+                    {
+                        string path = _reportService.GenerateReport(SelectedOrder);
+                        Log.Information("Automatically generated PDF report for order {OrderId} at {Path}", SelectedOrder.OrderId, path);
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to automatically generate PDF report after saving results.");
+                }
             }
             catch (Exception ex)
             {
@@ -439,6 +456,7 @@ namespace LabSystem.UI.ViewModels
                 string path = _reportService.GenerateReport(SelectedOrder);
                 Log.Information("Generated PDF report for order {OrderId} at {Path}", SelectedOrder.OrderId, path);
                 MessageBox.Show($"PDF Report generated successfully!\nSaved to: {path}", "Report Generated", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
             }
             catch (Exception ex)
             {

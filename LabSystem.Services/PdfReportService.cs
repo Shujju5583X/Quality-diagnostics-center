@@ -19,10 +19,11 @@ namespace LabSystem.Services
         public string GenerateReport(TestOrder order)
         {
             var results = _resultRepo.GetResultsForOrder(order.OrderId);
+            string dateStr = DateTime.Today.ToString("yyyy-MM-dd");
             
             Document document = new Document();
             Section section = document.AddSection();
-            section.AddParagraph("Medical Lab Management System").Format.Font.Size = 16;
+            section.AddParagraph($"Quality Diagnostics Center - {order.Patient?.FullName} - {dateStr}").Format.Font.Size = 16;
             section.AddParagraph($"Patient: {order.Patient?.FullName}");
             section.AddParagraph($"Order ID: {order.OrderId} | Date: {order.OrderedAt}");
             section.AddParagraph();
@@ -53,15 +54,23 @@ namespace LabSystem.Services
                 row.Cells[4].AddParagraph(r.IsAbnormal ? "Abnormal" : "Normal");
             }
 
-            PdfDocumentRenderer renderer = new PdfDocumentRenderer(true)
+            PdfDocumentRenderer renderer = new PdfDocumentRenderer()
             {
                 Document = document
             };
             renderer.RenderDocument();
 
-            string dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports", order.OrderId.ToString());
+            string dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports", dateStr);
             Directory.CreateDirectory(dir);
-            string filepath = Path.Combine(dir, $"report_{order.OrderId}.pdf");
+
+            string patientName = order.Patient?.FullName ?? "UnknownPatient";
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                patientName = patientName.Replace(c, '_');
+            }
+            patientName = patientName.Replace(' ', '_');
+
+            string filepath = Path.Combine(dir, $"{patientName}_{dateStr}.pdf");
 
             renderer.PdfDocument.Save(filepath);
             return filepath;

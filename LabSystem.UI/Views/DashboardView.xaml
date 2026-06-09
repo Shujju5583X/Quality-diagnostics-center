@@ -10,7 +10,13 @@
     <Grid>
         <TabControl materialDesign:ColorZoneAssist.Mode="SecondaryMid" Style="{StaticResource MaterialDesignNavigationRailTabControl}">
             <!-- Tab 1: Patients -->
-            <TabItem Header="Patients">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Vertical" Margin="4">
+                        <materialDesign:PackIcon Kind="AccountGroup" Width="24" Height="24" HorizontalAlignment="Center" Margin="0 0 0 4" />
+                        <TextBlock Text="Patients" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </TabItem.Header>
                 <Grid Margin="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
@@ -18,7 +24,7 @@
                     </Grid.ColumnDefinitions>
                     
                     <!-- Left: Patients Grid -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="8">
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="16" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -38,7 +44,7 @@
                     </materialDesign:Card>
 
                     <!-- Right: Add Patient Card -->
-                    <materialDesign:Card Grid.Column="1" Margin="8 0 0 0" Padding="16">
+                    <materialDesign:Card Grid.Column="1" Margin="8 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
                         <StackPanel>
                             <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="Register New Patient" />
                             
@@ -47,14 +53,25 @@
                             <TextBox materialDesign:HintAssist.Hint="Contact Phone" Text="{Binding NewPatientPhone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
                             <TextBox materialDesign:HintAssist.Hint="Contact Email" Text="{Binding NewPatientEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 24" />
                             
-                            <Button Command="{Binding AddPatientCommand}" Content="REGISTER PATIENT" Style="{StaticResource MaterialDesignRaisedButton}" />
+                            <Button Command="{Binding AddPatientCommand}" Style="{StaticResource MaterialDesignRaisedButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="AccountPlus" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                    <TextBlock Text="REGISTER PATIENT" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </materialDesign:Card>
                 </Grid>
             </TabItem>
 
             <!-- Tab 2: Orders -->
-            <TabItem Header="Create Orders">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Vertical" Margin="4">
+                        <materialDesign:PackIcon Kind="ClipboardText" Width="24" Height="24" HorizontalAlignment="Center" Margin="0 0 0 4" />
+                        <TextBlock Text="Create Orders" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </TabItem.Header>
                 <Grid Margin="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*" />
@@ -63,7 +80,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Left: Select Patient -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="8">
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="16" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -80,7 +97,7 @@
                     </materialDesign:Card>
 
                     <!-- Middle: Select Tests -->
-                    <materialDesign:Card Grid.Column="1" Margin="8 0 8 0" Padding="8">
+                    <materialDesign:Card Grid.Column="1" Margin="8 0 8 0" Padding="16" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -109,21 +126,32 @@
                     </materialDesign:Card>
 
                     <!-- Right: Submit Order -->
-                    <materialDesign:Card Grid.Column="2" Margin="8 0 0 0" Padding="16">
+                    <materialDesign:Card Grid.Column="2" Margin="8 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
                         <StackPanel>
                             <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="3. Confirm Order" />
                             
                             <TextBlock Text="Selected Patient:" Margin="0 0 0 4" Foreground="Gray" />
                             <TextBlock Text="{Binding SelectedPatient.FullName, TargetNullValue='No patient selected'}" FontWeight="Bold" FontSize="16" Margin="0 0 0 24" TextWrapping="Wrap"/>
                             
-                            <Button Command="{Binding CreateOrderCommand}" Content="SUBMIT ORDER" Style="{StaticResource MaterialDesignRaisedButton}" />
+                            <Button Command="{Binding CreateOrderCommand}" Style="{StaticResource MaterialDesignRaisedButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Send" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                    <TextBlock Text="SUBMIT ORDER" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </materialDesign:Card>
                 </Grid>
             </TabItem>
 
             <!-- Tab 3: Results -->
-            <TabItem Header="Enter Results">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Vertical" Margin="4">
+                        <materialDesign:PackIcon Kind="TestTube" Width="24" Height="24" HorizontalAlignment="Center" Margin="0 0 0 4" />
+                        <TextBlock Text="Enter Results" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </TabItem.Header>
                 <Grid Margin="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*" />
@@ -131,7 +159,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Left: Orders List -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="8">
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="16" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -163,7 +191,7 @@
                     </materialDesign:Card>
 
                     <!-- Right: Results Entry Grid -->
-                    <materialDesign:Card Grid.Column="1" Margin="8 0 0 0" Padding="16">
+                    <materialDesign:Card Grid.Column="1" Margin="8 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -198,9 +226,10 @@
                                             <DataTemplate>
                                                 <Grid>
                                                     <!-- Edit mode: Pending -->
-                                                    <TextBox Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Left" Visibility="Visible">
+                                                    <TextBox Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Left">
                                                         <TextBox.Style>
                                                             <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+                                                                <Setter Property="Visibility" Value="Visible"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -211,9 +240,10 @@
                                                     </TextBox>
 
                                                     <!-- Read-only mode: Complete -->
-                                                    <StackPanel Orientation="Horizontal" Visibility="Collapsed">
+                                                    <StackPanel Orientation="Horizontal">
                                                         <StackPanel.Style>
                                                             <Style TargetType="StackPanel">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
                                                                         <Setter Property="Visibility" Value="Visible"/>
@@ -245,7 +275,11 @@
 
                             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 8 0 0">
                                 <!-- Save results button (only for Pending) -->
-                                <Button Command="{Binding SaveResultsCommand}" Content="VERIFY &amp; SAVE RESULTS" Margin="0 0 10 0">
+                                <Button Command="{Binding SaveResultsCommand}" Margin="0 0 10 0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="ContentSaveCheck" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                        <TextBlock Text="VERIFY &amp; SAVE RESULTS" VerticalAlignment="Center" />
+                                    </StackPanel>
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
                                             <Setter Property="Visibility" Value="Visible"/>
@@ -259,7 +293,11 @@
                                 </Button>
 
                                 <!-- Report generation button (only for Complete) -->
-                                <Button Command="{Binding GenerateReportCommand}" Content="GENERATE PDF REPORT">
+                                <Button Command="{Binding GenerateReportCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="FilePdfBox" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                        <TextBlock Text="GENERATE PDF REPORT" VerticalAlignment="Center" />
+                                    </StackPanel>
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -278,9 +316,15 @@
             </TabItem>
 
             <!-- Tab 4: System / Backups -->
-            <TabItem Header="Settings &amp; Backup">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Vertical" Margin="4">
+                        <materialDesign:PackIcon Kind="Cog" Width="24" Height="24" HorizontalAlignment="Center" Margin="0 0 0 4" />
+                        <TextBlock Text="Settings" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </TabItem.Header>
                 <Grid Margin="16">
-                    <materialDesign:Card Padding="32" Width="450" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <materialDesign:Card Padding="40" Width="450" HorizontalAlignment="Center" VerticalAlignment="Center" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
                         <StackPanel HorizontalAlignment="Center">
                             <materialDesign:PackIcon Kind="DatabaseSettings" Width="64" Height="64" HorizontalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" Margin="0 0 0 16" />
                             <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" Text="System Management" HorizontalAlignment="Center" Margin="0 0 0 8" />
@@ -293,7 +337,12 @@
                             <TextBlock TextWrapping="Wrap" Text="To secure database integrity, you can trigger a live SQLite database backup. A timestamped copy of your laboratory database will be generated in your project backups directory immediately." 
                                        TextAlignment="Center" Margin="0 0 0 24" Foreground="DimGray"/>
 
-                            <Button Command="{Binding BackupCommand}" Content="BACKUP LIVE DATABASE NOW" Style="{StaticResource MaterialDesignRaisedButton}" Width="250" />
+                            <Button Command="{Binding BackupCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Width="260">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="DatabaseSync" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                    <TextBlock Text="BACKUP LIVE DATABASE NOW" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </materialDesign:Card>
                 </Grid>
