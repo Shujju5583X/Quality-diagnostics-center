@@ -8,5 +8,12 @@ namespace LabSystem.Core.Models
         public double? ReferenceRangeLow { get; set; }
         public double? ReferenceRangeHigh { get; set; }
         public bool IsActive { get; set; }
+
+        // Premium report metadata fields
+        public string Category { get; set; }
+        public string GroupName { get; set; }
+        public string Method { get; set; }
+        public string Interpretation { get; set; }
+        public int SortOrder { get; set; }
     }
 }

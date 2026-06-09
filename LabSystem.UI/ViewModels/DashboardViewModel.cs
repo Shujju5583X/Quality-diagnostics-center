@@ -188,7 +188,16 @@ namespace LabSystem.UI.ViewModels
                 {
                     if (t.IsActive)
                     {
-                        TestTypes.Add(new TestTypeSelection { TypeId = t.TypeId, Name = t.Name, Unit = t.Unit, Low = t.ReferenceRangeLow, High = t.ReferenceRangeHigh });
+                        TestTypes.Add(new TestTypeSelection 
+                        { 
+                            TypeId = t.TypeId, 
+                            Name = t.Name, 
+                            Unit = t.Unit, 
+                            Low = t.ReferenceRangeLow, 
+                            High = t.ReferenceRangeHigh,
+                            GroupName = t.GroupName,
+                            Category = t.Category
+                        });
                     }
                 }
 
@@ -488,6 +497,8 @@ namespace LabSystem.UI.ViewModels
         public string Unit { get; set; }
         public double? Low { get; set; }
         public double? High { get; set; }
+        public string GroupName { get; set; }
+        public string Category { get; set; }
 
         private bool _isSelected;
         public bool IsSelected

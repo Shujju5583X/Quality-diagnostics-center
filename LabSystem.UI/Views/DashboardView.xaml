@@ -43,6 +43,11 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <CollectionViewSource x:Key="GroupedTestTypes" Source="{Binding TestTypes}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="GroupName" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
     </UserControl.Resources>
 
     <Grid>
@@ -291,7 +296,18 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 16" Text="2. Select Tests" />
                             
-                            <ListBox Grid.Row="1" ItemsSource="{Binding TestTypes}" BorderThickness="0" Background="Transparent" Margin="4 0 4 4">
+                            <ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource GroupedTestTypes}}" BorderThickness="0" Background="Transparent" Margin="4 0 4 4">
+                                <ListBox.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.HeaderTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#EDE7F6" CornerRadius="4" Padding="8 6" Margin="0 8 0 4">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13" Foreground="#5E35B1" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </GroupStyle.HeaderTemplate>
+                                    </GroupStyle>
+                                </ListBox.GroupStyle>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="#E0E0E0" BorderThickness="0 0 0 1" Padding="4 10">

@@ -13,7 +13,12 @@ CREATE TABLE IF NOT EXISTS TestTypes (
     Unit TEXT,
     ReferenceRangeLow REAL,
     ReferenceRangeHigh REAL,
-    IsActive INTEGER DEFAULT 1
+    IsActive INTEGER DEFAULT 1,
+    Category TEXT,
+    GroupName TEXT,
+    Method TEXT,
+    Interpretation TEXT,
+    SortOrder INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS Staff (
