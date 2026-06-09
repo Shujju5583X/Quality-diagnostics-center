@@ -1,4 +1,6 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure.Annotations;
 using System.Data.Entity.ModelConfiguration.Conventions;
 using LabSystem.Core.Models;
 
@@ -68,6 +70,43 @@ namespace LabSystem.Data
                 .HasRequired(r => r.Order)
                 .WithMany()
                 .HasForeignKey(r => r.OrderId);
+
+            // Add index configurations for foreign keys
+            modelBuilder.Entity<TestOrder>()
+                .Property(o => o.PatientId)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_TestOrders_PatientId")));
+
+            modelBuilder.Entity<Result>()
+                .Property(r => r.OrderId)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_Results_OrderId")));
+
+            modelBuilder.Entity<Result>()
+                .Property(r => r.TypeId)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_Results_TypeId")));
+
+            modelBuilder.Entity<Result>()
+                .Property(r => r.TechnicianId)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_Results_TechnicianId")));
+
+            modelBuilder.Entity<Report>()
+                .Property(r => r.OrderId)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_Reports_OrderId")));
+
+            modelBuilder.Entity<AuditLog>()
+                .Property(a => a.UserId)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_AuditLogs_UserId")));
 
             base.OnModelCreating(modelBuilder);
         }

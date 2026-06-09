@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Services;
@@ -54,7 +55,7 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public void GenerateReport_ShouldGeneratePdf_WhenLogoDoesNotExist()
+        public async Task GenerateReport_ShouldGeneratePdf_WhenLogoDoesNotExist()
         {
             // Arrange: Ensure logo does not exist in target path
             if (File.Exists(_logoPath))
@@ -69,14 +70,14 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 1, FullName = "John Doe" }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrder(1))
-                           .Returns(new List<Result>
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(1))
+                           .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 1, Value = 15, TestType = new TestType { Name = "Glucose", Unit = "mg/dL", ReferenceRangeLow = 70, ReferenceRangeHigh = 100 } }
                            });
 
             // Act
-            string filepath = _service.GenerateReport(order);
+            string filepath = await _service.GenerateReportAsync(order);
 
             // Assert
             Assert.IsTrue(File.Exists(filepath));
@@ -90,7 +91,7 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public void GenerateReport_ShouldGeneratePdf_WhenLogoExists()
+        public async Task GenerateReport_ShouldGeneratePdf_WhenLogoExists()
         {
             // Arrange: Find and copy the actual logo file to target path
             string dir = AppDomain.CurrentDomain.BaseDirectory;
@@ -125,14 +126,14 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 2, FullName = "Jane Smith" }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrder(2))
-                           .Returns(new List<Result>
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(2))
+                           .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 2, Value = 12, TestType = new TestType { Name = "Hemoglobin", Unit = "g/dL", ReferenceRangeLow = 12, ReferenceRangeHigh = 16 } }
                            });
 
             // Act
-            string filepath = _service.GenerateReport(order);
+            string filepath = await _service.GenerateReportAsync(order);
 
             // Assert
             Assert.IsTrue(File.Exists(filepath));
@@ -146,7 +147,7 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public void GenerateVerificationReport_ManualInspection()
+        public async Task GenerateVerificationReport_ManualInspection()
         {
             var order = new TestOrder
             {
@@ -178,10 +179,10 @@ namespace LabSystem.Tests
                 new Result { ResultId = 108, OrderId = 999, TypeId = 51, Value = 7, IsAbnormal = false, TestType = new TestType { Name = "Blood Grouping & Rh", Unit = "Blood Group", ReferenceRangeLow = 1, ReferenceRangeHigh = 8, Category = "CLINICAL PATHOLOGY", GroupName = "Blood Group", SortOrder = 1, Method = "Monoclonal slide grouping (Agglutination test) by slide method" } }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrder(999)).Returns(mockResults);
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(999)).ReturnsAsync(mockResults);
 
             // Act
-            string filepath = _service.GenerateReport(order);
+            string filepath = await _service.GenerateReportAsync(order);
             
             // Copy the report to the workspace root for manual inspection
             string copyPath = Path.Combine(@"E:\Quality diagnostics center", "Sample_Verification_Report.pdf");

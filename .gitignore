@@ -77,3 +77,9 @@ __pycache__/
 env/
 venv/
 ENV/
+
+# ==========================================
+# Application output
+# ==========================================
+[Ss]ample\ reports/*.pdf
+![Ss]ample\ reports/Sample_Verification_Report.pdf

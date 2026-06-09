@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 
@@ -17,9 +18,9 @@ namespace LabSystem.Services
             _auditRepo = auditRepo;
         }
 
-        public void AddResult(Result result)
+        public async Task AddResultAsync(Result result)
         {
-            var testType = _testTypeRepo.GetById(result.TypeId);
+            var testType = await _testTypeRepo.GetByIdAsync(result.TypeId);
             if (testType != null)
             {
                 if (testType.ReferenceRangeLow.HasValue && result.Value < testType.ReferenceRangeLow.Value)
@@ -31,13 +32,13 @@ namespace LabSystem.Services
             }
 
             result.RecordedAt = DateTime.UtcNow.ToString("O");
-            _resultRepo.Add(result);
+            await _resultRepo.AddAsync(result);
 
-            _auditRepo.Add(new AuditLog
+            await _auditRepo.AddAsync(new AuditLog
             {
                 Action = "Created",
                 EntityType = "Result",
-                Timestamp = DateTime.UtcNow.ToString("O"),
+                Timestamp = DateTime.UtcNow,
                 Details = $"Result added for OrderId {result.OrderId}."
             });
         }

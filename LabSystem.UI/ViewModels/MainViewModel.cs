@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using System.Windows.Input;
 using LabSystem.Core.Interfaces;
 
@@ -27,8 +28,8 @@ namespace LabSystem.UI.ViewModels
 
             CurrentViewModel = loginVm;
 
-            BackupCommand = new RelayCommand(o => {
-                backupService.BackupNow();
+            BackupCommand = new RelayCommand(async o => {
+                await backupService.BackupNowAsync();
                 System.Windows.MessageBox.Show("Database (SQLite) and technician-friendly report (Excel) backed up successfully to the backups directory!", "Backup Completed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             });
         }

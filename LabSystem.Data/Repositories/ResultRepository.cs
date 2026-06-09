@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 
@@ -10,13 +11,13 @@ namespace LabSystem.Data.Repositories
     {
         public ResultRepository(LabDbContext context) : base(context) { }
 
-        public IEnumerable<Result> GetResultsForOrder(int orderId)
+        public async Task<IEnumerable<Result>> GetResultsForOrderAsync(int orderId)
         {
-            return _dbSet.AsNoTracking()
+            return await _dbSet.AsNoTracking()
                          .Include(r => r.TestType)
                          .Include(r => r.Technician)
                          .Where(r => r.OrderId == orderId)
-                         .ToList();
+                         .ToListAsync();
         }
     }
 }

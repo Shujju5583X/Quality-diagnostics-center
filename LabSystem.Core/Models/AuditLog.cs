@@ -10,7 +10,7 @@ namespace LabSystem.Core.Models
         public int? EntityId { get; set; }
         public int? UserId { get; set; }
         public virtual Staff User { get; set; }
-        public string Timestamp { get; set; }
+        public DateTime Timestamp { get; set; }
         public string Details { get; set; }
     }
 }

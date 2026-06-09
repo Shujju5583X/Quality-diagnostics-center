@@ -64,7 +64,14 @@ CREATE TABLE IF NOT EXISTS AuditLogs (
     EntityType TEXT,
     EntityId INTEGER,
     UserId INTEGER,
-    Timestamp TEXT NOT NULL,
+    Timestamp DATETIME NOT NULL,
     Details TEXT,
     FOREIGN KEY(UserId) REFERENCES Staff(StaffId)
 );
+
+CREATE INDEX IF NOT EXISTS IX_TestOrders_PatientId ON TestOrders (PatientId);
+CREATE INDEX IF NOT EXISTS IX_Results_OrderId ON Results (OrderId);
+CREATE INDEX IF NOT EXISTS IX_Results_TypeId ON Results (TypeId);
+CREATE INDEX IF NOT EXISTS IX_Results_TechnicianId ON Results (TechnicianId);
+CREATE INDEX IF NOT EXISTS IX_Reports_OrderId ON Reports (OrderId);
+CREATE INDEX IF NOT EXISTS IX_AuditLogs_UserId ON AuditLogs (UserId);

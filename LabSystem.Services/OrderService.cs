@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 
@@ -15,34 +16,34 @@ namespace LabSystem.Services
             _auditRepo = auditRepo;
         }
 
-        public void CreateOrder(TestOrder order)
+        public async Task CreateOrderAsync(TestOrder order)
         {
             order.OrderedAt = DateTime.UtcNow.ToString("O");
-            _orderRepo.Add(order);
+            await _orderRepo.AddAsync(order);
             
-            _auditRepo.Add(new AuditLog
+            await _auditRepo.AddAsync(new AuditLog
             {
                 Action = "Created",
                 EntityType = "TestOrder",
-                Timestamp = DateTime.UtcNow.ToString("O"),
+                Timestamp = DateTime.UtcNow,
                 Details = "New test order created."
             });
         }
 
-        public void UpdateOrderStatus(int orderId, string status)
+        public async Task UpdateOrderStatusAsync(int orderId, string status)
         {
-            var order = _orderRepo.GetById(orderId);
+            var order = await _orderRepo.GetByIdAsync(orderId);
             if (order != null)
             {
                 order.Status = status;
-                _orderRepo.Update(order);
+                await _orderRepo.UpdateAsync(order);
                 
-                _auditRepo.Add(new AuditLog
+                await _auditRepo.AddAsync(new AuditLog
                 {
                     Action = "Updated",
                     EntityType = "TestOrder",
                     EntityId = orderId,
-                    Timestamp = DateTime.UtcNow.ToString("O"),
+                    Timestamp = DateTime.UtcNow,
                     Details = $"Order status updated to {status}."
                 });
             }

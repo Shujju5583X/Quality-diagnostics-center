@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using LabSystem.Core.Models;
 
 namespace LabSystem.Core.Interfaces
 {
     public interface IResultRepository : IRepository<Result>
     {
-        IEnumerable<Result> GetResultsForOrder(int orderId);
+        Task<IEnumerable<Result>> GetResultsForOrderAsync(int orderId);
     }
 }

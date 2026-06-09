@@ -28,6 +28,11 @@ This desktop application streamlines day-to-day laboratory operations including 
 ### 🔑 Secure PIN Authentication
 - **Role-Based Access**: Restricts unauthorized access through admin and technician permissions.
 - **Cryptographic Security**: Employs industry-standard **BCrypt.Net-Next** hashing to store and verify staff PIN codes safely.
+- **Anti-Brute Force Protection**: Implements automatic account lockout mechanisms after consecutive failed login attempts.
+
+### ⚡ Performance & Scalability
+- **Asynchronous Architecture**: Core data access and service operations utilize fully async/await patterns for responsive user experiences.
+- **Database Indexing**: Entity Framework is configured with optimized indexing for foreign keys to ensure fast query execution.
 
 ### 💾 Multi-Format Backup Engine
 - **Developer-Friendly SQLite Backups**: Creates timestamped physical copies of `lab.db` (stored in `Backups/Database/`).

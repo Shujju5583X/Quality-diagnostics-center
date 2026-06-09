@@ -1,31 +1,32 @@
+using System.Threading.Tasks;
 using LabSystem.Core.Models;
 
 namespace LabSystem.Core.Interfaces
 {
     public interface IPdfReportService
     {
-        string GenerateReport(TestOrder order);
+        Task<string> GenerateReportAsync(TestOrder order);
     }
 
     public interface IBackupService
     {
-        void BackupNow();
+        Task BackupNowAsync();
     }
 }
 
     public interface IAuthService
     {
-        bool VerifyPin(int staffId, string pin);
+        Task<bool> VerifyPinAsync(int staffId, string pin);
         string HashPin(string pin);
     }
     
     public interface IOrderService
     {
-        void CreateOrder(TestOrder order);
-        void UpdateOrderStatus(int orderId, string status);
+        Task CreateOrderAsync(TestOrder order);
+        Task UpdateOrderStatusAsync(int orderId, string status);
     }
     
     public interface IResultService
     {
-        void AddResult(Result result);
+        Task AddResultAsync(Result result);
     }

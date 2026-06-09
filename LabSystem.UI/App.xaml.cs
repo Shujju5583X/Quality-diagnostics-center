@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.IO;
 using System.Windows;
 using LabSystem.Core.Interfaces;
@@ -95,6 +96,26 @@ namespace LabSystem.UI
             var mainWindow = new MainWindow();
             mainWindow.DataContext = Container.GetInstance<ViewModels.MainViewModel>();
             mainWindow.Show();
+        }
+
+        private void SecureConnectionString()
+        {
+            try
+            {
+                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                ConnectionStringsSection section = config.GetSection("connectionStrings") as ConnectionStringsSection;
+                if (section != null && !section.SectionInformation.IsProtected)
+                {
+                    section.SectionInformation.ProtectSection("DataProtectionConfigurationProvider");
+                    config.Save(ConfigurationSaveMode.Modified);
+                    ConfigurationManager.RefreshSection("connectionStrings");
+                    Log.Information("App.config connectionStrings section secured via DPAPI.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to encrypt connectionStrings configuration section.");
+            }
         }
     }
 }

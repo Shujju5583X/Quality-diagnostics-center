@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using ClosedXML.Excel;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
@@ -33,7 +34,7 @@ namespace LabSystem.Services
             _auditLogRepo = auditLogRepo;
         }
 
-        public void BackupNow()
+        public async Task BackupNowAsync()
         {
             string dbBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Database");
             string excelBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Excel");
@@ -53,16 +54,18 @@ namespace LabSystem.Services
 
             // 2. Human-Readable Excel Spreadsheet Backup (for Lab Technicians)
             string excelDestFile = Path.Combine(excelBackupsDir, $"lab_backup_{timestamp}.xlsx");
-            GenerateExcelBackup(excelDestFile);
+            await GenerateExcelBackupAsync(excelDestFile);
         }
 
-        private void GenerateExcelBackup(string filePath)
+        private async Task GenerateExcelBackupAsync(string filePath)
         {
             // Load all data into memory dictionaries for fast mapping and lookup
-            var patientsDict = _patientRepo.GetAll().ToDictionary(p => p.PatientId);
-            var testTypesDict = _testTypeRepo.GetAll().ToDictionary(t => t.TypeId);
-            var staffDict = _staffRepo.GetAll().ToDictionary(s => s.StaffId);
-            var ordersDict = _orderRepo.GetAll().ToDictionary(o => o.OrderId);
+            var patientsDict = (await _patientRepo.GetAllAsync()).ToDictionary(p => p.PatientId);
+            var testTypesDict = (await _testTypeRepo.GetAllAsync()).ToDictionary(t => t.TypeId);
+            var staffDict = (await _staffRepo.GetAllAsync()).ToDictionary(s => s.StaffId);
+            var ordersDict = (await _orderRepo.GetAllAsync()).ToDictionary(o => o.OrderId);
+            var resultsList = await _resultRepo.GetAllAsync();
+            var auditLogsList = await _auditLogRepo.GetAllAsync();
 
             using (var workbook = new XLWorkbook())
             {
@@ -173,7 +176,7 @@ namespace LabSystem.Services
                 wsResults.Row(3).Height = 28;
 
                 int resRow = 4;
-                foreach (var r in _resultRepo.GetAll().OrderBy(x => x.ResultId))
+                foreach (var r in resultsList.OrderBy(x => x.ResultId))
                 {
                     var order = ordersDict.TryGetValue(r.OrderId, out var o) ? o : null;
                     var patientName = (order != null && patientsDict.TryGetValue(order.PatientId, out var pat)) ? pat.FullName : "Unknown Patient";
@@ -301,13 +304,13 @@ namespace LabSystem.Services
                 wsLogs.Row(3).Height = 28;
 
                 int lRow = 4;
-                foreach (var log in _auditLogRepo.GetAll().OrderByDescending(x => x.LogId))
+                foreach (var log in auditLogsList.OrderByDescending(x => x.LogId))
                 {
                     wsLogs.Cell(lRow, 1).Value = log.LogId;
                     wsLogs.Cell(lRow, 2).Value = log.Action;
                     wsLogs.Cell(lRow, 3).Value = log.EntityType;
                     wsLogs.Cell(lRow, 4).Value = log.EntityId.HasValue ? log.EntityId.Value : "";
-                    wsLogs.Cell(lRow, 5).Value = log.Timestamp;
+                    wsLogs.Cell(lRow, 5).Value = log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
                     wsLogs.Cell(lRow, 6).Value = log.UserId.HasValue && staffDict.TryGetValue(log.UserId.Value, out var user) ? user.FullName : "System";
                     wsLogs.Cell(lRow, 7).Value = log.Details;
 

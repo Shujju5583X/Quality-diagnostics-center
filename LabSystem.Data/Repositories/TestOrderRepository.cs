@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 
@@ -10,20 +11,20 @@ namespace LabSystem.Data.Repositories
     {
         public TestOrderRepository(LabDbContext context) : base(context) { }
 
-        public IEnumerable<TestOrder> GetOrdersForPatient(int patientId)
+        public async Task<IEnumerable<TestOrder>> GetOrdersForPatientAsync(int patientId)
         {
-            return _dbSet.AsNoTracking()
+            return await _dbSet.AsNoTracking()
                          .Include(o => o.Patient)
                          .Where(o => o.PatientId == patientId)
-                         .ToList();
+                         .ToListAsync();
         }
 
-        public IEnumerable<TestOrder> GetByStatus(string status)
+        public async Task<IEnumerable<TestOrder>> GetByStatusAsync(string status)
         {
-            return _dbSet.AsNoTracking()
+            return await _dbSet.AsNoTracking()
                          .Include(o => o.Patient)
                          .Where(o => o.Status == status)
-                         .ToList();
+                         .ToListAsync();
         }
     }
 }

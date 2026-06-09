@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using LabSystem.Core.Interfaces;
@@ -157,11 +158,11 @@ namespace LabSystem.UI.ViewModels
             LoadData();
         }
 
-        private void LoadStaffName()
+        private async void LoadStaffName()
         {
             try
             {
-                var staff = _staffRepo.GetById(StaffId);
+                var staff = await _staffRepo.GetByIdAsync(StaffId);
                 CurrentStaffName = staff?.FullName ?? "Unknown Staff";
             }
             catch (Exception ex)
@@ -171,20 +172,22 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private void LoadData()
+        private async void LoadData()
         {
             try
             {
                 // Load Patients
                 Patients.Clear();
-                foreach (var p in _patientRepo.GetAll())
+                var patients = await _patientRepo.GetAllAsync();
+                foreach (var p in patients)
                 {
                     Patients.Add(p);
                 }
 
                 // Load Test Types for checkboxes
                 TestTypes.Clear();
-                foreach (var t in _testTypeRepo.GetAll())
+                var testTypes = await _testTypeRepo.GetAllAsync();
+                foreach (var t in testTypes)
                 {
                     if (t.IsActive)
                     {
@@ -203,12 +206,13 @@ namespace LabSystem.UI.ViewModels
 
                 // Load Orders
                 Orders.Clear();
-                foreach (var o in _orderRepo.GetAll())
+                var orders = await _orderRepo.GetAllAsync();
+                foreach (var o in orders)
                 {
                     // EF handles relation, but double-check if patient needs to be populated manually
                     if (o.Patient == null)
                     {
-                        o.Patient = _patientRepo.GetById(o.PatientId);
+                        o.Patient = await _patientRepo.GetByIdAsync(o.PatientId);
                     }
                     Orders.Add(o);
                 }
@@ -220,7 +224,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private void ExecuteAddPatient(object obj)
+        private async void ExecuteAddPatient(object obj)
         {
             if (string.IsNullOrWhiteSpace(NewPatientName))
             {
@@ -239,7 +243,7 @@ namespace LabSystem.UI.ViewModels
                     CreatedAt = DateTime.UtcNow.ToString("O")
                 };
 
-                _patientRepo.Add(patient);
+                await _patientRepo.AddAsync(patient);
                 Log.Information("Added patient: {PatientName}", NewPatientName);
 
                 // Reset fields
@@ -258,7 +262,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private void ExecuteCreateOrder(object obj)
+        private async void ExecuteCreateOrder(object obj)
         {
             if (SelectedPatient == null)
             {
@@ -285,7 +289,7 @@ namespace LabSystem.UI.ViewModels
                     Notes = testIds
                 };
 
-                _orderService.CreateOrder(order);
+                await _orderService.CreateOrderAsync(order);
                 Log.Information("Created test order ID {OrderId} for Patient ID {PatientId}", order.OrderId, SelectedPatient.PatientId);
 
                 // Unselect test check boxes
@@ -304,7 +308,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private void LoadResultsForSelectedOrder()
+        private async void LoadResultsForSelectedOrder()
         {
             SelectedOrderResults.Clear();
             ResultErrorMessage = string.Empty;
@@ -323,7 +327,7 @@ namespace LabSystem.UI.ViewModels
                         {
                             if (int.TryParse(idStr, out int id))
                             {
-                                var testType = _testTypeRepo.GetById(id);
+                                var testType = await _testTypeRepo.GetByIdAsync(id);
                                 if (testType != null)
                                 {
                                     SelectedOrderResults.Add(new ResultInput
@@ -344,12 +348,12 @@ namespace LabSystem.UI.ViewModels
                 else
                 {
                     // Order is complete, load the actual saved results
-                    var savedResults = _resultRepo.GetResultsForOrder(SelectedOrder.OrderId);
+                    var savedResults = await _resultRepo.GetResultsForOrderAsync(SelectedOrder.OrderId);
                     foreach (var r in savedResults)
                     {
                         if (r.TestType == null)
                         {
-                            r.TestType = _testTypeRepo.GetById(r.TypeId);
+                            r.TestType = await _testTypeRepo.GetByIdAsync(r.TypeId);
                         }
 
                         SelectedOrderResults.Add(new ResultInput
@@ -372,7 +376,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private void ExecuteSaveResults(object obj)
+        private async void ExecuteSaveResults(object obj)
         {
             if (SelectedOrder == null) return;
 
@@ -407,13 +411,13 @@ namespace LabSystem.UI.ViewModels
                     };
 
                     // Calling service logic which calculates abnormal flag and saves to DB
-                    _resultService.AddResult(result);
+                    await _resultService.AddResultAsync(result);
                 }
 
                 int selectedOrderId = SelectedOrder.OrderId;
 
                 // Update order status to Complete
-                _orderService.UpdateOrderStatus(selectedOrderId, "Complete");
+                await _orderService.UpdateOrderStatusAsync(selectedOrderId, "Complete");
                 Log.Information("Verified and completed order {OrderId}", selectedOrderId);
 
                 // Reload
@@ -429,7 +433,7 @@ namespace LabSystem.UI.ViewModels
                 {
                     if (SelectedOrder != null)
                     {
-                        string path = _reportService.GenerateReport(SelectedOrder);
+                        string path = await _reportService.GenerateReportAsync(SelectedOrder);
                         Log.Information("Automatically generated PDF report for order {OrderId} at {Path}", SelectedOrder.OrderId, path);
                         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
                     }
@@ -446,7 +450,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private void ExecuteGenerateReport(object obj)
+        private async void ExecuteGenerateReport(object obj)
         {
             if (SelectedOrder == null)
             {
@@ -462,7 +466,7 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
-                string path = _reportService.GenerateReport(SelectedOrder);
+                string path = await _reportService.GenerateReportAsync(SelectedOrder);
                 Log.Information("Generated PDF report for order {OrderId} at {Path}", SelectedOrder.OrderId, path);
                 MessageBox.Show($"PDF Report generated successfully!\nSaved to: {path}", "Report Generated", MessageBoxButton.OK, MessageBoxImage.Information);
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
@@ -474,11 +478,11 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private void ExecuteBackup(object obj)
+        private async void ExecuteBackup(object obj)
         {
             try
             {
-                _backupService.BackupNow();
+                await _backupService.BackupNowAsync();
                 MessageBox.Show("Database (SQLite) and technician-friendly report (Excel) backed up successfully to the backups directory!", "Backup Completed", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)

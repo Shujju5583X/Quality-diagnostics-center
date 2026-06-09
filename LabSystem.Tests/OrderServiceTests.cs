@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Services;
@@ -23,19 +24,21 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public void UpdateOrderStatus_ShouldUpdateStatus_AndAddAuditLog()
+        public async Task UpdateOrderStatus_ShouldUpdateStatus_AndAddAuditLog()
         {
             // Arrange
             var order = new TestOrder { OrderId = 1, Status = "Pending" };
-            _mockOrderRepo.Setup(r => r.GetById(1)).Returns(order);
+            _mockOrderRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(order);
+            _mockOrderRepo.Setup(r => r.UpdateAsync(order)).Returns(Task.CompletedTask);
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).Returns(Task.CompletedTask);
 
             // Act
-            _service.UpdateOrderStatus(1, "Complete");
+            await _service.UpdateOrderStatusAsync(1, "Complete");
 
             // Assert
             Assert.AreEqual("Complete", order.Status);
-            _mockOrderRepo.Verify(r => r.Update(order), Times.Once);
-            _mockAuditRepo.Verify(r => r.Add(It.Is<AuditLog>(a => a.Action == "Updated" && a.EntityType == "TestOrder")), Times.Once);
+            _mockOrderRepo.Verify(r => r.UpdateAsync(order), Times.Once);
+            _mockAuditRepo.Verify(r => r.AddAsync(It.Is<AuditLog>(a => a.Action == "Updated" && a.EntityType == "TestOrder")), Times.Once);
         }
 
         [Test]

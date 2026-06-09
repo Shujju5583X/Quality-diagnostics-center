@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using MigraDoc.DocumentObjectModel;
@@ -18,9 +19,9 @@ namespace LabSystem.Services
             _resultRepo = resultRepo;
         }
 
-        public string GenerateReport(TestOrder order)
+        public async Task<string> GenerateReportAsync(TestOrder order)
         {
-            var results = _resultRepo.GetResultsForOrder(order.OrderId);
+            var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId);
             string dateStr = DateTime.Today.ToString("yyyy-MM-dd");
             
             string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
@@ -314,7 +315,7 @@ namespace LabSystem.Services
             }
             safePatientName = safePatientName.Replace(' ', '_');
 
-            string filepath = Path.Combine(dir, $"{safePatientName}_{dateStr}.pdf");
+            string filepath = Path.Combine(dir, $"{safePatientName}_Order{order.OrderId}_{dateStr}_{Guid.NewGuid().ToString().Substring(0,4)}.pdf");
             renderer.PdfDocument.Save(filepath);
             return filepath;
         }

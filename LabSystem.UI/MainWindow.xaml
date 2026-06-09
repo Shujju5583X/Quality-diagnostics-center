@@ -48,7 +48,13 @@
                                     <Image Source="logo.png" Stretch="Uniform" />
                                 </Border>
                                 <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" HorizontalAlignment="Center" Margin="0 0 0 24">Staff Login</TextBlock>
-                                <PasswordBox materialDesign:HintAssist.Hint="Enter PIN (e.g. 1234)" 
+                                <ComboBox ItemsSource="{Binding StaffList}"
+                                          SelectedItem="{Binding SelectedStaff}"
+                                          DisplayMemberPath="FullName"
+                                          materialDesign:HintAssist.Hint="Select Staff Member"
+                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                          Margin="0 0 0 16" />
+                                <PasswordBox materialDesign:HintAssist.Hint="Enter PIN" 
                                              Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
                                              PasswordChanged="PinBox_PasswordChanged"
                                              Margin="0 0 0 24" />

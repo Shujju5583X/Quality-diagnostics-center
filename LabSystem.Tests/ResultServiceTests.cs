@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Services;
@@ -25,34 +26,38 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public void AddResult_ShouldFlagAbnormal_WhenValueAboveHighRange()
+        public async Task AddResult_ShouldFlagAbnormal_WhenValueAboveHighRange()
         {
             // Arrange
             var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
-            _mockTestTypeRepo.Setup(r => r.GetById(1)).Returns(testType);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>())).Returns(Task.CompletedTask);
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).Returns(Task.CompletedTask);
 
             var result = new Result { TypeId = 1, Value = 25 };
 
             // Act
-            _service.AddResult(result);
+            await _service.AddResultAsync(result);
 
             // Assert
             Assert.IsTrue(result.IsAbnormal);
-            _mockResultRepo.Verify(r => r.Add(It.IsAny<Result>()), Times.Once);
-            _mockAuditRepo.Verify(r => r.Add(It.IsAny<AuditLog>()), Times.Once);
+            _mockResultRepo.Verify(r => r.AddAsync(It.IsAny<Result>()), Times.Once);
+            _mockAuditRepo.Verify(r => r.AddAsync(It.IsAny<AuditLog>()), Times.Once);
         }
 
         [Test]
-        public void AddResult_ShouldNotFlagAbnormal_WhenValueWithinRange()
+        public async Task AddResult_ShouldNotFlagAbnormal_WhenValueWithinRange()
         {
             // Arrange
             var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
-            _mockTestTypeRepo.Setup(r => r.GetById(1)).Returns(testType);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>())).Returns(Task.CompletedTask);
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).Returns(Task.CompletedTask);
 
             var result = new Result { TypeId = 1, Value = 15 };
 
             // Act
-            _service.AddResult(result);
+            await _service.AddResultAsync(result);
 
             // Assert
             Assert.IsFalse(result.IsAbnormal);
