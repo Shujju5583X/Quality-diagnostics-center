@@ -7,6 +7,7 @@ namespace LabSystem.Core.Interfaces
     public interface IPdfReportService
     {
         Task<string> GenerateReportAsync(TestOrder order, bool includeLetterhead = true, CancellationToken cancellationToken = default);
+        Task<string> GenerateInvoicePdfAsync(Invoice invoice, CancellationToken cancellationToken = default);
     }
 
     public interface IBackupService

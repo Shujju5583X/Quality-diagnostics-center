@@ -290,6 +290,7 @@ namespace LabSystem.UI.ViewModels
         public ICommand CreateOrderCommand { get; }
         public ICommand SaveResultsCommand { get; }
         public ICommand GenerateReportCommand { get; }
+        public ICommand GenerateBillCommand { get; }
         public ICommand BackupCommand { get; }
         public ICommand RefreshCommand { get; }
         public ICommand SaveCatalogTestCommand { get; }
@@ -327,6 +328,7 @@ namespace LabSystem.UI.ViewModels
             CreateOrderCommand = new RelayCommand(ExecuteCreateOrder);
             SaveResultsCommand = new RelayCommand(ExecuteSaveResults);
             GenerateReportCommand = new RelayCommand(ExecuteGenerateReport);
+            GenerateBillCommand = new RelayCommand(ExecuteGenerateBill);
             BackupCommand = new RelayCommand(ExecuteBackup);
             RefreshCommand = new RelayCommand(o => LoadData());
             SaveCatalogTestCommand = new RelayCommand(ExecuteSaveCatalogTest);
@@ -790,12 +792,46 @@ namespace LabSystem.UI.ViewModels
             try
             {
                 var previewWindow = new Views.PdfPreviewWindow(SelectedOrder, _reportService);
+                previewWindow.Owner = Application.Current.MainWindow;
                 previewWindow.ShowDialog();
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to generate report.");
-                MessageBox.Show("Error generating PDF report.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error generating PDF report: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void ExecuteGenerateBill(object obj)
+        {
+            if (SelectedOrder == null)
+            {
+                MessageBox.Show("Please select an order from the list.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                var invoice = await _billingService.GetInvoiceForOrderAsync(SelectedOrder.OrderId);
+                if (invoice == null)
+                {
+                    invoice = await _billingService.GenerateInvoiceAsync(SelectedOrder.OrderId);
+                    invoice = await _billingService.GetInvoiceForOrderAsync(SelectedOrder.OrderId);
+                }
+
+                LoadData(); // Always refresh to ensure it shows up
+
+                if (invoice != null)
+                {
+                    var previewWindow = new Views.InvoicePreviewWindow(invoice, _reportService);
+                    previewWindow.Owner = Application.Current.MainWindow; // Fix CenterOwner issue
+                    previewWindow.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to generate bill.");
+                MessageBox.Show($"Error generating bill: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

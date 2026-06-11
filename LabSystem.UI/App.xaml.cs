@@ -63,6 +63,7 @@ namespace LabSystem.UI
             Container.Register<IResultService, ResultService>(Lifestyle.Transient);
             Container.Register<IPdfReportService>(() => new PdfReportService(
                 Container.GetInstance<IResultRepository>(),
+                Container.GetInstance<IRepository<LabSystem.Core.Models.TestType>>(),
                 GetLetterheadPath()), Lifestyle.Transient);
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
             Container.Register<IBillingService, BillingService>(Lifestyle.Transient);

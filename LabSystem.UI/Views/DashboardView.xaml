@@ -754,7 +754,7 @@
                                 </Button>
 
                                 <!-- Report generation button (only for Complete) -->
-                                <Button Command="{Binding GenerateReportCommand}" Height="44">
+                                <Button Command="{Binding GenerateReportCommand}" Margin="0 0 12 0" Height="44">
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="FilePdfBox" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
                                         <TextBlock Text="GENERATE PDF REPORT" VerticalAlignment="Center" FontWeight="Bold"/>
@@ -769,6 +769,14 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
+                                </Button>
+
+                                <!-- Generate Bill button (visible when an order is selected) -->
+                                <Button Command="{Binding GenerateBillCommand}" Height="44" Style="{StaticResource MaterialDesignOutlinedButton}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Receipt" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                        <TextBlock Text="GENERATE BILL" VerticalAlignment="Center" FontWeight="Bold"/>
+                                    </StackPanel>
                                 </Button>
                             </StackPanel>
                         </Grid>

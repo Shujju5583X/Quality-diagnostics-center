@@ -25,6 +25,12 @@ This desktop application streamlines day-to-day laboratory operations including 
 - **Tabular Results Layout**: Rendered via **MigraDoc / PDFsharp** with clean grids detailing measured values, normal ranges, units, and abnormality indicators.
 - **Automated Delivery**: Once verified, the application builds, saves, and automatically opens the PDF report in the default system viewer.
 
+### 💳 Billing & Invoicing System
+- **Automatic Invoice Generation**: Generates patient invoices containing itemized charges for each test type requested in the order.
+- **Payment Status Tracking**: Allows updating invoice status (e.g., from `PENDING` to `PAID`) with records of the payment method (Cash, Card, UPI, etc.).
+- **Interactive Invoice Preview**: A WPF-integrated PDF preview window utilizing a `WebBrowser` control for seamless reviewing, printing, or downloading the invoice locally.
+- **Professional Invoice PDF Layout**: Programmatically designs and renders high-quality invoice documents via **PDFsharp/MigraDoc** under daily dated subdirectories.
+
 ### 🔑 Secure PIN Authentication
 - **Role-Based Access**: Restricts unauthorized access through admin and technician permissions.
 - **Cryptographic Security**: Employs industry-standard **BCrypt.Net-Next** hashing to store and verify staff PIN codes safely.
@@ -64,8 +70,8 @@ graph TD
 ### Layer Breakdown
 
 1. **`LabSystem.Core` (Domain Layer)**
-   - **Models**: Defines domain models (`Patient`, `TestOrder`, `Result`, `TestType`, `Staff`, `Report`, and `AuditLog`).
-   - **Interfaces**: Domain contracts establishing decoupling via Repository and Service abstractions (`IPatientRepository`, `ITestOrderRepository`, `IResultRepository`, `IAuthService`, `IBackupService`, etc.).
+   - **Models**: Defines domain models (`Patient`, `TestOrder`, `Result`, `TestType`, `Staff`, `Report`, `AuditLog`, and `Invoice`).
+   - **Interfaces**: Domain contracts establishing decoupling via Repository and Service abstractions (`IPatientRepository`, `ITestOrderRepository`, `IResultRepository`, `IAuthService`, `IBillingService`, `IBackupService`, etc.).
    - **Enums**: Shared enumeration categories.
 
 2. **`LabSystem.Data` (Infrastructure/Persistence Layer)**
@@ -78,12 +84,13 @@ graph TD
    - **Authentication**: `AuthService` handling cryptographically secure PIN authorization via BCrypt.
    - **Order Dispatching**: `OrderService` managing new clinical test requests and audit tracking.
    - **Diagnostics Verification**: `ResultService` checking clinical metrics against normal bounds, setting flags, and persisting data.
-   - **PDF Engine**: `PdfReportService` assembling and outputting MigraDoc PDF structures.
+   - **Billing Service**: `BillingService` handles invoice creation, total amount calculation, and invoice settlement/payment tracking.
+   - **PDF Engine**: `PdfReportService` assembling and outputting MigraDoc PDF structures (both clinical reports and invoice documents).
    - **Backup Utilities**: `SqliteBackupService` driving DB cloning and ClosedXML workbook composition.
 
 4. **`LabSystem.UI` (WPF Presentation Layer)**
    - **Material Theme**: Styled using the **Material Design in XAML** toolkit, featuring clean typography, dynamic states, and harmonious colors.
-   - **MVVM DataBinding**: Clean separation of Views (XAML files like `DashboardView`) and ViewModels (C# files like `DashboardViewModel`).
+   - **MVVM DataBinding**: Clean separation of Views (XAML files like `DashboardView`, `InvoicePreviewWindow`) and ViewModels (C# files like `DashboardViewModel`).
    - **Dependency Injection**: Orchestrated via **SimpleInjector** to register transient DbContexts, data services, repository providers, and ViewModels.
    - **Serilog Diagnostics**: Writes runtime logs locally, cycling daily.
 

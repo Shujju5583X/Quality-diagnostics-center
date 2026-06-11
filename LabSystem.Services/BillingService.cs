@@ -41,6 +41,7 @@ namespace LabSystem.Services
 
                 var invoice = new Invoice
                 {
+                    InvoiceId = orderId,
                     OrderId = orderId,
                     TotalAmount = total,
                     IsPaid = false,

@@ -14,16 +14,18 @@ namespace LabSystem.Services
     public class PdfReportService : IPdfReportService
     {
         private readonly IResultRepository _resultRepo;
+        private readonly IRepository<TestType> _testTypeRepo;
         private readonly string _letterheadPath;
 
-        public PdfReportService(IResultRepository resultRepo)
-            : this(resultRepo, GetDefaultLetterheadPath())
+        public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo)
+            : this(resultRepo, testTypeRepo, GetDefaultLetterheadPath())
         {
         }
 
-        public PdfReportService(IResultRepository resultRepo, string letterheadPath)
+        public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo, string letterheadPath)
         {
             _resultRepo = resultRepo;
+            _testTypeRepo = testTypeRepo;
             _letterheadPath = letterheadPath;
         }
 
@@ -419,6 +421,170 @@ namespace LabSystem.Services
                 return $"<= {tt.ReferenceRangeHigh.Value}";
             }
             return "N/A";
+        }
+
+        public async Task<string> GenerateInvoicePdfAsync(Invoice invoice, CancellationToken cancellationToken = default)
+        {
+            string dateStr = DateTime.Today.ToString("yyyy-MM-dd");
+            
+            Document document = new Document();
+            document.Info.Title = "Invoice / Bill";
+            document.Info.Subject = "Patient Invoice";
+            document.Info.Author = "Quality Diagnostics Centre";
+
+            Section section = document.AddSection();
+
+            var pageSetup = section.PageSetup;
+            pageSetup.PageFormat = PageFormat.A4;
+            pageSetup.LeftMargin = Unit.FromCentimeter(2.0);
+            pageSetup.RightMargin = Unit.FromCentimeter(2.0);
+            pageSetup.TopMargin = Unit.FromCentimeter(2.0);
+            pageSetup.BottomMargin = Unit.FromCentimeter(2.0);
+
+            // Add Header
+            var headerPara = section.AddParagraph();
+            headerPara.Format.Alignment = ParagraphAlignment.Center;
+            var titleText = headerPara.AddFormattedText("QUALITY DIAGNOSTICS CENTRE\n", TextFormat.Bold);
+            titleText.Size = 20;
+            
+            var subtitleText = headerPara.AddFormattedText("MAIN ROAD , VANDE MART BACK SIDE\nBETHAMCHERLA 8639979746\n\n", TextFormat.NotBold);
+            subtitleText.Size = 10;
+
+            var invoiceTitle = headerPara.AddFormattedText("INVOICE / BILL", TextFormat.Bold);
+            invoiceTitle.Size = 16;
+            headerPara.Format.SpaceAfter = "1.0cm";
+
+            // Patient & Order Info
+            var infoTable = section.AddTable();
+            infoTable.Borders.Width = 0;
+            infoTable.AddColumn("3.5cm");
+            infoTable.AddColumn("0.5cm");
+            infoTable.AddColumn("7.0cm");
+            infoTable.AddColumn("2.5cm");
+            infoTable.AddColumn("0.5cm");
+            infoTable.AddColumn("3.0cm");
+
+            string patientName = invoice.Order?.Patient?.FullName ?? "Unknown Patient";
+            string invoiceId = invoice.InvoiceId.ToString();
+            string orderId = invoice.OrderId.ToString();
+            string createdDate = invoice.CreatedAt;
+            if (DateTime.TryParse(invoice.CreatedAt, out DateTime ct))
+            {
+                createdDate = ct.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt");
+            }
+
+            var row1 = infoTable.AddRow();
+            row1.Cells[0].AddParagraph("Patient Name").Format.Font.Bold = true;
+            row1.Cells[1].AddParagraph(":");
+            row1.Cells[2].AddParagraph(patientName);
+            row1.Cells[3].AddParagraph("Invoice No").Format.Font.Bold = true;
+            row1.Cells[4].AddParagraph(":");
+            row1.Cells[5].AddParagraph(invoiceId);
+
+            var row2 = infoTable.AddRow();
+            row2.Cells[0].AddParagraph("Referred By").Format.Font.Bold = true;
+            row2.Cells[1].AddParagraph(":");
+            row2.Cells[2].AddParagraph(!string.IsNullOrWhiteSpace(invoice.Order?.ReferredBy) ? invoice.Order.ReferredBy : "SELF");
+            row2.Cells[3].AddParagraph("Order ID").Format.Font.Bold = true;
+            row2.Cells[4].AddParagraph(":");
+            row2.Cells[5].AddParagraph(orderId);
+
+            var row3 = infoTable.AddRow();
+            row3.Cells[0].AddParagraph("Date").Format.Font.Bold = true;
+            row3.Cells[1].AddParagraph(":");
+            row3.Cells[2].AddParagraph(createdDate);
+            
+            section.AddParagraph().Format.SpaceAfter = "1.0cm";
+
+            // Items Table
+            var itemTable = section.AddTable();
+            itemTable.Borders.Width = 0.5;
+            itemTable.Borders.Color = Colors.LightGray;
+            itemTable.AddColumn("2.0cm"); // S.No
+            itemTable.AddColumn("10.0cm"); // Particulars
+            itemTable.AddColumn("5.0cm"); // Amount
+
+            var header = itemTable.AddRow();
+            header.HeadingFormat = true;
+            header.Shading.Color = Colors.LightGray;
+            header.Height = "0.7cm";
+            header.VerticalAlignment = VerticalAlignment.Center;
+            header.Cells[0].AddParagraph("S.No").Format.Font.Bold = true;
+            header.Cells[1].AddParagraph("Particulars (Test Name)").Format.Font.Bold = true;
+            header.Cells[2].AddParagraph("Amount (Rs.)").Format.Font.Bold = true;
+
+            int sno = 1;
+            decimal calculatedTotal = 0;
+
+            if (invoice.Order != null && !string.IsNullOrWhiteSpace(invoice.Order.Notes))
+            {
+                var testIds = invoice.Order.Notes.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                     .Select(id => int.Parse(id)).ToList();
+                
+                var allTests = await _testTypeRepo.GetAllAsync(cancellationToken);
+                var tests = allTests.Where(t => testIds.Contains(t.TypeId)).ToList();
+
+                foreach (var test in tests)
+                {
+                    var row = itemTable.AddRow();
+                    row.Height = "0.6cm";
+                    row.VerticalAlignment = VerticalAlignment.Center;
+                    row.Cells[0].AddParagraph(sno.ToString());
+                    row.Cells[1].AddParagraph(test.Name);
+                    row.Cells[2].AddParagraph(test.Price.ToString("F2"));
+                    
+                    calculatedTotal += test.Price;
+                    sno++;
+                }
+            }
+
+            // Total Row
+            var totalRow = itemTable.AddRow();
+            totalRow.Height = "0.8cm";
+            totalRow.VerticalAlignment = VerticalAlignment.Center;
+            totalRow.Cells[0].MergeRight = 1;
+            var totalLbl = totalRow.Cells[0].AddParagraph("TOTAL AMOUNT");
+            totalLbl.Format.Font.Bold = true;
+            totalLbl.Format.Alignment = ParagraphAlignment.Right;
+            totalRow.Cells[0].Format.RightIndent = "0.5cm";
+            
+            var totalVal = totalRow.Cells[2].AddParagraph(invoice.TotalAmount.ToString("F2"));
+            totalVal.Format.Font.Bold = true;
+
+            section.AddParagraph().Format.SpaceAfter = "1.0cm";
+
+            // Payment Status
+            var statusPara = section.AddParagraph();
+            statusPara.Format.Font.Size = 12;
+            if (invoice.IsPaid)
+            {
+                statusPara.AddFormattedText($"Payment Status: PAID ({invoice.PaymentMethod})", TextFormat.Bold).Color = Colors.DarkGreen;
+            }
+            else
+            {
+                statusPara.AddFormattedText("Payment Status: PENDING", TextFormat.Bold).Color = Colors.DarkRed;
+            }
+
+            // Render Document
+            PdfDocumentRenderer renderer = new PdfDocumentRenderer()
+            {
+                Document = document
+            };
+            renderer.RenderDocument();
+
+            string dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Invoices", dateStr);
+            Directory.CreateDirectory(dir);
+
+            string safePatientName = patientName;
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                safePatientName = safePatientName.Replace(c, '_');
+            }
+            safePatientName = safePatientName.Replace(' ', '_');
+
+            string filepath = Path.Combine(dir, $"Invoice_{invoiceId}_{safePatientName}_{dateStr}_{Guid.NewGuid().ToString().Substring(0,4)}.pdf");
+            renderer.PdfDocument.Save(filepath);
+            return filepath;
         }
     }
 }

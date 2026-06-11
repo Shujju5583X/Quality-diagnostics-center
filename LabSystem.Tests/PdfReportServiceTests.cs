@@ -14,6 +14,7 @@ namespace LabSystem.Tests
     public class PdfReportServiceTests
     {
         private Mock<IResultRepository> _mockResultRepo;
+        private Mock<IRepository<TestType>> _mockTestTypeRepo;
         private PdfReportService _service;
         private string _logoPath;
         private string _tempLogoBackupPath;
@@ -21,9 +22,9 @@ namespace LabSystem.Tests
         [SetUp]
         public void SetUp()
         {
-
             _mockResultRepo = new Mock<IResultRepository>();
-            _service = new PdfReportService(_mockResultRepo.Object);
+            _mockTestTypeRepo = new Mock<IRepository<TestType>>();
+            _service = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object);
             _logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
             _tempLogoBackupPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo_temp_backup.png");
 
