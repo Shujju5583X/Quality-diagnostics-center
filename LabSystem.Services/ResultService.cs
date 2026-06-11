@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
@@ -18,9 +19,9 @@ namespace LabSystem.Services
             _auditRepo = auditRepo;
         }
 
-        public async Task AddResultAsync(Result result)
+        public async Task AddResultAsync(Result result, CancellationToken cancellationToken = default)
         {
-            var testType = await _testTypeRepo.GetByIdAsync(result.TypeId);
+            var testType = await _testTypeRepo.GetByIdAsync(result.TypeId, cancellationToken);
             if (testType != null)
             {
                 if (testType.ReferenceRangeLow.HasValue && result.Value < testType.ReferenceRangeLow.Value)
@@ -32,7 +33,7 @@ namespace LabSystem.Services
             }
 
             result.RecordedAt = DateTime.UtcNow.ToString("O");
-            await _resultRepo.AddAsync(result);
+            await _resultRepo.AddAsync(result, cancellationToken);
 
             await _auditRepo.AddAsync(new AuditLog
             {
@@ -40,7 +41,7 @@ namespace LabSystem.Services
                 EntityType = "Result",
                 Timestamp = DateTime.UtcNow,
                 Details = $"Result added for OrderId {result.OrderId}."
-            });
+            }, cancellationToken);
         }
     }
 }

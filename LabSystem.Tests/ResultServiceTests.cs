@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
@@ -30,9 +31,9 @@ namespace LabSystem.Tests
         {
             // Arrange
             var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
-            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(testType);
-            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>())).Returns(Task.CompletedTask);
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).Returns(Task.CompletedTask);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             var result = new Result { TypeId = 1, Value = 25 };
 
@@ -41,8 +42,8 @@ namespace LabSystem.Tests
 
             // Assert
             Assert.IsTrue(result.IsAbnormal);
-            _mockResultRepo.Verify(r => r.AddAsync(It.IsAny<Result>()), Times.Once);
-            _mockAuditRepo.Verify(r => r.AddAsync(It.IsAny<AuditLog>()), Times.Once);
+            _mockResultRepo.Verify(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockAuditRepo.Verify(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -50,9 +51,9 @@ namespace LabSystem.Tests
         {
             // Arrange
             var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
-            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(testType);
-            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>())).Returns(Task.CompletedTask);
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).Returns(Task.CompletedTask);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             var result = new Result { TypeId = 1, Value = 15 };
 

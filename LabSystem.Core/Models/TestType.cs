@@ -15,5 +15,6 @@ namespace LabSystem.Core.Models
         public string Method { get; set; }
         public string Interpretation { get; set; }
         public int SortOrder { get; set; }
+        public decimal Price { get; set; }
     }
 }

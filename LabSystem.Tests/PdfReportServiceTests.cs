@@ -21,8 +21,6 @@ namespace LabSystem.Tests
         [SetUp]
         public void SetUp()
         {
-            // Enable PDFsharp to resolve installed Windows fonts automatically
-            PdfSharp.Fonts.GlobalFontSettings.UseWindowsFontsUnderWindows = true;
 
             _mockResultRepo = new Mock<IResultRepository>();
             _service = new PdfReportService(_mockResultRepo.Object);
@@ -70,7 +68,7 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 1, FullName = "John Doe" }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(1))
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(1, default))
                            .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 1, Value = 15, TestType = new TestType { Name = "Glucose", Unit = "mg/dL", ReferenceRangeLow = 70, ReferenceRangeHigh = 100 } }
@@ -126,7 +124,7 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 2, FullName = "Jane Smith" }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(2))
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(2, default))
                            .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 2, Value = 12, TestType = new TestType { Name = "Hemoglobin", Unit = "g/dL", ReferenceRangeLow = 12, ReferenceRangeHigh = 16 } }
@@ -179,7 +177,7 @@ namespace LabSystem.Tests
                 new Result { ResultId = 108, OrderId = 999, TypeId = 51, Value = 7, IsAbnormal = false, TestType = new TestType { Name = "Blood Grouping & Rh", Unit = "Blood Group", ReferenceRangeLow = 1, ReferenceRangeHigh = 8, Category = "CLINICAL PATHOLOGY", GroupName = "Blood Group", SortOrder = 1, Method = "Monoclonal slide grouping (Agglutination test) by slide method" } }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(999)).ReturnsAsync(mockResults);
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(999, default)).ReturnsAsync(mockResults);
 
             // Act
             string filepath = await _service.GenerateReportAsync(order);

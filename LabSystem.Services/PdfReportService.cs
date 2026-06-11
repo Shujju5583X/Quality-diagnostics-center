@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
@@ -13,15 +14,45 @@ namespace LabSystem.Services
     public class PdfReportService : IPdfReportService
     {
         private readonly IResultRepository _resultRepo;
+        private readonly string _letterheadPath;
 
         public PdfReportService(IResultRepository resultRepo)
+            : this(resultRepo, GetDefaultLetterheadPath())
         {
-            _resultRepo = resultRepo;
         }
 
-        public async Task<string> GenerateReportAsync(TestOrder order)
+        public PdfReportService(IResultRepository resultRepo, string letterheadPath)
         {
-            var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId);
+            _resultRepo = resultRepo;
+            _letterheadPath = letterheadPath;
+        }
+
+        private static string GetDefaultLetterheadPath()
+        {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var candidates = new[]
+            {
+                Path.Combine(baseDir, "Assets", "letterhead.jpg"),
+                Path.Combine(baseDir, "Assets", "letterhead.jpeg"),
+                Path.Combine(baseDir, "Assets", "letterhead.png"),
+                Path.Combine(baseDir, "letterhead.jpg"),
+                Path.Combine(baseDir, "letterhead.jpeg"),
+                Path.Combine(baseDir, "letterhead.png"),
+                Path.Combine(baseDir, "Sample reports", "10 001.jpg.jpeg"),
+            };
+
+            foreach (var candidate in candidates)
+            {
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            return candidates[0];
+        }
+
+        public async Task<string> GenerateReportAsync(TestOrder order, bool includeLetterhead = true, CancellationToken cancellationToken = default)
+        {
+            var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId, cancellationToken);
             string dateStr = DateTime.Today.ToString("yyyy-MM-dd");
             
             Document document = new Document();
@@ -36,27 +67,48 @@ namespace LabSystem.Services
             pageSetup.PageFormat = PageFormat.A4;
             pageSetup.LeftMargin = Unit.FromCentimeter(1.5);
             pageSetup.RightMargin = Unit.FromCentimeter(1.5);
-            pageSetup.TopMargin = Unit.FromCentimeter(1.5);
-            pageSetup.BottomMargin = Unit.FromCentimeter(1.5);
+
+            if (includeLetterhead && File.Exists(_letterheadPath))
+            {
+                pageSetup.TopMargin = Unit.FromCentimeter(4.5);
+                pageSetup.BottomMargin = Unit.FromCentimeter(3.0);
+
+                var bgImage = section.Headers.Primary.AddImage(_letterheadPath);
+                bgImage.Width = pageSetup.PageWidth;
+                bgImage.Height = pageSetup.PageHeight;
+                bgImage.RelativeHorizontal = MigraDoc.DocumentObjectModel.Shapes.RelativeHorizontal.Page;
+                bgImage.RelativeVertical = MigraDoc.DocumentObjectModel.Shapes.RelativeVertical.Page;
+                bgImage.WrapFormat.Style = MigraDoc.DocumentObjectModel.Shapes.WrapStyle.Through;
+            }
+            else if (includeLetterhead)
+            {
+                pageSetup.TopMargin = Unit.FromCentimeter(1.5);
+                pageSetup.BottomMargin = Unit.FromCentimeter(1.5);
+            }
+            else
+            {
+                pageSetup.TopMargin = Unit.FromCentimeter(1.5);
+                pageSetup.BottomMargin = Unit.FromCentimeter(1.5);
+                
+                // Add simple text header if no letterhead image
+                var headerPara = section.AddParagraph();
+                headerPara.Format.Alignment = ParagraphAlignment.Center;
+                var titleText = headerPara.AddFormattedText("QUALITY DIAGNOSTICS CENTRE\n", TextFormat.NotBold);
+                titleText.Font.Name = "Times New Roman";
+                titleText.Size = 24;
+                titleText.Color = Colors.Black;
+                
+                var subtitleText = headerPara.AddFormattedText("MAIN ROAD , VANDE MART BACK SIDE\nBETHAMCHERLA 8639979746", TextFormat.NotBold);
+                subtitleText.Font.Name = "Times New Roman";
+                subtitleText.Size = 10;
+                subtitleText.Color = Colors.Black;
+                headerPara.Format.SpaceAfter = "1.5cm";
+            }
 
             // Style configuration
             Style style = document.Styles["Normal"];
             style.Font.Name = "Arial";
             style.Font.Size = 9.5;
-            
-            // Header
-            var headerPara = section.AddParagraph();
-            headerPara.Format.Alignment = ParagraphAlignment.Center;
-            var titleText = headerPara.AddFormattedText("QUALITY DIAGNOSTICS CENTRE\n", TextFormat.NotBold);
-            titleText.Font.Name = "Times New Roman";
-            titleText.Size = 24;
-            titleText.Color = Colors.Black;
-            
-            var subtitleText = headerPara.AddFormattedText("MAIN ROAD , VANDE MART BACK SIDE\nBETHAMCHERLA 8639979746", TextFormat.NotBold);
-            subtitleText.Font.Name = "Times New Roman";
-            subtitleText.Size = 10;
-            subtitleText.Color = Colors.Black;
-            headerPara.Format.SpaceAfter = "1.5cm";
 
             // Patient Info Section Table
             var patientTable = section.AddTable();

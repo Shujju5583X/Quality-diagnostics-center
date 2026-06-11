@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
@@ -16,10 +17,10 @@ namespace LabSystem.Services
             _auditRepo = auditRepo;
         }
 
-        public async Task CreateOrderAsync(TestOrder order)
+        public async Task CreateOrderAsync(TestOrder order, CancellationToken cancellationToken = default)
         {
             order.OrderedAt = DateTime.UtcNow.ToString("O");
-            await _orderRepo.AddAsync(order);
+            await _orderRepo.AddAsync(order, cancellationToken);
             
             await _auditRepo.AddAsync(new AuditLog
             {
@@ -27,16 +28,16 @@ namespace LabSystem.Services
                 EntityType = "TestOrder",
                 Timestamp = DateTime.UtcNow,
                 Details = "New test order created."
-            });
+            }, cancellationToken);
         }
 
-        public async Task UpdateOrderStatusAsync(int orderId, string status)
+        public async Task UpdateOrderStatusAsync(int orderId, string status, CancellationToken cancellationToken = default)
         {
-            var order = await _orderRepo.GetByIdAsync(orderId);
+            var order = await _orderRepo.GetByIdAsync(orderId, cancellationToken);
             if (order != null)
             {
                 order.Status = status;
-                await _orderRepo.UpdateAsync(order);
+                await _orderRepo.UpdateAsync(order, cancellationToken);
                 
                 await _auditRepo.AddAsync(new AuditLog
                 {
@@ -45,7 +46,7 @@ namespace LabSystem.Services
                     EntityId = orderId,
                     Timestamp = DateTime.UtcNow,
                     Details = $"Order status updated to {status}."
-                });
+                }, cancellationToken);
             }
         }
     }

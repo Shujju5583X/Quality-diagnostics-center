@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS TestTypes (
     GroupName TEXT,
     Method TEXT,
     Interpretation TEXT,
-    SortOrder INTEGER DEFAULT 0
+    SortOrder INTEGER DEFAULT 0,
+    Price REAL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS Staff (
@@ -39,6 +40,17 @@ CREATE TABLE IF NOT EXISTS TestOrders (
     Notes TEXT,
     ReferredBy TEXT,
     FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
+);
+
+CREATE TABLE IF NOT EXISTS Invoices (
+    InvoiceId INTEGER PRIMARY KEY AUTOINCREMENT,
+    OrderId INTEGER NOT NULL UNIQUE,
+    TotalAmount REAL NOT NULL,
+    IsPaid INTEGER DEFAULT 0,
+    PaidAt TEXT,
+    CreatedAt TEXT NOT NULL,
+    PaymentMethod TEXT,
+    FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId)
 );
 
 CREATE TABLE IF NOT EXISTS Results (

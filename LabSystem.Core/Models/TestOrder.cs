@@ -11,5 +11,7 @@ namespace LabSystem.Core.Models
         public string Status { get; set; }
         public string Notes { get; set; }
         public string ReferredBy { get; set; }
+        
+        public virtual Invoice Invoice { get; set; }
     }
 }

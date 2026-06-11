@@ -8,6 +8,7 @@ using System.Windows.Input;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using Serilog;
+using LabSystem.Services;
 
 namespace LabSystem.UI.ViewModels
 {
@@ -23,6 +24,7 @@ namespace LabSystem.UI.ViewModels
         private readonly IResultService _resultService;
         private readonly IPdfReportService _reportService;
         private readonly IBackupService _backupService;
+        private readonly IBillingService _billingService;
 
         private int _staffId;
         private string _currentStaffName;
@@ -99,6 +101,9 @@ namespace LabSystem.UI.ViewModels
         // Catalog Management items
         public ObservableCollection<TestType> CatalogTestTypes { get; } = new ObservableCollection<TestType>();
 
+        // Billing Items
+        public ObservableCollection<Invoice> Invoices { get; } = new ObservableCollection<Invoice>();
+
         // Audit Logs items
         public ObservableCollection<AuditLog> AuditLogs { get; } = new ObservableCollection<AuditLog>();
 
@@ -117,6 +122,13 @@ namespace LabSystem.UI.ViewModels
                 OnPropertyChanged();
                 LoadResultsForSelectedOrder();
             }
+        }
+
+        private Invoice _selectedInvoice;
+        public Invoice SelectedInvoice
+        {
+            get => _selectedInvoice;
+            set { _selectedInvoice = value; OnPropertyChanged(); }
         }
 
         // New Patient Bindings
@@ -283,6 +295,8 @@ namespace LabSystem.UI.ViewModels
         public ICommand SaveCatalogTestCommand { get; }
         public ICommand AddCatalogTestCommand { get; }
         public ICommand RefreshAuditLogsCommand { get; }
+        public ICommand MarkAsPaidCashCommand { get; }
+        public ICommand MarkAsPaidUpiCommand { get; }
 
         public DashboardViewModel(
             IPatientRepository patientRepo,
@@ -294,7 +308,8 @@ namespace LabSystem.UI.ViewModels
             IOrderService orderService,
             IResultService resultService,
             IPdfReportService reportService,
-            IBackupService backupService)
+            IBackupService backupService,
+            IBillingService billingService)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
@@ -306,6 +321,7 @@ namespace LabSystem.UI.ViewModels
             _resultService = resultService;
             _reportService = reportService;
             _backupService = backupService;
+            _billingService = billingService;
 
             AddPatientCommand = new RelayCommand(ExecuteAddPatient);
             CreateOrderCommand = new RelayCommand(ExecuteCreateOrder);
@@ -316,6 +332,8 @@ namespace LabSystem.UI.ViewModels
             SaveCatalogTestCommand = new RelayCommand(ExecuteSaveCatalogTest);
             AddCatalogTestCommand = new RelayCommand(ExecuteAddCatalogTest);
             RefreshAuditLogsCommand = new RelayCommand(async o => await LoadAuditLogsAsync());
+            MarkAsPaidCashCommand = new RelayCommand(async o => await ExecuteMarkAsPaidAsync("Cash"));
+            MarkAsPaidUpiCommand = new RelayCommand(async o => await ExecuteMarkAsPaidAsync("UPI"));
 
             LoadData();
         }
@@ -387,6 +405,14 @@ namespace LabSystem.UI.ViewModels
                 foreach (var t in testTypes.OrderBy(x => x.SortOrder).ThenBy(x => x.Name))
                 {
                     CatalogTestTypes.Add(t);
+                }
+
+                // Load Invoices
+                Invoices.Clear();
+                var invoices = await _billingService.GetAllInvoicesAsync();
+                foreach (var inv in invoices)
+                {
+                    Invoices.Add(inv);
                 }
 
                 // Load Dashboard Statistics
@@ -525,6 +551,9 @@ namespace LabSystem.UI.ViewModels
 
                 await _orderService.CreateOrderAsync(order);
                 Log.Information("Created test order ID {OrderId} for Patient ID {PatientId}", order.OrderId, SelectedPatient.PatientId);
+
+                // Generate Invoice automatically
+                await _billingService.GenerateInvoiceAsync(order.OrderId);
 
                 await _auditLogRepo.AddAsync(new AuditLog
                 {
@@ -728,9 +757,8 @@ namespace LabSystem.UI.ViewModels
                 {
                     if (SelectedOrder != null)
                     {
-                        string path = await _reportService.GenerateReportAsync(SelectedOrder);
-                        Log.Information("Automatically generated PDF report for order {OrderId} at {Path}", SelectedOrder.OrderId, path);
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+                        var previewWindow = new Views.PdfPreviewWindow(SelectedOrder, _reportService);
+                        previewWindow.ShowDialog();
                     }
                 }
                 catch (Exception ex)
@@ -745,7 +773,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private async void ExecuteGenerateReport(object obj)
+        private void ExecuteGenerateReport(object obj)
         {
             if (SelectedOrder == null)
             {
@@ -761,10 +789,8 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
-                string path = await _reportService.GenerateReportAsync(SelectedOrder);
-                Log.Information("Generated PDF report for order {OrderId} at {Path}", SelectedOrder.OrderId, path);
-                MessageBox.Show($"PDF Report generated successfully!\nSaved to: {path}", "Report Generated", MessageBoxButton.OK, MessageBoxImage.Information);
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+                var previewWindow = new Views.PdfPreviewWindow(SelectedOrder, _reportService);
+                previewWindow.ShowDialog();
             }
             catch (Exception ex)
             {
@@ -837,6 +863,24 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
+                // Fetch the tracked entity to avoid multiple entity instance conflict in EF
+                var entityToUpdate = await _testTypeRepo.GetByIdAsync(SelectedCatalogTest.TypeId);
+                if (entityToUpdate == null) return;
+
+                entityToUpdate.Name = CatalogTestName;
+                entityToUpdate.Unit = CatalogTestUnit;
+                entityToUpdate.ReferenceRangeLow = CatalogTestLow;
+                entityToUpdate.ReferenceRangeHigh = CatalogTestHigh;
+                entityToUpdate.IsActive = CatalogTestIsActive;
+                entityToUpdate.Category = CatalogTestCategory;
+                entityToUpdate.GroupName = CatalogTestGroupName;
+                entityToUpdate.Method = CatalogTestMethod;
+                entityToUpdate.Interpretation = CatalogTestInterpretation;
+                entityToUpdate.SortOrder = CatalogTestSortOrder;
+
+                await _testTypeRepo.UpdateAsync(entityToUpdate);
+
+                // Update the UI model
                 SelectedCatalogTest.Name = CatalogTestName;
                 SelectedCatalogTest.Unit = CatalogTestUnit;
                 SelectedCatalogTest.ReferenceRangeLow = CatalogTestLow;
@@ -848,7 +892,6 @@ namespace LabSystem.UI.ViewModels
                 SelectedCatalogTest.Interpretation = CatalogTestInterpretation;
                 SelectedCatalogTest.SortOrder = CatalogTestSortOrder;
 
-                await _testTypeRepo.UpdateAsync(SelectedCatalogTest);
                 Log.Information("Admin updated TestType {TypeId}: {TestName}", SelectedCatalogTest.TypeId, CatalogTestName);
 
                 await _auditLogRepo.AddAsync(new AuditLog
@@ -916,6 +959,45 @@ namespace LabSystem.UI.ViewModels
             {
                 Log.Error(ex, "Failed to add test type.");
                 MessageBox.Show("Error adding test type.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteMarkAsPaidAsync(string paymentMethod)
+        {
+            if (SelectedInvoice == null)
+            {
+                MessageBox.Show("Please select an invoice to mark as paid.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (SelectedInvoice.IsPaid)
+            {
+                MessageBox.Show("This invoice is already paid.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                await _billingService.MarkAsPaidAsync(SelectedInvoice.InvoiceId, paymentMethod);
+                Log.Information("Marked invoice {InvoiceId} as paid via {PaymentMethod}", SelectedInvoice.InvoiceId, paymentMethod);
+
+                await _auditLogRepo.AddAsync(new AuditLog
+                {
+                    Action = "Updated",
+                    EntityType = "Invoice",
+                    EntityId = SelectedInvoice.InvoiceId,
+                    UserId = StaffId,
+                    Timestamp = DateTime.UtcNow,
+                    Details = $"Marked invoice {SelectedInvoice.InvoiceId} as paid via {paymentMethod}."
+                });
+
+                MessageBox.Show($"Invoice marked as paid via {paymentMethod} successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                LoadData(); // Reload invoices
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to mark invoice as paid.");
+                MessageBox.Show("Error updating invoice status.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

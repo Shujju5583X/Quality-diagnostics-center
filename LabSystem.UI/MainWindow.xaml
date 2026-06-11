@@ -21,7 +21,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
-        <materialDesign:ColorZone Mode="PrimaryMid" Padding="16" materialDesign:ElevationAssist.Elevation="Dp4">
+        <materialDesign:ColorZone Mode="PrimaryMid" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
             <DockPanel>
                 <StackPanel Orientation="Horizontal" Margin="16 0 0 0" VerticalAlignment="Center">
                     <Image Source="logo.png" Width="28" Height="28" Margin="0 0 8 0" VerticalAlignment="Center" />
@@ -42,7 +42,7 @@
                 <DataTemplate DataType="{x:Type viewmodels:LoginViewModel}">
                     <!-- Basic Login View Embedded for simplicity -->
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="350">
-                        <materialDesign:Card Padding="40" Margin="16" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp4">
+                        <materialDesign:Card Padding="40" Margin="16" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                             <StackPanel>
                                 <Border CornerRadius="8" ClipToBounds="True" HorizontalAlignment="Center" Margin="0 0 0 16" Width="80" Height="80">
                                     <Image Source="logo.png" Stretch="Uniform" />

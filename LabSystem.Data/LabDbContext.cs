@@ -22,6 +22,7 @@ namespace LabSystem.Data
         public DbSet<Result> Results { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -35,11 +36,13 @@ namespace LabSystem.Data
             modelBuilder.Entity<Result>().ToTable("Results");
             modelBuilder.Entity<Report>().ToTable("Reports");
             modelBuilder.Entity<AuditLog>().ToTable("AuditLogs");
+            modelBuilder.Entity<Invoice>().ToTable("Invoices");
 
             // SQLite explicit configurations
             modelBuilder.Entity<AuditLog>().HasKey(a => a.LogId);
             modelBuilder.Entity<TestOrder>().HasKey(o => o.OrderId);
             modelBuilder.Entity<TestType>().HasKey(t => t.TypeId);
+            modelBuilder.Entity<Invoice>().HasKey(i => i.InvoiceId);
 
             // Configure foreign key relations explicitly for SQLite compatibility
             modelBuilder.Entity<AuditLog>()
@@ -71,6 +74,10 @@ namespace LabSystem.Data
                 .HasRequired(r => r.Order)
                 .WithMany()
                 .HasForeignKey(r => r.OrderId);
+
+            modelBuilder.Entity<Invoice>()
+                .HasRequired(i => i.Order)
+                .WithOptional(o => o.Invoice);
 
             // Add index configurations for foreign keys
             modelBuilder.Entity<TestOrder>()

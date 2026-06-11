@@ -6,7 +6,7 @@ class Program
 {
     static void Main()
     {
-        string dbPath = @"LabSystem.UI\bin\Debug\net462\lab.db";
+        string dbPath = @"LabSystem.UI\bin\Debug\net451\lab.db";
         string connStr = $"Data Source={dbPath};Version=3;";
         using (var conn = new SQLiteConnection(connStr))
         {

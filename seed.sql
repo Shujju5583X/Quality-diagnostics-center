@@ -162,3 +162,4 @@ INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActi
 INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder) VALUES
 ('Patient Prothrombin Time', 'seconds', 12.0, 16.0, 1, 'HEMATOLOGY', 'PT-INR', 'Coagulation', 'Assess coagulation pathways.', 1),
 ('INR', 'INR', 2.0, 3.0, 1, 'HEMATOLOGY', 'PT-INR', 'Calculated', 'Standard therapy INR range: 2.0 - 3.0.', 2);
+UPDATE TestTypes SET Price = 500.00;

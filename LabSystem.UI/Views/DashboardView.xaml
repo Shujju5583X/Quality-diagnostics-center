@@ -127,6 +127,18 @@
                         </Grid>
                     </ListBoxItem>
 
+                    <!-- Billing -->
+                    <ListBoxItem>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Grid.Column="1" Text="Billing" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                        </Grid>
+                    </ListBoxItem>
+
                     <!-- Test Catalog (Admin only) -->
                     <ListBoxItem Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                         <Grid>
@@ -211,7 +223,7 @@
                         </Grid.ColumnDefinitions>
                         
                         <!-- Card 1: Patients -->
-                        <materialDesign:Card Grid.Column="0" Margin="4" Padding="20" UniformCornerRadius="8" Background="#EDE7F6" materialDesign:ElevationAssist.Elevation="Dp2">
+                        <materialDesign:Card Grid.Column="0" Margin="4" Padding="20" UniformCornerRadius="8" Background="#EDE7F6" materialDesign:ShadowAssist.ShadowDepth="Depth1">
                             <StackPanel>
                                 <materialDesign:PackIcon Kind="AccountGroup" Width="32" Height="32" Foreground="#5E35B1" Margin="0 0 0 8"/>
                                 <TextBlock Text="TOTAL PATIENTS" FontSize="11" FontWeight="Bold" Foreground="#7E57C2"/>
@@ -220,7 +232,7 @@
                         </materialDesign:Card>
 
                         <!-- Card 2: Pending Orders -->
-                        <materialDesign:Card Grid.Column="1" Margin="4" Padding="20" UniformCornerRadius="8" Background="#FFF3E0" materialDesign:ElevationAssist.Elevation="Dp2">
+                        <materialDesign:Card Grid.Column="1" Margin="4" Padding="20" UniformCornerRadius="8" Background="#FFF3E0" materialDesign:ShadowAssist.ShadowDepth="Depth1">
                             <StackPanel>
                                 <materialDesign:PackIcon Kind="Clock" Width="32" Height="32" Foreground="#EF6C00" Margin="0 0 0 8"/>
                                 <TextBlock Text="PENDING ORDERS" FontSize="11" FontWeight="Bold" Foreground="#FB8C00"/>
@@ -229,7 +241,7 @@
                         </materialDesign:Card>
 
                         <!-- Card 3: Completed Orders -->
-                        <materialDesign:Card Grid.Column="2" Margin="4" Padding="20" UniformCornerRadius="8" Background="#E0F2F1" materialDesign:ElevationAssist.Elevation="Dp2">
+                        <materialDesign:Card Grid.Column="2" Margin="4" Padding="20" UniformCornerRadius="8" Background="#E0F2F1" materialDesign:ShadowAssist.ShadowDepth="Depth1">
                             <StackPanel>
                                 <materialDesign:PackIcon Kind="ClipboardCheck" Width="32" Height="32" Foreground="#00796B" Margin="0 0 0 8"/>
                                 <TextBlock Text="COMPLETED TESTS" FontSize="11" FontWeight="Bold" Foreground="#26A69A"/>
@@ -238,7 +250,7 @@
                         </materialDesign:Card>
 
                         <!-- Card 4: Abnormal Flags -->
-                        <materialDesign:Card Grid.Column="3" Margin="4" Padding="20" UniformCornerRadius="8" Background="#FFEBEE" materialDesign:ElevationAssist.Elevation="Dp2">
+                        <materialDesign:Card Grid.Column="3" Margin="4" Padding="20" UniformCornerRadius="8" Background="#FFEBEE" materialDesign:ShadowAssist.ShadowDepth="Depth1">
                             <StackPanel>
                                 <materialDesign:PackIcon Kind="AlertDecagram" Width="32" Height="32" Foreground="#C62828" Margin="0 0 0 8"/>
                                 <TextBlock Text="ABNORMAL CASES" FontSize="11" FontWeight="Bold" Foreground="#EF5350"/>
@@ -248,7 +260,7 @@
                     </Grid>
                     
                     <!-- Recent Orders List -->
-                    <materialDesign:Card Grid.Row="2" Padding="20" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Row="2" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -278,7 +290,7 @@
                     </Grid.ColumnDefinitions>
                     
                     <!-- Left: Patients Grid -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -323,7 +335,7 @@
                     </materialDesign:Card>
 
                     <!-- Right: Add Patient Card -->
-                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Register New Patient" />
@@ -383,7 +395,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Left: Select Patient -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -420,7 +432,7 @@
                     </materialDesign:Card>
 
                     <!-- Middle: Select Tests -->
-                    <materialDesign:Card Grid.Column="1" Margin="12 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="1" Margin="12 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -471,7 +483,7 @@
                     </materialDesign:Card>
 
                     <!-- Right: Submit Order -->
-                    <materialDesign:Card Grid.Column="2" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="2" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -522,7 +534,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Left: Orders List -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -599,7 +611,7 @@
                     </materialDesign:Card>
 
                     <!-- Right: Results Entry Card -->
-                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -726,7 +738,7 @@
                                 <!-- Save results button (only for Pending) -->
                                 <Button Command="{Binding SaveResultsCommand}" Margin="0 0 12 0" Height="44">
                                     <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="ContentSaveCheck" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
                                         <TextBlock Text="VERIFY &amp; SAVE RESULTS" VerticalAlignment="Center" FontWeight="Bold"/>
                                     </StackPanel>
                                     <Button.Style>
@@ -763,8 +775,161 @@
                     </materialDesign:Card>
                 </Grid>
             </TabItem>
+            <!-- Tab 4: Billing -->
+            <TabItem>
+                <Grid Margin="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="3*" />
+                    </Grid.ColumnDefinitions>
 
-            <!-- Tab 4: Reference Catalog -->
+                    <!-- Left: Invoices List -->
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Invoices" />
+                            
+                            <!-- Search -->
+                            <TextBox Grid.Row="1"
+                                     x:Name="InvoicesSearchBox"
+                                     materialDesign:HintAssist.Hint="Search invoices by patient, ID..."
+                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                     materialDesign:TextFieldAssist.HasClearButton="True"
+                                     Margin="4 0 4 16"
+                                     TextChanged="InvoicesSearchBox_TextChanged"/>
+                            
+                            <DataGrid Grid.Row="2" 
+                                      x:Name="InvoicesGrid" 
+                                      ItemsSource="{Binding Invoices}" 
+                                      SelectedItem="{Binding SelectedInvoice}" 
+                                      AutoGenerateColumns="False" 
+                                      IsReadOnly="True" 
+                                      SelectionMode="Single"
+                                      Margin="4 0 4 4"
+                                      AlternatingRowBackground="#FAF9FC">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Invoice ID" Binding="{Binding InvoiceId}" Width="Auto" />
+                                    <DataGridTextColumn Header="Patient" Binding="{Binding Order.Patient.FullName}" Width="*" />
+                                    <DataGridTextColumn Header="Amount" Binding="{Binding TotalAmount}" Width="Auto" />
+                                    
+                                    <!-- Custom Badge Style for Invoice Status -->
+                                    <DataGridTemplateColumn Header="Status" Width="Auto">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="12" Padding="8 4" HorizontalAlignment="Center" UseLayoutRounding="True" Margin="0 2">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsPaid}" Value="False">
+                                                                    <Setter Property="Background" Value="#FFEBEE"/>
+                                                                    <Setter Property="BorderBrush" Value="#FFCDD2"/>
+                                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsPaid}" Value="True">
+                                                                    <Setter Property="Background" Value="#E0F2F1"/>
+                                                                    <Setter Property="BorderBrush" Value="#B2DFDB"/>
+                                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock FontWeight="SemiBold" FontSize="11">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsPaid}" Value="False">
+                                                                        <Setter Property="Foreground" Value="#C62828"/>
+                                                                        <Setter Property="Text" Value="Pending"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IsPaid}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#00796B"/>
+                                                                        <Setter Property="Text" Value="Paid"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Right: Invoice Details Card -->
+                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Summary Banner -->
+                            <Border Grid.Row="0" Background="#F1EBF9" CornerRadius="8" Padding="16" Margin="0 0 0 16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="36" Height="36" Foreground="#673AB7" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Margin="16 0 0 0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedInvoice.Order.Patient.FullName, TargetNullValue='No Invoice Selected'}" FontSize="16" FontWeight="Bold" Foreground="#311B92"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
+                                            <TextBlock Text="Invoice ID: " Foreground="#5C6BC0" FontSize="12"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.InvoiceId, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
+                                            <TextBlock Text="Total: " Foreground="#5C6BC0" FontSize="12"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.TotalAmount, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
+                                            <TextBlock Text="Status: " Foreground="#5C6BC0" FontSize="12"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.IsPaid, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="False">
+                                                                <Setter Property="Text" Value="Pending"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="True">
+                                                                <Setter Property="Text" Value="Paid"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <StackPanel Grid.Row="1" Margin="0 16">
+                                <TextBlock Text="PAYMENT OPTIONS" FontSize="12" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 16"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Command="{Binding MarkAsPaidCashCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140" Margin="0 0 16 0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="CASH" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Command="{Binding MarkAsPaidUpiCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="QrcodeScan" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="UPI" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 5: Reference Catalog -->
             <TabItem>
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
@@ -773,7 +938,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Catalog List Card -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -813,7 +978,7 @@
                     </materialDesign:Card>
 
                     <!-- Edit Form Card -->
-                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Manage Test Type" />
@@ -875,7 +1040,7 @@
 
                                 <TextBox materialDesign:HintAssist.Hint="Interpretation Notes" 
                                          Text="{Binding CatalogTestInterpretation, UpdateSourceTrigger=PropertyChanged}" 
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
                                          AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="80"
                                          Margin="0 0 0 16" />
 
@@ -908,7 +1073,7 @@
             <!-- Tab 5: Audit Logs -->
             <TabItem>
                 <Grid Margin="24">
-                    <materialDesign:Card Padding="20" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -962,7 +1127,7 @@
             <!-- Tab 6: Settings -->
             <TabItem>
                 <Grid Margin="24">
-                    <materialDesign:Card Padding="40" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" UniformCornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp3">
+                    <materialDesign:Card Padding="40" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <StackPanel HorizontalAlignment="Center">
                             <materialDesign:PackIcon Kind="DatabaseSettings" Width="72" Height="72" HorizontalAlignment="Center" Foreground="#673AB7" Margin="0 0 0 20" />
                             <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" Text="System Management" HorizontalAlignment="Center" Margin="0 0 0 10" FontWeight="Bold"/>

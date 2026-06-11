@@ -61,28 +61,28 @@ namespace LabSystem.Tests
             }
 
             // Arrange mocks to return default empty lists to avoid exceptions
-            _mockPatientRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Patient>
+            _mockPatientRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Patient>
             {
                 new Patient { PatientId = 1, FullName = "John Doe", DateOfBirth = "1990-01-01", Gender = "Male", ContactPhone = "123456", ContactEmail = "john@example.com", CreatedAt = "2026-06-09" }
             });
-            _mockOrderRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<TestOrder>
+            _mockOrderRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<TestOrder>
             {
                 new TestOrder { OrderId = 10, PatientId = 1, Status = "Pending", OrderedAt = "2026-06-09", Notes = "101,102", ReferredBy = "Dr. Clark" }
             });
-            _mockResultRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Result>
+            _mockResultRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Result>
             {
                 new Result { ResultId = 50, OrderId = 10, TypeId = 101, Value = 5.5, IsAbnormal = false, RecordedAt = "2026-06-09", TechnicianId = 1 }
             });
-            _mockTestTypeRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<TestType>
+            _mockTestTypeRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<TestType>
             {
                 new TestType { TypeId = 101, Name = "Blood Sugar", Unit = "mg/dL", ReferenceRangeLow = 70, ReferenceRangeHigh = 100, IsActive = true },
                 new TestType { TypeId = 102, Name = "Hemoglobin", Unit = "g/dL", ReferenceRangeLow = 12, ReferenceRangeHigh = 16, IsActive = true }
             });
-            _mockStaffRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Staff>
+            _mockStaffRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Staff>
             {
                 new Staff { StaffId = 1, FullName = "Dr. Alice Smith", Role = "Technician", PinHash = "dummyhash", FailedLoginAttempts = 1, LockoutEnd = "2026-06-09T16:00:00Z" }
             });
-            _mockAuditLogRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<AuditLog>
+            _mockAuditLogRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<AuditLog>
             {
                 new AuditLog { LogId = 500, Action = "Backup", EntityType = "System", EntityId = null, Timestamp = new DateTime(2026, 6, 9), UserId = 1, Details = "Backup created" }
             });

@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-db_path = r"E:\Quality diagnostics center\LabSystem.UI\bin\Debug\net462\lab.db"
+db_path = r"E:\Quality diagnostics center\LabSystem.UI\bin\Debug\net451\lab.db"
 init_sql = r"E:\Quality diagnostics center\LabSystem.Data\Migrations\V1__init.sql"
 seed_sql = r"E:\Quality diagnostics center\seed.sql"
 

@@ -1,14 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\LabSystem.Core\LabSystem.Core.csproj" />
+    <ProjectReference Include="..\LabSystem.Data\LabSystem.Data.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="ClosedXML" Version="0.102.2" />
-    <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.4" />
+    <PackageReference Include="ClosedXML" Version="0.95.4" />
+    <PackageReference Include="PDFsharp-MigraDoc" Version="1.50.5147" />
+    <PackageReference Include="EntityFramework" Version="6.4.4" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
   </ItemGroup>
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFramework>net451</TargetFramework>
     <LangVersion>10.0</LangVersion>
   </PropertyGroup>
 </Project>

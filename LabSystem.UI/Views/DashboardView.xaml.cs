@@ -154,5 +154,33 @@ namespace LabSystem.UI.Views
                 };
             }
         }
+        private void InvoicesSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox == null || InvoicesGrid == null || InvoicesGrid.ItemsSource == null) return;
+
+            var filterText = textBox.Text;
+            var cv = CollectionViewSource.GetDefaultView(InvoicesGrid.ItemsSource);
+            if (cv == null) return;
+
+            if (string.IsNullOrWhiteSpace(filterText))
+            {
+                cv.Filter = null;
+            }
+            else
+            {
+                cv.Filter = obj =>
+                {
+                    if (obj is Invoice invoice)
+                    {
+                        var patientName = invoice.Order?.Patient?.FullName ?? "";
+                        return (patientName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                               invoice.InvoiceId.ToString().Contains(filterText) ||
+                               invoice.OrderId.ToString().Contains(filterText);
+                    }
+                    return false;
+                };
+            }
+        }
     }
 }

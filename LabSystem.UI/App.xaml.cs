@@ -19,9 +19,6 @@ namespace LabSystem.UI
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            // Enable PDFsharp to resolve installed Windows fonts automatically
-            PdfSharp.Fonts.GlobalFontSettings.UseWindowsFontsUnderWindows = true;
-
             // Set SQLite database folder path to output directory
             AppDomain.CurrentDomain.SetData("DataDirectory", AppDomain.CurrentDomain.BaseDirectory);
 
@@ -41,81 +38,7 @@ namespace LabSystem.UI
                 MessageBox.Show("A critical error occurred. Please check the logs.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             };
 
-            // Initialize DB
-            using (var db = new LabDbContext())
-            {
-                db.Database.Initialize(false);
-                
-                // Run V1__init.sql if tables don't exist
-                try
-                {
-                    db.Database.ExecuteSqlCommand("SELECT 1 FROM Patients LIMIT 1;");
-                }
-                catch
-                {
-                    // Attempt to load from Embedded Resources (Production Failsafe)
-                    string sql = null;
-                    string seedSql = null;
-                    var assembly = Assembly.GetExecutingAssembly();
-                    
-                    using (var stream = assembly.GetManifestResourceStream("LabSystem.UI.Resources.V1__init.sql"))
-                    {
-                        if (stream != null)
-                        {
-                            using (var reader = new StreamReader(stream))
-                            {
-                                sql = reader.ReadToEnd();
-                            }
-                        }
-                    }
-                    
-                    using (var stream = assembly.GetManifestResourceStream("LabSystem.UI.Resources.seed.sql"))
-                    {
-                        if (stream != null)
-                        {
-                            using (var reader = new StreamReader(stream))
-                            {
-                                seedSql = reader.ReadToEnd();
-                            }
-                        }
-                    }
-
-                    // Fallback to relative file path for local development/scaffolding
-                    if (string.IsNullOrEmpty(sql))
-                    {
-                        string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "LabSystem.Data", "Migrations", "V1__init.sql");
-                        if (File.Exists(scriptPath))
-                        {
-                            sql = File.ReadAllText(scriptPath);
-                        }
-                    }
-
-                    if (string.IsNullOrEmpty(seedSql))
-                    {
-                        string seedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "seed.sql");
-                        if (File.Exists(seedPath))
-                        {
-                            seedSql = File.ReadAllText(seedPath);
-                        }
-                    }
-
-                    // Execute schemas if found
-                    if (!string.IsNullOrEmpty(sql))
-                    {
-                        db.Database.ExecuteSqlCommand(sql);
-                    }
-                    if (!string.IsNullOrEmpty(seedSql))
-                    {
-                        db.Database.ExecuteSqlCommand(seedSql);
-                    }
-                }
-
-                // Dynamically update schema for existing database files to avoid EF exceptions
-                try { db.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN Gender TEXT;"); } catch { }
-                try { db.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN ReferredBy TEXT;"); } catch { }
-                try { db.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN FailedLoginAttempts INTEGER DEFAULT 0;"); } catch { }
-                try { db.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN LockoutEnd TEXT;"); } catch { }
-            }
+            InitializeDatabase();
 
             // Setup SimpleInjector
             Container = new Container();
@@ -129,13 +52,20 @@ namespace LabSystem.UI
             Container.Register<IPatientRepository, PatientRepository>(Lifestyle.Transient);
             Container.Register<ITestOrderRepository, TestOrderRepository>(Lifestyle.Transient);
             Container.Register<IResultRepository, ResultRepository>(Lifestyle.Transient);
+            Container.Register<ITestTypeRepository, TestTypeRepository>(Lifestyle.Transient);
+            Container.Register<IStaffRepository, StaffRepository>(Lifestyle.Transient);
+            Container.Register<IAuditLogRepository, AuditLogRepository>(Lifestyle.Transient);
+            Container.Register<IReportRepository, ReportRepository>(Lifestyle.Transient);
 
             // Register Services
             Container.Register<IAuthService, AuthService>(Lifestyle.Transient);
             Container.Register<IOrderService, OrderService>(Lifestyle.Transient);
             Container.Register<IResultService, ResultService>(Lifestyle.Transient);
-            Container.Register<IPdfReportService, PdfReportService>(Lifestyle.Transient);
+            Container.Register<IPdfReportService>(() => new PdfReportService(
+                Container.GetInstance<IResultRepository>(),
+                GetLetterheadPath()), Lifestyle.Transient);
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
+            Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
 
             // Register ViewModels
             Container.Register<ViewModels.MainViewModel>();
@@ -145,6 +75,157 @@ namespace LabSystem.UI
             var mainWindow = new MainWindow();
             mainWindow.DataContext = Container.GetInstance<ViewModels.MainViewModel>();
             mainWindow.Show();
+        }
+
+        private static string GetLetterheadPath()
+        {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var candidates = new[]
+            {
+                Path.Combine(baseDir, "Assets", "letterhead.jpg"),
+                Path.Combine(baseDir, "Assets", "letterhead.jpeg"),
+                Path.Combine(baseDir, "Assets", "letterhead.png"),
+                Path.Combine(baseDir, "letterhead.jpg"),
+                Path.Combine(baseDir, "letterhead.jpeg"),
+                Path.Combine(baseDir, "letterhead.png"),
+                Path.Combine(baseDir, "Sample reports", "10 001.jpg.jpeg"),
+            };
+
+            foreach (var candidate in candidates)
+            {
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            return candidates[0];
+        }
+
+        private static void InitializeDatabase()
+        {
+            using (var db = new LabDbContext())
+            {
+                db.Database.Initialize(false);
+
+                bool tablesExist;
+                try
+                {
+                    db.Database.ExecuteSqlCommand("SELECT 1 FROM Patients LIMIT 1;");
+                    tablesExist = true;
+                }
+                catch
+                {
+                    tablesExist = false;
+                }
+
+                if (!tablesExist)
+                {
+                    InitializeSchema(db);
+                }
+
+                EnsureSchemaUpToDate(db);
+            }
+        }
+
+        private static void InitializeSchema(LabDbContext db)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            string sql = null;
+            string seedSql = null;
+
+            using (var stream = assembly.GetManifestResourceStream("LabSystem.UI.Resources.V1__init.sql"))
+            {
+                if (stream != null)
+                {
+                    using (var reader = new StreamReader(stream))
+                    {
+                        sql = reader.ReadToEnd();
+                    }
+                }
+            }
+
+            using (var stream = assembly.GetManifestResourceStream("LabSystem.UI.Resources.seed.sql"))
+            {
+                if (stream != null)
+                {
+                    using (var reader = new StreamReader(stream))
+                    {
+                        seedSql = reader.ReadToEnd();
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(sql))
+            {
+                var scriptPath = FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
+                if (scriptPath != null && File.Exists(scriptPath))
+                {
+                    sql = File.ReadAllText(scriptPath);
+                    Log.Information("Loaded schema from: {Path}", scriptPath);
+                }
+            }
+
+            if (string.IsNullOrEmpty(seedSql))
+            {
+                var seedPath = FindFileUpwards("", "seed.sql");
+                if (seedPath != null && File.Exists(seedPath))
+                {
+                    seedSql = File.ReadAllText(seedPath);
+                    Log.Information("Loaded seed data from: {Path}", seedPath);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(sql))
+            {
+                db.Database.ExecuteSqlCommand(sql);
+                Log.Information("Database schema initialized.");
+            }
+            else
+            {
+                Log.Warning("Could not find V1__init.sql schema file.");
+            }
+
+            if (!string.IsNullOrEmpty(seedSql))
+            {
+                db.Database.ExecuteSqlCommand(seedSql);
+                Log.Information("Seed data applied.");
+            }
+        }
+
+        private static void EnsureSchemaUpToDate(LabDbContext db)
+        {
+            var migrations = new[]
+            {
+                new { Table = "Patients", Column = "Gender", Type = "TEXT" },
+                new { Table = "TestOrders", Column = "ReferredBy", Type = "TEXT" },
+                new { Table = "Staff", Column = "FailedLoginAttempts", Type = "INTEGER DEFAULT 0" },
+                new { Table = "Staff", Column = "LockoutEnd", Type = "TEXT" },
+            };
+
+            foreach (var migration in migrations)
+            {
+                try
+                {
+                    db.Database.ExecuteSqlCommand($"ALTER TABLE {migration.Table} ADD COLUMN {migration.Column} {migration.Type};");
+                    Log.Debug("Applied migration: Added column {Column} to {Table}", migration.Column, migration.Table);
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "Migration skipped (column may already exist): {Table}.{Column}", migration.Table, migration.Column);
+                }
+            }
+        }
+
+        private static string FindFileUpwards(params string[] pathParts)
+        {
+            var dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+            while (dir != null)
+            {
+                var candidate = Path.Combine(dir.FullName, Path.Combine(pathParts));
+                if (File.Exists(candidate))
+                    return candidate;
+                dir = dir.Parent;
+            }
+            return null;
         }
     }
 }

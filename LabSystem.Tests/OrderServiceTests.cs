@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
@@ -28,17 +29,17 @@ namespace LabSystem.Tests
         {
             // Arrange
             var order = new TestOrder { OrderId = 1, Status = "Pending" };
-            _mockOrderRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(order);
-            _mockOrderRepo.Setup(r => r.UpdateAsync(order)).Returns(Task.CompletedTask);
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>())).Returns(Task.CompletedTask);
+            _mockOrderRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+            _mockOrderRepo.Setup(r => r.UpdateAsync(order, It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             // Act
             await _service.UpdateOrderStatusAsync(1, "Complete");
 
             // Assert
             Assert.AreEqual("Complete", order.Status);
-            _mockOrderRepo.Verify(r => r.UpdateAsync(order), Times.Once);
-            _mockAuditRepo.Verify(r => r.AddAsync(It.Is<AuditLog>(a => a.Action == "Updated" && a.EntityType == "TestOrder")), Times.Once);
+            _mockOrderRepo.Verify(r => r.UpdateAsync(order, It.IsAny<CancellationToken>()), Times.Once);
+            _mockAuditRepo.Verify(r => r.AddAsync(It.Is<AuditLog>(a => a.Action == "Updated" && a.EntityType == "TestOrder"), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using LabSystem.Core.Interfaces;
@@ -34,7 +35,7 @@ namespace LabSystem.Services
             _auditLogRepo = auditLogRepo;
         }
 
-        public async Task BackupNowAsync()
+        public async Task BackupNowAsync(CancellationToken cancellationToken = default)
         {
             string dbBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Database");
             string excelBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Excel");
@@ -54,18 +55,18 @@ namespace LabSystem.Services
 
             // 2. Human-Readable Excel Spreadsheet Backup (for Lab Technicians)
             string excelDestFile = Path.Combine(excelBackupsDir, $"lab_backup_{timestamp}.xlsx");
-            await GenerateExcelBackupAsync(excelDestFile);
+            await GenerateExcelBackupAsync(excelDestFile, cancellationToken);
         }
 
-        private async Task GenerateExcelBackupAsync(string filePath)
+        private async Task GenerateExcelBackupAsync(string filePath, CancellationToken cancellationToken = default)
         {
             // Load all data into memory dictionaries for fast mapping and lookup
-            var patientsDict = (await _patientRepo.GetAllAsync()).ToDictionary(p => p.PatientId);
-            var testTypesDict = (await _testTypeRepo.GetAllAsync()).ToDictionary(t => t.TypeId);
-            var staffDict = (await _staffRepo.GetAllAsync()).ToDictionary(s => s.StaffId);
-            var ordersDict = (await _orderRepo.GetAllAsync()).ToDictionary(o => o.OrderId);
-            var resultsList = await _resultRepo.GetAllAsync();
-            var auditLogsList = await _auditLogRepo.GetAllAsync();
+            var patientsDict = (await _patientRepo.GetAllAsync(cancellationToken)).ToDictionary(p => p.PatientId);
+            var testTypesDict = (await _testTypeRepo.GetAllAsync(cancellationToken)).ToDictionary(t => t.TypeId);
+            var staffDict = (await _staffRepo.GetAllAsync(cancellationToken)).ToDictionary(s => s.StaffId);
+            var ordersDict = (await _orderRepo.GetAllAsync(cancellationToken)).ToDictionary(o => o.OrderId);
+            var resultsList = await _resultRepo.GetAllAsync(cancellationToken);
+            var auditLogsList = await _auditLogRepo.GetAllAsync(cancellationToken);
 
             using (var workbook = new XLWorkbook())
             {
@@ -281,7 +282,7 @@ namespace LabSystem.Services
                     wsStaff.Cell(sRow, 2).Value = staff.FullName;
                     wsStaff.Cell(sRow, 3).Value = staff.Role;
                     wsStaff.Cell(sRow, 4).Value = staff.FailedLoginAttempts;
-                    wsStaff.Cell(sRow, 5).Value = staff.LockoutEnd ?? "";
+                    wsStaff.Cell(sRow, 5).SetValue<string>(staff.LockoutEnd ?? "");
 
                     StyleDataRow(wsStaff, sRow, 5);
                     sRow++;
