@@ -124,6 +124,10 @@ namespace LabSystem.UI
 
         private static string GetLetterheadPath()
         {
+            var path = FindFileUpwards("Sample reports", "10 001.jpg.jpeg");
+            if (path != null && File.Exists(path))
+                return path;
+
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var candidates = new[]
             {
@@ -133,7 +137,6 @@ namespace LabSystem.UI
                 Path.Combine(baseDir, "letterhead.jpg"),
                 Path.Combine(baseDir, "letterhead.jpeg"),
                 Path.Combine(baseDir, "letterhead.png"),
-                Path.Combine(baseDir, "Sample reports", "10 001.jpg.jpeg"),
             };
 
             foreach (var candidate in candidates)
@@ -264,6 +267,7 @@ namespace LabSystem.UI
                 new { Table = "Staff",       Column = "PinHash",              Type = "TEXT" },
                 new { Table = "Staff",       Column = "FailedLoginAttempts",  Type = "INTEGER DEFAULT 0" },
                 new { Table = "Staff",       Column = "LockoutEnd",           Type = "DATETIME" },
+                new { Table = "Staff",       Column = "CreatedAt",            Type = "DATETIME" },
             };
 
             foreach (var migration in migrations)
@@ -277,6 +281,16 @@ namespace LabSystem.UI
                 {
                     Log.Debug(ex, "Migration skipped (column may already exist): {Table}.{Column}", migration.Table, migration.Column);
                 }
+            }
+
+            // Ensure no NULL values exist for Staff.CreatedAt to avoid mapping issues
+            try
+            {
+                db.Database.ExecuteSqlCommand("UPDATE Staff SET CreatedAt = CURRENT_TIMESTAMP WHERE CreatedAt IS NULL;");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to update NULL CreatedAt values in Staff table.");
             }
 
             try

@@ -1,6 +1,9 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using Serilog;
@@ -11,6 +14,7 @@ namespace LabSystem.UI.Views
         private readonly TestOrder _order;
         private readonly IPdfReportService _reportService;
         private string _tempPdfPath;
+        private bool _isLoaded = false;
 
         public PdfPreviewWindow(TestOrder order, IPdfReportService reportService)
         {
@@ -23,11 +27,32 @@ namespace LabSystem.UI.Views
 
         private async void PdfPreviewWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            _isLoaded = true;
+            await UpdatePreviewAsync();
+        }
+
+        private async void LetterheadComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            await UpdatePreviewAsync();
+        }
+
+        private async Task UpdatePreviewAsync()
+        {
             try
             {
-                // Generate temporary PDF with letterhead
-                _tempPdfPath = await _reportService.GenerateReportAsync(_order, includeLetterhead: true);
+                bool includeLetterhead = (LetterheadComboBox.SelectedIndex == 0); // 0 = With Letterhead, 1 = Without Letterhead
+
+                string oldPath = _tempPdfPath;
+
+                // Generate temporary PDF
+                _tempPdfPath = await _reportService.GenerateReportAsync(_order, includeLetterhead: includeLetterhead);
                 
+                if (oldPath != null && oldPath != _tempPdfPath && File.Exists(oldPath))
+                {
+                    try { File.Delete(oldPath); } catch { }
+                }
+
                 try
                 {
                     // Display in WebBrowser (works on modern IE versions)
@@ -42,7 +67,7 @@ namespace LabSystem.UI.Views
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error loading PDF preview.");
+                Log.Error(ex, "Error updating PDF preview.");
                 MessageBox.Show($"Error loading preview: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -61,34 +86,19 @@ namespace LabSystem.UI.Views
             }
         }
 
-        private async void PrintPdf_Click(object sender, RoutedEventArgs e)
+        private void PrintPdf_Click(object sender, RoutedEventArgs e)
         {
-            MessageBoxResult result = MessageBox.Show(
-                "Do you want to print WITH the letterhead background?\n\nSelect 'Yes' for blank paper, 'No' for pre-printed letterhead.", 
-                "Print Options", 
-                MessageBoxButton.YesNoCancel, 
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Cancel)
-                return;
-
-            string printPath = _tempPdfPath;
+            if (string.IsNullOrEmpty(_tempPdfPath) || !File.Exists(_tempPdfPath)) return;
 
             try
             {
-                if (result == MessageBoxResult.No)
-                {
-                    // Generate new PDF without letterhead for printing
-                    printPath = await _reportService.GenerateReportAsync(_order, includeLetterhead: false);
-                }
-
                 // Print silently using the default system print verb
                 var p = new Process();
                 p.StartInfo = new ProcessStartInfo()
                 {
                     CreateNoWindow = true,
                     Verb = "print",
-                    FileName = printPath,
+                    FileName = _tempPdfPath,
                     UseShellExecute = true
                 };
                 p.Start();
@@ -101,6 +111,11 @@ namespace LabSystem.UI.Views
                 Log.Error(ex, "Error printing PDF");
                 MessageBox.Show($"Error printing PDF: {ex.Message}\nMake sure a default PDF viewer is installed and configured for printing.", "Print Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }

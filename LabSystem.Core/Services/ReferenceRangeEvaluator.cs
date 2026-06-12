@@ -87,7 +87,7 @@ namespace LabSystem.Core.Services
                 }
                 if (matchingRange.RangeHigh.HasValue)
                 {
-                    return $"<= {matchingRange.RangeHigh.Value}";
+                    return $"<{matchingRange.RangeHigh.Value}";
                 }
             }
 
@@ -122,7 +122,7 @@ namespace LabSystem.Core.Services
             }
             if (tt.ReferenceRangeHigh.HasValue)
             {
-                return $"<= {tt.ReferenceRangeHigh.Value}";
+                return $"<{tt.ReferenceRangeHigh.Value}";
             }
             return "N/A";
         }

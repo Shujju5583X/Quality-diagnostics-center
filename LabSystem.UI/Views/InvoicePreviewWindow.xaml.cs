@@ -110,5 +110,10 @@ namespace LabSystem.UI.Views
                 MessageBox.Show("Error printing PDF. Make sure you have a default PDF viewer installed that supports printing.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
     }
 }

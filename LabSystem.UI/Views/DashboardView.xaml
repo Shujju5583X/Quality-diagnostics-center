@@ -655,7 +655,7 @@
                                     </DataGridTextColumn>
 
                                     <!-- Value — editable TextBox or ComboBox depending on HasOptions -->
-                                    <DataGridTemplateColumn Header="Result Value" Width="160">
+                                    <DataGridTemplateColumn Header="Result Value" Width="160" IsReadOnly="True">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid>
@@ -665,10 +665,9 @@
                                                              BorderThickness="0"
                                                              Background="Transparent"
                                                              VerticalAlignment="Center"
-                                                             Padding="8 6"
-                                                             Visibility="{Binding HasOptions, Converter={StaticResource BoolToVis}}">
+                                                             Padding="8 6">
                                                         <TextBox.Style>
-                                                            <Style TargetType="TextBox">
+                                                            <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding HasOptions}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>
