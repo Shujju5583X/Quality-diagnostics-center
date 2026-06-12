@@ -5,7 +5,7 @@
     <ProjectReference Include="..\LabSystem.Services\LabSystem.Services.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="LiveCharts.Wpf" Version="0.9.7" />
+
     <PackageReference Include="MaterialDesignThemes" Version="3.2.0" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />

@@ -7,22 +7,9 @@ using BCrypt.Net;
 
 namespace LabSystem.Services
 {
-    public class LockoutException : Exception
-    {
-        public DateTime LockoutEnd { get; }
-        public LockoutException(DateTime lockoutEnd) 
-            : base($"Too many failed attempts. Try again after {lockoutEnd.ToLocalTime():yyyy-MM-dd HH:mm:ss}.")
-        {
-            LockoutEnd = lockoutEnd;
-        }
-    }
-
     public class AuthService : IAuthService
     {
         private readonly IRepository<Staff> _staffRepo;
-        private const int MaxFailedAttempts = 5;
-        private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(1);
-        private readonly SemaphoreSlim _lockoutSemaphore = new SemaphoreSlim(1, 1);
 
         public AuthService(IRepository<Staff> staffRepo)
         {
@@ -31,43 +18,10 @@ namespace LabSystem.Services
 
         public async Task<bool> VerifyPinAsync(int staffId, string pin, CancellationToken cancellationToken = default)
         {
-            await _lockoutSemaphore.WaitAsync(cancellationToken);
-            try
-            {
-                var staff = await _staffRepo.GetByIdAsync(staffId, cancellationToken);
-                if (staff == null) return false;
+            var staff = await _staffRepo.GetByIdAsync(staffId, cancellationToken);
+            if (staff == null) return false;
 
-                if (staff.LockoutEnd.HasValue)
-                {
-                    if (staff.LockoutEnd.Value > DateTime.UtcNow)
-                    {
-                        throw new LockoutException(staff.LockoutEnd.Value);
-                    }
-                }
-
-                bool isValid = BCrypt.Net.BCrypt.Verify(pin, staff.PinHash);
-
-                if (isValid)
-                {
-                    staff.FailedLoginAttempts = 0;
-                    staff.LockoutEnd = null;
-                }
-                else
-                {
-                    staff.FailedLoginAttempts++;
-                    if (staff.FailedLoginAttempts >= MaxFailedAttempts)
-                    {
-                        staff.LockoutEnd = DateTime.UtcNow.Add(LockoutDuration);
-                    }
-                }
-
-                await _staffRepo.UpdateAsync(staff, cancellationToken);
-                return isValid;
-            }
-            finally
-            {
-                _lockoutSemaphore.Release();
-            }
+            return BCrypt.Net.BCrypt.Verify(pin, staff.PinHash);
         }
 
         public string HashPin(string pin)

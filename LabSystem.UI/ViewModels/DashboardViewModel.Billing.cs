@@ -69,16 +69,6 @@ namespace LabSystem.UI.ViewModels
                 await _billingService.AddPaymentAsync(SelectedInvoice.InvoiceId, amount, paymentMethod);
                 Log.Information("Added payment {Amount} to invoice {InvoiceId} via {PaymentMethod}", amount, SelectedInvoice.InvoiceId, paymentMethod);
 
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "Invoice",
-                    EntityId = SelectedInvoice.InvoiceId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Added {paymentMethod} payment of Rs.{amount} to invoice {SelectedInvoice.InvoiceId}."
-                });
-
                 MessageBox.Show($"Payment of Rs.{amount} via {paymentMethod} added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 await LoadDataAsync(); // Reload invoices
             }
@@ -89,59 +79,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private async Task ExecuteUpdateFinancialsAsync(object obj)
-        {
-            if (SelectedInvoice == null)
-            {
-                MessageBox.Show("Please select an invoice.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
 
-            string discountStr = RejectionDialog.Show("Update Financials", "Enter Discount Amount:");
-            if (discountStr == null) return;
-            string taxStr = RejectionDialog.Show("Update Financials", "Enter Tax Amount:");
-            if (taxStr == null) return;
-
-            decimal discount = 0, tax = 0;
-            decimal.TryParse(discountStr, out discount);
-            decimal.TryParse(taxStr, out tax);
-
-            try
-            {
-                await _billingService.UpdateInvoiceFinancialsAsync(SelectedInvoice.InvoiceId, discount, tax);
-                await LoadDataAsync();
-                MessageBox.Show("Invoice financials updated.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to update invoice financials.");
-                MessageBox.Show("Error updating invoice.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task ExecuteExportRevenueReportAsync(object obj)
-        {
-            var dialog = new Microsoft.Win32.SaveFileDialog
-            {
-                FileName = $"RevenueReport_{DateTime.Today:yyyyMMdd}",
-                DefaultExt = ".xlsx",
-                Filter = "Excel Workbook (*.xlsx)|*.xlsx"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                try
-                {
-                    await _billingService.ExportRevenueReportToExcelAsync(ReferralStartDate, ReferralEndDate, dialog.FileName);
-                    MessageBox.Show("Revenue report exported successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Failed to export revenue report.");
-                    MessageBox.Show("Error exporting revenue report.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
 
         private async Task ExecuteBackupAsync(object obj)
         {
@@ -154,15 +92,6 @@ namespace LabSystem.UI.ViewModels
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
 
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Backup",
-                    EntityType = "System",
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = "Created full SQLite database and ClosedXML Excel backup."
-                });
-
                 MessageBox.Show("Database (SQLite) and technician-friendly report (Excel) backed up successfully to the backups directory!", "Backup Completed", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
@@ -170,6 +99,49 @@ namespace LabSystem.UI.ViewModels
                 Log.Error(ex, "Database backup failed.");
                 MessageBox.Show("Failed to complete database backup. Check logs for details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+    }
+
+    public static class RejectionDialog
+    {
+        public static string Show(string title, string prompt)
+        {
+            var window = new Window
+            {
+                Title = title,
+                Width = 400,
+                Height = 180,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = Application.Current.MainWindow,
+                ResizeMode = ResizeMode.NoResize,
+                WindowStyle = WindowStyle.ToolWindow
+            };
+
+            var stack = new System.Windows.Controls.StackPanel { Margin = new Thickness(15) };
+            
+            var lbl = new System.Windows.Controls.TextBlock { Text = prompt, Margin = new Thickness(0, 0, 0, 10), FontWeight = FontWeights.Bold };
+            stack.Children.Add(lbl);
+
+            var txt = new System.Windows.Controls.TextBox { Height = 25, Margin = new Thickness(0, 0, 0, 15) };
+            stack.Children.Add(txt);
+
+            var btnStack = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            var btnOk = new System.Windows.Controls.Button { Content = "OK", Width = 75, IsDefault = true, Margin = new Thickness(0, 0, 10, 0) };
+            var btnCancel = new System.Windows.Controls.Button { Content = "Cancel", Width = 75, IsCancel = true };
+
+            btnOk.Click += (s, e) => { window.DialogResult = true; window.Close(); };
+            btnCancel.Click += (s, e) => { window.DialogResult = false; window.Close(); };
+
+            btnStack.Children.Add(btnOk);
+            btnStack.Children.Add(btnCancel);
+            stack.Children.Add(btnStack);
+
+            window.Content = stack;
+            if (window.ShowDialog() == true)
+            {
+                return txt.Text;
+            }
+            return null;
         }
     }
 }

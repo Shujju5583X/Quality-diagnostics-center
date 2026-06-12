@@ -145,49 +145,5 @@ namespace LabSystem.Tests
             }
         }
 
-        [Test]
-        public async Task GenerateVerificationReport_ManualInspection()
-        {
-            var order = new TestOrder
-            {
-                OrderId = 999,
-                OrderedAt = DateTime.UtcNow,
-                PatientId = 4,
-                Patient = new Patient 
-                { 
-                    PatientId = 4, 
-                    FullName = "Yash M. Patel",
-                    DateOfBirth = new DateTime(2005, 8, 25)
-                }
-            };
-
-            var mockResults = new List<Result>
-            {
-                // CBC Group (Hematology)
-                new Result { ResultId = 101, OrderId = 999, TypeId = 1, Value = 12.5, IsAbnormal = true, TestType = new TestType { Name = "Hemoglobin (Hb)", Unit = "g/dL", ReferenceRangeLow = 13.0, ReferenceRangeHigh = 17.0, Category = "HEMATOLOGY", GroupName = "Complete Blood Count (CBC)", SortOrder = 1, Method = "Fully automated cell counter" } },
-                new Result { ResultId = 102, OrderId = 999, TypeId = 2, Value = 5.2, IsAbnormal = false, TestType = new TestType { Name = "Total RBC count", Unit = "mill/cumm", ReferenceRangeLow = 4.5, ReferenceRangeHigh = 5.5, Category = "HEMATOLOGY", GroupName = "Complete Blood Count (CBC)", SortOrder = 2 } },
-                new Result { ResultId = 103, OrderId = 999, TypeId = 8, Value = 9000, IsAbnormal = false, TestType = new TestType { Name = "Total WBC count", Unit = "cumm", ReferenceRangeLow = 4000, ReferenceRangeHigh = 11000, Category = "HEMATOLOGY", GroupName = "Complete Blood Count (CBC)", SortOrder = 8 } },
-                new Result { ResultId = 104, OrderId = 999, TypeId = 14, Value = 150000, IsAbnormal = false, TestType = new TestType { Name = "Platelet Count", Unit = "cumm", ReferenceRangeLow = 150000, ReferenceRangeHigh = 410000, Category = "HEMATOLOGY", GroupName = "Complete Blood Count (CBC)", SortOrder = 14 } },
-                
-                // Lipid Profile (Biochemistry)
-                new Result { ResultId = 105, OrderId = 999, TypeId = 32, Value = 250, IsAbnormal = true, TestType = new TestType { Name = "Cholesterol, Total", Unit = "mg/dL", ReferenceRangeLow = 0, ReferenceRangeHigh = 200, Category = "BIOCHEMISTRY", GroupName = "Lipid Profile", SortOrder = 1, Method = "Spectrophotometry", Interpretation = "Desirable: < 200 mg/dL.\nHigh: > 240 mg/dL." } },
-                new Result { ResultId = 106, OrderId = 999, TypeId = 33, Value = 100, IsAbnormal = false, TestType = new TestType { Name = "Triglycerides", Unit = "mg/dL", ReferenceRangeLow = 0, ReferenceRangeHigh = 150, Category = "BIOCHEMISTRY", GroupName = "Lipid Profile", SortOrder = 2 } },
-                new Result { ResultId = 107, OrderId = 999, TypeId = 34, Value = 50, IsAbnormal = false, TestType = new TestType { Name = "HDL Cholesterol", Unit = "mg/dL", ReferenceRangeLow = 40, ReferenceRangeHigh = 60, Category = "BIOCHEMISTRY", GroupName = "Lipid Profile", SortOrder = 3 } },
-                
-                // Qualitative - Blood Group (Clinical Pathology)
-                new Result { ResultId = 108, OrderId = 999, TypeId = 51, Value = 7, IsAbnormal = false, TestType = new TestType { Name = "Blood Grouping & Rh", Unit = "Blood Group", ReferenceRangeLow = 1, ReferenceRangeHigh = 8, Category = "CLINICAL PATHOLOGY", GroupName = "Blood Group", SortOrder = 1, Method = "Monoclonal slide grouping (Agglutination test) by slide method" } }
-            };
-
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(999, default)).ReturnsAsync(mockResults);
-
-            // Act
-            string filepath = await _service.GenerateReportAsync(order);
-            
-            // Copy the report to the workspace root for manual inspection
-            string copyPath = Path.Combine(@"E:\Quality diagnostics center", "Sample_Verification_Report.pdf");
-            File.Copy(filepath, copyPath, true);
-
-            Console.WriteLine("Verification report saved to: " + copyPath);
-        }
     }
 }

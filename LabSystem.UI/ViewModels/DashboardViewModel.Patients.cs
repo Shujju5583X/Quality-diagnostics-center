@@ -204,15 +204,6 @@ namespace LabSystem.UI.ViewModels
                 await _patientRepo.AddAsync(patient);
                 Log.Information("Added patient: {PatientName} with UHID {Uhid}", NewPatientName, uhid);
 
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Created",
-                    EntityType = "Patient",
-                    EntityId = patient.PatientId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Registered patient '{NewPatientName}' (UHID: {uhid})."
-                });
 
                 // Reset fields
                 NewPatientName = string.Empty;

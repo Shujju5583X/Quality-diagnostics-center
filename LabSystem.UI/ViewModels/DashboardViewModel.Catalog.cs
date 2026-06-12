@@ -149,16 +149,6 @@ namespace LabSystem.UI.ViewModels
 
                 Log.Information("Admin updated TestType {TypeId}: {TestName}", SelectedCatalogTest.TypeId, CatalogTestName);
 
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "TestType",
-                    EntityId = SelectedCatalogTest.TypeId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Updated test type '{CatalogTestName}' (ID {SelectedCatalogTest.TypeId})."
-                });
-
                 MessageBox.Show("Test type saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 await LoadDataAsync();
             }
@@ -195,16 +185,6 @@ namespace LabSystem.UI.ViewModels
 
                 await _testTypeRepo.AddAsync(newTest);
                 Log.Information("Admin added new TestType: {TestName}", CatalogTestName);
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Created",
-                    EntityType = "TestType",
-                    EntityId = newTest.TypeId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Created new test type '{CatalogTestName}' (ID {newTest.TypeId})."
-                });
 
                 MessageBox.Show("New test type added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 await LoadDataAsync();

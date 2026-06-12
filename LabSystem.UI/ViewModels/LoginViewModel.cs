@@ -94,10 +94,7 @@ namespace LabSystem.UI.ViewModels
                     ErrorMessage = "Invalid PIN.";
                 }
             }
-            catch (LockoutException ex)
-            {
-                ErrorMessage = ex.Message;
-            }
+
             catch (Exception ex)
             {
                 Log.Error(ex, "Login failed unexpectedly.");

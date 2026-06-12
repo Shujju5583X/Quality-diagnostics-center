@@ -33,15 +33,7 @@ namespace LabSystem.Services
         {
             var testType = await _testTypeRepo.GetByIdAsync(result.TypeId, cancellationToken);
             
-            // Phase 4: QC Enforcement Check
-            if (testType != null)
-            {
-                var latestQc = await _qcRepo.GetLatestQCAsync(testType.TypeId, cancellationToken);
-                if (latestQc != null && latestQc.IsOutOfRange)
-                {
-                    throw new InvalidOperationException($"Cannot record result for {testType.Name}. The latest Quality Control (QC) run is OUT OF RANGE (> 2SD). Please recalibrate and run a passing QC first.");
-                }
-            }
+
 
             var order = await _orderRepo.GetByIdAsync(result.OrderId, cancellationToken);
             
@@ -90,16 +82,7 @@ namespace LabSystem.Services
             if (result == null)
                 throw new InvalidOperationException("Result not found.");
 
-            // Do QC check again before amendment
             var testType = await _testTypeRepo.GetByIdAsync(result.TypeId, cancellationToken);
-            if (testType != null)
-            {
-                var latestQc = await _qcRepo.GetLatestQCAsync(testType.TypeId, cancellationToken);
-                if (latestQc != null && latestQc.IsOutOfRange)
-                {
-                    throw new InvalidOperationException($"Cannot amend result for {testType.Name}. The latest Quality Control (QC) run is OUT OF RANGE (> 2SD).");
-                }
-            }
 
             double oldValue = result.Value;
             result.Value = newValue;

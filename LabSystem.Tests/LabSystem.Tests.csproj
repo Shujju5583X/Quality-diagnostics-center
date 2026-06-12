@@ -12,6 +12,5 @@
   <ItemGroup>
     <ProjectReference Include="..\LabSystem.Core\LabSystem.Core.csproj" />
     <ProjectReference Include="..\LabSystem.Services\LabSystem.Services.csproj" />
-    <ProjectReference Include="..\LabSystem.UI\LabSystem.UI.csproj" />
   </ItemGroup>
 </Project>

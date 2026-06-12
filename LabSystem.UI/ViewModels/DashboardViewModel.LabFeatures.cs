@@ -51,42 +51,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private Specimen _selectedSpecimen;
-        public ObservableCollection<Specimen> Specimens { get; } = new ObservableCollection<Specimen>();
 
-        public Specimen SelectedSpecimen
-        {
-            get => _selectedSpecimen;
-            set
-            {
-                _selectedSpecimen = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private DateTime _referralStartDate = DateTime.Today.AddDays(-30);
-        public DateTime ReferralStartDate
-        {
-            get => _referralStartDate;
-            set
-            {
-                _referralStartDate = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private DateTime _referralEndDate = DateTime.Today;
-        public DateTime ReferralEndDate
-        {
-            get => _referralEndDate;
-            set
-            {
-                _referralEndDate = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public ObservableCollection<DoctorReferralStats> ReferralStats { get; } = new ObservableCollection<DoctorReferralStats>();
 
         // Catalog Doctor tab properties
         private Doctor _catalogSelectedDoctor;
@@ -107,13 +72,11 @@ namespace LabSystem.UI.ViewModels
         private string _docSpecialization;
         private string _docClinicName;
         private string _docContactPhone;
-        private decimal _docCommissionPercent;
 
         public string DocName { get => _docName; set { _docName = value; OnPropertyChanged(); } }
         public string DocSpecialization { get => _docSpecialization; set { _docSpecialization = value; OnPropertyChanged(); } }
         public string DocClinicName { get => _docClinicName; set { _docClinicName = value; OnPropertyChanged(); } }
         public string DocContactPhone { get => _docContactPhone; set { _docContactPhone = value; OnPropertyChanged(); } }
-        public decimal DocCommissionPercent { get => _docCommissionPercent; set { _docCommissionPercent = value; OnPropertyChanged(); } }
 
         // Logic methods
         private void OnTestPanelSelected(TestPanel panel)
@@ -148,7 +111,6 @@ namespace LabSystem.UI.ViewModels
                 DocSpecialization = doc.Specialization;
                 DocClinicName = doc.ClinicName;
                 DocContactPhone = doc.ContactPhone;
-                DocCommissionPercent = doc.CommissionPercent;
             }
             else
             {
@@ -156,109 +118,10 @@ namespace LabSystem.UI.ViewModels
                 DocSpecialization = string.Empty;
                 DocClinicName = string.Empty;
                 DocContactPhone = string.Empty;
-                DocCommissionPercent = 0;
             }
         }
 
-        public async Task RefreshReferralStatsAsync()
-        {
-            try
-            {
-                ReferralStats.Clear();
-                // To cover the full day on end date
-                var start = ReferralStartDate.Date;
-                var end = ReferralEndDate.Date.AddDays(1).AddTicks(-1);
 
-                var stats = await _billingService.GetDoctorReferralStatsAsync(start, end);
-                foreach (var s in stats)
-                {
-                    ReferralStats.Add(s);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load doctor referral statistics.");
-            }
-        }
-
-        private async Task ExecuteRefreshReferralStatsAsync(object obj)
-        {
-            await RefreshReferralStatsAsync();
-        }
-
-        private async Task ExecuteMarkSpecimenStatusAsync(object obj, string status)
-        {
-            if (SelectedSpecimen == null)
-            {
-                MessageBox.Show("Please select a specimen from the grid.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            var specimen = SelectedSpecimen;
-            try
-            {
-                specimen.Status = status;
-                specimen.CollectionTime = DateTime.UtcNow;
-                specimen.CollectedBy = CurrentStaffName;
-                await _specimenRepo.UpdateAsync(specimen);
-                await LoadDataAsync();
-                
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "Specimen",
-                    EntityId = specimen.SpecimenId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Specimen barcode {specimen.Barcode} marked as {status}."
-                });
-
-                MessageBox.Show($"Specimen marked as {status}.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to update specimen status.");
-                MessageBox.Show("Error updating specimen status.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task ExecuteRejectSpecimenAsync(object obj)
-        {
-            if (SelectedSpecimen == null)
-            {
-                MessageBox.Show("Please select a specimen from the grid.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            var reason = RejectionDialog.Show("Reject Specimen", "Enter reason for rejection (e.g., Clotted, Hemolyzed):");
-            if (string.IsNullOrWhiteSpace(reason)) return; // cancelled or empty
-
-            var specimen = SelectedSpecimen;
-            try
-            {
-                specimen.Status = "Rejected";
-                specimen.RejectionReason = reason;
-                specimen.CollectionTime = DateTime.UtcNow;
-                specimen.CollectedBy = CurrentStaffName;
-                await _specimenRepo.UpdateAsync(specimen);
-                await LoadDataAsync();
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "Specimen",
-                    EntityId = specimen.SpecimenId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Specimen barcode {specimen.Barcode} REJECTED. Reason: {reason}."
-                });
-
-                MessageBox.Show("Specimen marked as Rejected.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to reject specimen.");
-                MessageBox.Show("Error rejecting specimen.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
 
         private async Task ExecuteSaveCatalogDoctorAsync(object obj)
         {
@@ -278,19 +141,8 @@ namespace LabSystem.UI.ViewModels
                 CatalogSelectedDoctor.Specialization = DocSpecialization;
                 CatalogSelectedDoctor.ClinicName = DocClinicName;
                 CatalogSelectedDoctor.ContactPhone = DocContactPhone;
-                CatalogSelectedDoctor.CommissionPercent = DocCommissionPercent;
 
                 await _doctorRepo.UpdateAsync(CatalogSelectedDoctor);
-                
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "Doctor",
-                    EntityId = CatalogSelectedDoctor.DoctorId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Updated doctor details for {CatalogSelectedDoctor.Name}."
-                });
 
                 await LoadDataAsync();
                 MessageBox.Show("Doctor details updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -316,27 +168,15 @@ namespace LabSystem.UI.ViewModels
                     Name = DocName,
                     Specialization = DocSpecialization,
                     ClinicName = DocClinicName,
-                    ContactPhone = DocContactPhone,
-                    CommissionPercent = DocCommissionPercent
+                    ContactPhone = DocContactPhone
                 };
 
                 await _doctorRepo.AddAsync(doc);
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Created",
-                    EntityType = "Doctor",
-                    EntityId = doc.DoctorId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Added new referring doctor: {doc.Name}."
-                });
 
                 DocName = string.Empty;
                 DocSpecialization = string.Empty;
                 DocClinicName = string.Empty;
                 DocContactPhone = string.Empty;
-                DocCommissionPercent = 0;
 
                 await LoadDataAsync();
                 MessageBox.Show("Doctor added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -380,46 +220,4 @@ namespace LabSystem.UI.ViewModels
         }
     }
 
-    public static class RejectionDialog
-    {
-        public static string Show(string title, string prompt)
-        {
-            var window = new Window
-            {
-                Title = title,
-                Width = 400,
-                Height = 180,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = Application.Current.MainWindow,
-                ResizeMode = ResizeMode.NoResize,
-                WindowStyle = WindowStyle.ToolWindow
-            };
-
-            var stack = new StackPanel { Margin = new Thickness(15) };
-            
-            var lbl = new TextBlock { Text = prompt, Margin = new Thickness(0, 0, 0, 10), FontWeight = FontWeights.Bold };
-            stack.Children.Add(lbl);
-
-            var txt = new TextBox { Height = 25, Margin = new Thickness(0, 0, 0, 15) };
-            stack.Children.Add(txt);
-
-            var btnStack = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-            var btnOk = new Button { Content = "OK", Width = 75, IsDefault = true, Margin = new Thickness(0, 0, 10, 0) };
-            var btnCancel = new Button { Content = "Cancel", Width = 75, IsCancel = true };
-
-            btnOk.Click += (s, e) => { window.DialogResult = true; window.Close(); };
-            btnCancel.Click += (s, e) => { window.DialogResult = false; window.Close(); };
-
-            btnStack.Children.Add(btnOk);
-            btnStack.Children.Add(btnCancel);
-            stack.Children.Add(btnStack);
-
-            window.Content = stack;
-            if (window.ShowDialog() == true)
-            {
-                return txt.Text;
-            }
-            return null;
-        }
-    }
 }

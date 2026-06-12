@@ -62,15 +62,6 @@ namespace LabSystem.UI.ViewModels
                 await _orderService.UpdateOrderStatusAsync(selectedOrderId, "Complete");
                 Log.Information("Verified and completed order {OrderId}", selectedOrderId);
 
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "TestOrder",
-                    EntityId = selectedOrderId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Verified and saved results for order ID {selectedOrderId}."
-                });
 
                 // Reload
                 await LoadDataAsync();

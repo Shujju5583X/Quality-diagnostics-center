@@ -56,15 +56,6 @@ namespace LabSystem.UI.ViewModels
                 // Generate Invoice automatically
                 await _billingService.GenerateInvoiceAsync(order.OrderId);
 
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Created",
-                    EntityType = "TestOrder",
-                    EntityId = order.OrderId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Created order {order.OrderId} for patient ID {SelectedPatient.PatientId}. Referred by: {order.ReferredBy}."
-                });
 
                 // Unselect test checkboxes
                 foreach (var t in TestTypes)

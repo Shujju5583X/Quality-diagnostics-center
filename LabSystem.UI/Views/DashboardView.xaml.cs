@@ -69,35 +69,6 @@ namespace LabSystem.UI.Views
             }
         }
 
-        private void AuditLogSearchBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            var textBox = sender as TextBox;
-            if (textBox == null || AuditGrid == null || AuditGrid.ItemsSource == null) return;
-
-            var filterText = textBox.Text;
-            var cv = CollectionViewSource.GetDefaultView(AuditGrid.ItemsSource);
-            if (cv == null) return;
-
-            if (string.IsNullOrWhiteSpace(filterText))
-            {
-                cv.Filter = null;
-            }
-            else
-            {
-                cv.Filter = obj =>
-                {
-                    if (obj is AuditLog log)
-                    {
-                        var userName = log.User?.FullName ?? "System";
-                        return (log.Action != null && log.Action.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                               (log.Details != null && log.Details.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                               (userName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                               (log.EntityType != null && log.EntityType.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0);
-                    }
-                    return false;
-                };
-            }
-        }
         private void InvoicesSearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             var textBox = sender as TextBox;

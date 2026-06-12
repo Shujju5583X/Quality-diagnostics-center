@@ -19,7 +19,6 @@ namespace LabSystem.UI.ViewModels
         private readonly IResultRepository _resultRepo;
         private readonly IRepository<TestType> _testTypeRepo;
         private readonly IRepository<Staff> _staffRepo;
-        private readonly IRepository<AuditLog> _auditLogRepo;
         private readonly IOrderService _orderService;
         private readonly IResultService _resultService;
         private readonly IPdfReportService _reportService;
@@ -27,7 +26,6 @@ namespace LabSystem.UI.ViewModels
         private readonly IBillingService _billingService;
         private readonly IRepository<Doctor> _doctorRepo;
         private readonly IRepository<TestPanel> _testPanelRepo;
-        private readonly IRepository<Specimen> _specimenRepo;
         private readonly IQCResultRepository _qcRepo;
 
         private int _staffId;
@@ -78,8 +76,7 @@ namespace LabSystem.UI.ViewModels
         private string _catalogTestInterpretation;
         private int _catalogTestSortOrder;
 
-        // Audit Log search fields
-        private string _auditLogSearchQuery;
+
 
         public int StaffId
         {
@@ -117,8 +114,7 @@ namespace LabSystem.UI.ViewModels
         // Billing Items
         public ObservableCollection<Invoice> Invoices { get; } = new ObservableCollection<Invoice>();
 
-        // Audit Logs items
-        public ObservableCollection<AuditLog> AuditLogs { get; } = new ObservableCollection<AuditLog>();
+
 
         public Patient SelectedPatient
         {
@@ -179,26 +175,17 @@ namespace LabSystem.UI.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand SaveCatalogTestCommand { get; }
         public ICommand AddCatalogTestCommand { get; }
-        public ICommand RefreshAuditLogsCommand { get; }
+
         public ICommand AddPaymentCashCommand { get; }
         public ICommand AddPaymentUpiCommand { get; }
-        public ICommand UpdateFinancialsCommand { get; }
-        public ICommand ExportRevenueReportCommand { get; }
 
-        private RevenueReportStats _currentRevenueReport;
-        public RevenueReportStats CurrentRevenueReport
-        {
-            get => _currentRevenueReport;
-            set { _currentRevenueReport = value; OnPropertyChanged(); }
-        }
+
+
         public ICommand PreviousPatientPageCommand { get; }
         public ICommand NextPatientPageCommand { get; }
         
         // Commands for Phase 2
-        public ICommand RefreshReferralStatsCommand { get; }
-        public ICommand MarkSpecimenReceivedCommand { get; }
-        public ICommand MarkSpecimenProcessingCommand { get; }
-        public ICommand RejectSpecimenCommand { get; }
+
         public ICommand SaveCatalogDoctorCommand { get; }
         public ICommand AddCatalogDoctorCommand { get; }
 
@@ -208,7 +195,6 @@ namespace LabSystem.UI.ViewModels
             IResultRepository resultRepo,
             IRepository<TestType> testTypeRepo,
             IRepository<Staff> staffRepo,
-            IRepository<AuditLog> auditLogRepo,
             IOrderService orderService,
             IResultService resultService,
             IPdfReportService reportService,
@@ -216,7 +202,6 @@ namespace LabSystem.UI.ViewModels
             IBillingService billingService,
             IRepository<Doctor> doctorRepo,
             IRepository<TestPanel> testPanelRepo,
-            IRepository<Specimen> specimenRepo,
             IQCResultRepository qcRepo)
         {
             _patientRepo = patientRepo;
@@ -224,7 +209,6 @@ namespace LabSystem.UI.ViewModels
             _resultRepo = resultRepo;
             _testTypeRepo = testTypeRepo;
             _staffRepo = staffRepo;
-            _auditLogRepo = auditLogRepo;
             _orderService = orderService;
             _resultService = resultService;
             _reportService = reportService;
@@ -232,7 +216,6 @@ namespace LabSystem.UI.ViewModels
             _billingService = billingService;
             _doctorRepo = doctorRepo;
             _testPanelRepo = testPanelRepo;
-            _specimenRepo = specimenRepo;
             _qcRepo = qcRepo;
 
             AddPatientCommand = new RelayCommand(async o => await ExecuteAddPatientAsync(o));
@@ -244,16 +227,10 @@ namespace LabSystem.UI.ViewModels
             RefreshCommand = new RelayCommand(async o => await LoadDataAsync());
             SaveCatalogTestCommand = new RelayCommand(async o => await ExecuteSaveCatalogTestAsync(o));
             AddCatalogTestCommand = new RelayCommand(async o => await ExecuteAddCatalogTestAsync(o));
-            RefreshAuditLogsCommand = new RelayCommand(async o => await LoadAuditLogsAsync());
             AddPaymentCashCommand = new RelayCommand(async o => await ExecuteAddPaymentAsync("Cash"));
             AddPaymentUpiCommand = new RelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
-            UpdateFinancialsCommand = new RelayCommand(async o => await ExecuteUpdateFinancialsAsync(o));
-            ExportRevenueReportCommand = new RelayCommand(async o => await ExecuteExportRevenueReportAsync(o));
 
-            RefreshReferralStatsCommand = new RelayCommand(async o => await ExecuteRefreshReferralStatsAsync(o));
-            MarkSpecimenReceivedCommand = new RelayCommand(async o => await ExecuteMarkSpecimenStatusAsync(o, "Received"));
-            MarkSpecimenProcessingCommand = new RelayCommand(async o => await ExecuteMarkSpecimenStatusAsync(o, "Processing"));
-            RejectSpecimenCommand = new RelayCommand(async o => await ExecuteRejectSpecimenAsync(o));
+
             SaveCatalogDoctorCommand = new RelayCommand(async o => await ExecuteSaveCatalogDoctorAsync(o));
             AddCatalogDoctorCommand = new RelayCommand(async o => await ExecuteAddCatalogDoctorAsync(o));
 
@@ -343,25 +320,7 @@ namespace LabSystem.UI.ViewModels
                     TestPanels.Add(p);
                 }
 
-                // Load Specimens
-                Specimens.Clear();
-                var specimens = await _specimenRepo.GetAllAsync();
-                foreach (var s in specimens.OrderByDescending(x => x.OrderId))
-                {
-                    Specimens.Add(s);
-                }
 
-                // Load Referral Stats & Revenue Report
-                await RefreshReferralStatsAsync();
-                
-                try
-                {
-                    CurrentRevenueReport = await _billingService.GetRevenueReportAsync(ReferralStartDate, ReferralEndDate);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Failed to load revenue report stats.");
-                }
 
                 // Load Orders
                 Orders.Clear();
