@@ -135,7 +135,7 @@ namespace LabSystem.UI.ViewModels
                             TypeId = r.TypeId,
                             TestName = r.TestType?.Name ?? "Unknown Test",
                             Unit = r.TestType?.Unit ?? "",
-                            ValueText = r.Value == -999.0 ? "Sample Rejected" : r.Value.ToString(),
+                            ValueText = r.Value == null ? "Sample Rejected" : r.Value.ToString(),
                             IsAbnormal = r.IsAbnormal,
                             IsReadOnly = true
                         };

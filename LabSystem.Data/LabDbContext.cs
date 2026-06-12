@@ -15,6 +15,11 @@ namespace LabSystem.Data
             Database.SetInitializer<LabDbContext>(null);
         }
 
+        public LabDbContext(System.Data.Common.DbConnection connection) : base(connection, true)
+        {
+            Database.SetInitializer<LabDbContext>(null);
+        }
+
         public DbSet<Patient> Patients { get; set; }
         public DbSet<TestType> TestTypes { get; set; }
         public DbSet<Staff> Staff { get; set; }

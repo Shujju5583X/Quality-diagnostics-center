@@ -133,7 +133,9 @@ namespace LabSystem.Services
                     wsOrders.Cell(oRow, 4).Value = o.OrderedAt.ToString("yyyy-MM-dd HH:mm:ss");
                     wsOrders.Cell(oRow, 5).Value = o.ReferredBy;
                     wsOrders.Cell(oRow, 6).Value = o.Status;
-                    wsOrders.Cell(oRow, 7).Value = string.Join(", ", o.TestTypes.Select(tt => tt.Name));
+                    wsOrders.Cell(oRow, 7).Value = o.TestTypes != null && o.TestTypes.Any()
+                        ? string.Join(", ", o.TestTypes.Select(tt => tt.Name))
+                        : GetRequestedTestNames(o.Notes, testTypesDict);
                     wsOrders.Cell(oRow, 8).Value = o.Notes;
 
                     StyleDataRow(wsOrders, oRow, 8);
@@ -189,7 +191,7 @@ namespace LabSystem.Services
                     wsResults.Cell(resRow, 2).Value = r.OrderId;
                     wsResults.Cell(resRow, 3).Value = patientName;
                     wsResults.Cell(resRow, 4).Value = testName;
-                    wsResults.Cell(resRow, 5).Value = r.Value;
+                    wsResults.Cell(resRow, 5).Value = (object)r.Value ?? "Rejected";
                     wsResults.Cell(resRow, 6).Value = normalRange;
                     wsResults.Cell(resRow, 7).Value = unit;
                     wsResults.Cell(resRow, 8).Value = r.IsAbnormal ? "ABNORMAL" : "Normal";

@@ -26,7 +26,7 @@ namespace LabSystem.Data.Repositories
             return await _dbSet.AsNoTracking()
                          .Include(r => r.Order)
                          .Include(r => r.TestType)
-                         .Where(r => r.Order.PatientId == patientId && r.TypeId == testTypeId && r.Value != -999.0)
+                         .Where(r => r.Order.PatientId == patientId && r.TypeId == testTypeId && r.Value != null)
                          .OrderBy(r => r.RecordedAt)
                          .ToListAsync();
         }

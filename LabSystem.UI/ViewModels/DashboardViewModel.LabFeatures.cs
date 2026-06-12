@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using LabSystem.Core.Models;
+using LabSystem.Core.Services;
 using Serilog;
 
 namespace LabSystem.UI.ViewModels
@@ -91,33 +92,17 @@ namespace LabSystem.UI.ViewModels
 
         private void EvaluatePatientReferenceRange(ResultInput ri, TestType testType, Patient patient)
         {
-            if (testType != null && testType.ReferenceRanges != null && testType.ReferenceRanges.Count > 0 && patient != null)
+            var matchingRange = ReferenceRangeEvaluator.FindMatchingRange(testType, patient);
+            if (matchingRange != null)
             {
-                int age = 30; // default
-                if (patient.DateOfBirth.HasValue)
-                {
-                    var dob = patient.DateOfBirth.Value;
-                    age = DateTime.Today.Year - dob.Year;
-                    if (dob > DateTime.Today.AddYears(-age)) age--;
-                    if (age < 0) age = 0;
-                }
-                string gender = patient.Gender ?? "All";
-
-                var matchingRange = testType.ReferenceRanges.FirstOrDefault(r =>
-                    (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
-                    && age >= r.AgeMin && age <= r.AgeMax);
-
-                if (matchingRange != null)
-                {
-                    ri.Low = matchingRange.RangeLow;
-                    ri.High = matchingRange.RangeHigh;
-                    return;
-                }
+                ri.Low = matchingRange.RangeLow;
+                ri.High = matchingRange.RangeHigh;
             }
-
-            // Fallback to TestType defaults
-            ri.Low = testType?.ReferenceRangeLow;
-            ri.High = testType?.ReferenceRangeHigh;
+            else
+            {
+                ri.Low = testType?.ReferenceRangeLow;
+                ri.High = testType?.ReferenceRangeHigh;
+            }
         }
     }
 }

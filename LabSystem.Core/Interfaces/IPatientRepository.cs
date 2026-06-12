@@ -11,5 +11,6 @@ namespace LabSystem.Core.Interfaces
         Task<IEnumerable<Patient>> SearchByNameAsync(string query, CancellationToken cancellationToken = default);
         Task<IEnumerable<Patient>> SearchPatientsAsync(string query, DateTime? startDate, DateTime? endDate, int page, int pageSize, CancellationToken cancellationToken = default);
         Task<int> GetPatientsCountAsync(string query, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken = default);
+        Task<string> GetMaxUhidForYearAsync(int year, CancellationToken cancellationToken = default);
     }
 }

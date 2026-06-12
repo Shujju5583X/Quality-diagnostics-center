@@ -92,9 +92,12 @@ CREATE TABLE IF NOT EXISTS Invoices (
     InvoiceId INTEGER PRIMARY KEY AUTOINCREMENT,
     OrderId INTEGER NOT NULL UNIQUE,
     TotalAmount REAL NOT NULL,
+    DiscountAmount REAL DEFAULT 0,
+    TaxAmount REAL DEFAULT 0,
     IsPaid INTEGER DEFAULT 0,
     PaidAt DATETIME,
     CreatedAt DATETIME NOT NULL,
+    UpdatedAt DATETIME,
     PaymentMethod TEXT,
     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId)
 );
@@ -103,10 +106,15 @@ CREATE TABLE IF NOT EXISTS Results (
     ResultId INTEGER PRIMARY KEY AUTOINCREMENT,
     OrderId INTEGER NOT NULL,
     TypeId INTEGER NOT NULL,
-    Value REAL NOT NULL,
+    Value REAL,
     RecordedAt DATETIME NOT NULL,
     TechnicianId INTEGER NOT NULL,
     IsAbnormal INTEGER NOT NULL,
+    CreatedAt DATETIME,
+    UpdatedAt DATETIME,
+    IsAmended INTEGER NOT NULL DEFAULT 0,
+    AmendmentReason TEXT,
+    AmendedAt DATETIME,
     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId),
     FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId),
     FOREIGN KEY(TechnicianId) REFERENCES Staff(StaffId)
@@ -119,6 +127,12 @@ CREATE TABLE IF NOT EXISTS Reports (
     GeneratedAt DATETIME NOT NULL,
     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId)
 );
+
+CREATE TABLE IF NOT EXISTS SchemaVersion (
+    Version INTEGER PRIMARY KEY,
+    AppliedAt DATETIME NOT NULL
+);
+INSERT INTO SchemaVersion (Version, AppliedAt) VALUES (1, CURRENT_TIMESTAMP);
 
 CREATE INDEX IF NOT EXISTS IX_TestOrders_PatientId ON TestOrders (PatientId);
 CREATE INDEX IF NOT EXISTS IX_Results_OrderId ON Results (OrderId);

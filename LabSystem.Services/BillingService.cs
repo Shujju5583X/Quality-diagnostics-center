@@ -2,35 +2,44 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using Serilog;
-using System.Data.Entity;
-using LabSystem.Data;
 
 namespace LabSystem.Services
 {
     public class BillingService : IBillingService
     {
-        private readonly LabDbContext _context;
+        private readonly IInvoiceRepository _invoiceRepo;
+        private readonly IPaymentRepository _paymentRepo;
+        private readonly ITestOrderRepository _orderRepo;
+        private readonly IRepository<TestPanel> _panelRepo;
 
-        public BillingService(LabDbContext context)
+        public BillingService(
+            IInvoiceRepository invoiceRepo,
+            IPaymentRepository paymentRepo,
+            ITestOrderRepository orderRepo,
+            IRepository<TestPanel> panelRepo)
         {
-            _context = context;
+            _invoiceRepo = invoiceRepo;
+            _paymentRepo = paymentRepo;
+            _orderRepo = orderRepo;
+            _panelRepo = panelRepo;
         }
 
         public async Task<Invoice> GenerateInvoiceAsync(int orderId)
         {
             try
             {
-                var order = await _context.TestOrders.Include(o => o.TestTypes).FirstOrDefaultAsync(o => o.OrderId == orderId);
+                var order = await _orderRepo.GetByIdAsync(orderId);
                 if (order == null) throw new Exception("Order not found.");
 
                 // Check if invoice already exists
-                var existing = await _context.Invoices.FirstOrDefaultAsync(i => i.OrderId == orderId);
+                var existing = await _invoiceRepo.GetByOrderIdAsync(orderId);
                 if (existing != null) return existing;
 
                 // Load all test panels with their test types eager-loaded
-                var panels = await _context.TestPanels.Include(p => p.TestTypes).ToListAsync();
+                var panels = await _panelRepo.GetAllAsync();
 
                 var orderedTestTypeIds = new HashSet<int>(order.TestTypes.Select(t => t.TypeId));
                 decimal total = 0;
@@ -67,8 +76,7 @@ namespace LabSystem.Services
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _context.Invoices.Add(invoice);
-                await _context.SaveChangesAsync();
+                await _invoiceRepo.AddAsync(invoice);
                 
                 return invoice;
             }
@@ -81,40 +89,33 @@ namespace LabSystem.Services
 
         public async Task<Invoice> GetInvoiceForOrderAsync(int orderId)
         {
-            return await _context.Invoices
-                .Include(i => i.Order)
-                .Include(i => i.Order.Patient)
-                .Include(i => i.Payments)
-                .FirstOrDefaultAsync(i => i.OrderId == orderId);
+            return await _invoiceRepo.GetByOrderIdAsync(orderId);
         }
 
         public async Task<IEnumerable<Invoice>> GetAllInvoicesAsync()
         {
-            return await _context.Invoices
-                .Include(i => i.Order)
-                .Include(i => i.Order.Patient)
-                .Include(i => i.Payments)
-                .ToListAsync();
+            return await _invoiceRepo.GetAllWithDetailsAsync();
         }
 
         public async Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discount, decimal tax)
         {
-            var invoice = await _context.Invoices.Include(i => i.Payments).FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+            var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
             if (invoice != null)
             {
                 invoice.DiscountAmount = discount;
                 invoice.TaxAmount = tax;
                 decimal grandTotal = invoice.TotalAmount - invoice.DiscountAmount + invoice.TaxAmount;
-                decimal paidAmount = invoice.Payments.Sum(p => p.Amount);
+                var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
+                decimal paidAmount = payments.Sum(p => p.Amount);
                 invoice.IsPaid = paidAmount >= grandTotal;
                 if (invoice.IsPaid && !invoice.PaidAt.HasValue) invoice.PaidAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
+                await _invoiceRepo.UpdateAsync(invoice);
             }
         }
 
         public async Task AddPaymentAsync(int invoiceId, decimal amount, string paymentMethod)
         {
-            var invoice = await _context.Invoices.Include(i => i.Payments).FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+            var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
             if (invoice != null)
             {
                 var payment = new Payment
@@ -124,22 +125,22 @@ namespace LabSystem.Services
                     PaymentMethod = paymentMethod,
                     PaymentDate = DateTime.UtcNow
                 };
-                _context.Payments.Add(payment);
+                await _paymentRepo.AddAsync(payment);
                 
                 // Recalculate IsPaid
+                var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
                 decimal grandTotal = invoice.TotalAmount - invoice.DiscountAmount + invoice.TaxAmount;
-                decimal paidAmount = invoice.Payments.Sum(p => p.Amount) + amount; // Include the new payment
+                decimal paidAmount = payments.Sum(p => p.Amount);
                 
                 invoice.IsPaid = paidAmount >= grandTotal;
                 if (invoice.IsPaid && !invoice.PaidAt.HasValue)
                 {
                     invoice.PaidAt = DateTime.UtcNow;
-                    invoice.PaymentMethod = paymentMethod; // Keep legacy field updated
+                    invoice.PaymentMethod = paymentMethod;
                 }
                 
-                await _context.SaveChangesAsync();
+                await _invoiceRepo.UpdateAsync(invoice);
             }
         }
-
     }
 }

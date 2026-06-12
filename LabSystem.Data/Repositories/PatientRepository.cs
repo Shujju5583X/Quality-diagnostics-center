@@ -70,5 +70,16 @@ namespace LabSystem.Data.Repositories
 
             return await q.CountAsync(cancellationToken);
         }
+
+        public async Task<string> GetMaxUhidForYearAsync(int year, CancellationToken cancellationToken = default)
+        {
+            string prefix = $"QDC-{year}-";
+            var match = await _dbSet.AsNoTracking()
+                .Where(p => p.Uhid.StartsWith(prefix))
+                .OrderByDescending(p => p.Uhid)
+                .Select(p => p.Uhid)
+                .FirstOrDefaultAsync(cancellationToken);
+            return match;
+        }
     }
 }

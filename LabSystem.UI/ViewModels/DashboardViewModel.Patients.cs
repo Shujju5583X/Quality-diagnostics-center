@@ -225,23 +225,17 @@ namespace LabSystem.UI.ViewModels
         private async Task<string> GenerateNextUhidAsync()
         {
             var currentYear = DateTime.Now.Year;
-            var startOfYear = new DateTime(currentYear, 1, 1);
-            var endOfYear = new DateTime(currentYear, 12, 31);
-            
-            // Count registered this year
-            int countThisYear = await _patientRepo.GetPatientsCountAsync("", startOfYear, endOfYear);
-            int seq = countThisYear + 1;
-            string uhid = $"QDC-{currentYear}-{seq:D5}";
-
-            // Guarantee uniqueness
-            var all = await _patientRepo.GetAllAsync();
-            while (all.Any(p => p.Uhid == uhid))
+            string maxUhid = await _patientRepo.GetMaxUhidForYearAsync(currentYear);
+            int seq = 1;
+            if (maxUhid != null)
             {
-                seq++;
-                uhid = $"QDC-{currentYear}-{seq:D5}";
+                var parts = maxUhid.Split('-');
+                if (parts.Length == 3 && int.TryParse(parts[2], out int parsedSeq))
+                {
+                    seq = parsedSeq + 1;
+                }
             }
-
-            return uhid;
+            return $"QDC-{currentYear}-{seq:D5}";
         }
     }
 }

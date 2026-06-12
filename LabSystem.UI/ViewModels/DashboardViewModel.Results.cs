@@ -44,7 +44,7 @@ namespace LabSystem.UI.ViewModels
                 // Save each result
                 foreach (var r in SelectedOrderResults)
                 {
-                    double val = r.ValueText == "Sample Rejected" ? -999.0 : double.Parse(r.ValueText);
+                    double? val = r.ValueText == "Sample Rejected" ? (double?)null : double.Parse(r.ValueText);
                     var result = new Result
                     {
                         OrderId = SelectedOrder.OrderId,

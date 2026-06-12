@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
+using LabSystem.Core.Services;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
 using MigraDoc.Rendering;
@@ -419,15 +420,16 @@ namespace LabSystem.Services
             return filepath;
         }
 
-        private string FormatResultValue(double value, TestType testType)
+        private string FormatResultValue(double? value, TestType testType)
         {
-            if (value == -999.0)
+            if (value == null)
             {
                 return "Sample Rejected";
             }
+            double val = value.Value;
             if (testType.Unit == "Blood Group")
             {
-                switch ((int)value)
+                switch ((int)val)
                 {
                     case 1: return "A Rh Positive";
                     case 2: return "A Rh Negative";
@@ -442,124 +444,37 @@ namespace LabSystem.Services
             }
             if (testType.Name.Contains("Malarial Parasite") || testType.Name.Contains("PBS Malarial"))
             {
-                return value >= 1.0 ? "Detected" : "Not Detected";
+                return val >= 1.0 ? "Detected" : "Not Detected";
             }
             if (testType.Name.Contains("Rapid Malaria"))
             {
-                return value >= 1.0 ? "Positive" : "Negative";
+                return val >= 1.0 ? "Positive" : "Negative";
             }
             if (testType.Unit == "Qualitative" || testType.Name.Contains("Urine Sugar") || testType.Name.Contains("Urine Protein"))
             {
-                return value >= 1.0 ? "Present" : "Absent";
+                return val >= 1.0 ? "Present" : "Absent";
             }
             if (testType.Unit == "Titer")
             {
-                if (value <= 0) return "No Agglutination";
-                return $"Agglutination (1:{(int)value})";
+                if (val <= 0) return "No Agglutination";
+                return $"Agglutination (1:{(int)val})";
             }
             if (testType.Unit == "Index" || testType.Unit == "Ratio" || testType.Name.Contains("Antibody") || testType.Name.Contains("HBsAg") || testType.Name.Contains("HCV") || testType.Name.Contains("VDRL") || testType.Name.Contains("HIV"))
             {
-                if (value == 0.0) return "Negative";
-                return value.ToString("F2");
+                if (val == 0.0) return "Negative";
+                return val.ToString("F2");
             }
-            return value.ToString();
+            return val.ToString();
         }
 
-        private int CalculateAge(DateTime? dob, DateTime relativeTo)
+        private bool IsValueLow(double? value, TestType tt, Patient patient)
         {
-            if (!dob.HasValue) return 30; // default age
-            var birthDate = dob.Value;
-            int age = relativeTo.Year - birthDate.Year;
-            if (relativeTo.Month < birthDate.Month || (relativeTo.Month == birthDate.Month && relativeTo.Day < birthDate.Day))
-            {
-                age--;
-            }
-            return age < 0 ? 0 : age;
-        }
-
-        private bool IsValueLow(double value, TestType tt, Patient patient)
-        {
-            if (tt.ReferenceRanges != null && tt.ReferenceRanges.Count > 0 && patient != null)
-            {
-                int age = CalculateAge(patient.DateOfBirth, DateTime.UtcNow);
-                string gender = patient.Gender ?? "All";
-
-                var matchingRange = tt.ReferenceRanges.FirstOrDefault(r =>
-                    (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
-                    && age >= r.AgeMin && age <= r.AgeMax);
-
-                if (matchingRange != null)
-                {
-                    return matchingRange.RangeLow.HasValue && value < matchingRange.RangeLow.Value;
-                }
-            }
-            return tt.ReferenceRangeLow.HasValue && value < tt.ReferenceRangeLow.Value;
+            return ReferenceRangeEvaluator.IsLow(value, tt, patient);
         }
 
         private string FormatReferenceRange(TestType tt, Patient patient)
         {
-            if (tt == null) return "N/A";
-            
-            if (tt.ReferenceRanges != null && tt.ReferenceRanges.Count > 0 && patient != null)
-            {
-                int age = CalculateAge(patient.DateOfBirth, DateTime.UtcNow);
-                string gender = patient.Gender ?? "All";
-
-                var matchingRange = tt.ReferenceRanges.FirstOrDefault(r =>
-                    (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
-                    && age >= r.AgeMin && age <= r.AgeMax);
-
-                if (matchingRange != null)
-                {
-                    if (matchingRange.RangeLow.HasValue && matchingRange.RangeHigh.HasValue)
-                    {
-                        return $"{matchingRange.RangeLow.Value} - {matchingRange.RangeHigh.Value}";
-                    }
-                    if (matchingRange.RangeLow.HasValue)
-                    {
-                        return $">= {matchingRange.RangeLow.Value}";
-                    }
-                    if (matchingRange.RangeHigh.HasValue)
-                    {
-                        return $"<= {matchingRange.RangeHigh.Value}";
-                    }
-                }
-            }
-
-            if (tt.Unit == "Blood Group")
-            {
-                return "A/B/O/AB Rh +/-";
-            }
-            if (tt.Unit == "Titer")
-            {
-                return "No Agglutination";
-            }
-            if (tt.Unit == "Qualitative" || tt.Name.Contains("Urine Sugar") || tt.Name.Contains("Urine Protein"))
-            {
-                return "Absent";
-            }
-            if (tt.Name.Contains("Malarial Parasite"))
-            {
-                return "Not Detected";
-            }
-            if (tt.Name.Contains("Rapid Malaria") || tt.Name.Contains("HBsAg") || tt.Name.Contains("HCV") || tt.Name.Contains("VDRL") || tt.Name.Contains("HIV"))
-            {
-                return "Negative";
-            }
-            
-            if (tt.ReferenceRangeLow.HasValue && tt.ReferenceRangeHigh.HasValue)
-            {
-                return $"{tt.ReferenceRangeLow.Value} - {tt.ReferenceRangeHigh.Value}";
-            }
-            if (tt.ReferenceRangeLow.HasValue)
-            {
-                return $">= {tt.ReferenceRangeLow.Value}";
-            }
-            if (tt.ReferenceRangeHigh.HasValue)
-            {
-                return $"<= {tt.ReferenceRangeHigh.Value}";
-            }
-            return "N/A";
+            return ReferenceRangeEvaluator.FormatRange(tt, patient);
         }
 
         public async Task<string> GenerateInvoicePdfAsync(Invoice invoice, CancellationToken cancellationToken = default)

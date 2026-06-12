@@ -62,7 +62,7 @@ namespace LabSystem.UI
             Container.Options.EnableAutoVerification = false;
 
             // Register DbContext
-            Container.Register<LabDbContext>(Lifestyle.Transient);
+            Container.Register<LabDbContext>(() => new LabDbContext(), Lifestyle.Transient);
 
             // Register Repositories
             Container.Register<IPatientRepository, PatientRepository>(Lifestyle.Transient);
@@ -71,6 +71,8 @@ namespace LabSystem.UI
             Container.Register<ITestTypeRepository, TestTypeRepository>(Lifestyle.Transient);
             Container.Register<IRepository<TestPanel>, TestPanelRepository>(Lifestyle.Transient);
             Container.Register<IStaffRepository, StaffRepository>(Lifestyle.Transient);
+            Container.Register<IInvoiceRepository, InvoiceRepository>(Lifestyle.Transient);
+            Container.Register<IPaymentRepository, PaymentRepository>(Lifestyle.Transient);
             Container.Register<IReportRepository, ReportRepository>(Lifestyle.Transient);
             
             // Fallback for any other IRepository<T>
@@ -166,6 +168,13 @@ namespace LabSystem.UI
                 }
 
                 EnsureSchemaUpToDate(db);
+
+                var staffCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Staff").FirstOrDefault();
+                if (staffCount == 0)
+                {
+                    db.Database.ExecuteSqlCommand("INSERT INTO Staff (FullName) VALUES ('Lab Technician');");
+                    Log.Information("Default staff record seeded.");
+                }
             }
         }
 
@@ -349,6 +358,20 @@ namespace LabSystem.UI
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to create/verify schema tables.");
+            }
+
+            try
+            {
+                var hasRejectedRows = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Results WHERE Value = -999.0").FirstOrDefault() > 0;
+                if (hasRejectedRows)
+                {
+                    db.Database.ExecuteSqlCommand("UPDATE Results SET Value = NULL WHERE Value = -999.0;");
+                    Log.Information("Data migration: Converted legacy -999.0 sentinel values in Results table to NULL.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to run Results -999.0 sentinel migration.");
             }
 
             try

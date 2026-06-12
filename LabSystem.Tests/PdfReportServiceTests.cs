@@ -17,50 +17,42 @@ namespace LabSystem.Tests
         private Mock<IRepository<TestType>> _mockTestTypeRepo;
         private PdfReportService _service;
         private string _logoPath;
-        private string _tempLogoBackupPath;
 
         [SetUp]
         public void SetUp()
         {
             _mockResultRepo = new Mock<IResultRepository>();
             _mockTestTypeRepo = new Mock<IRepository<TestType>>();
-            _service = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object, null, null);
-            _logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
-            _tempLogoBackupPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo_temp_backup.png");
+            
+            var testDataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TestData");
+            Directory.CreateDirectory(testDataDir);
+            _logoPath = Path.Combine(testDataDir, "test_logo.png");
 
-            // Backup existing logo if it exists in the test output directory
-            if (File.Exists(_logoPath))
+            // Generate 1x1 white pixel PNG programmatically using System.Drawing
+            using (var bitmap = new System.Drawing.Bitmap(1, 1))
             {
-                File.Move(_logoPath, _tempLogoBackupPath);
+                bitmap.SetPixel(0, 0, System.Drawing.Color.White);
+                bitmap.Save(_logoPath, System.Drawing.Imaging.ImageFormat.Png);
             }
+
+            _service = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object, null, _logoPath);
         }
 
         [TearDown]
         public void TearDown()
         {
-            // Restore backup logo if it was backed up
-            if (File.Exists(_tempLogoBackupPath))
+            if (File.Exists(_logoPath))
             {
-                if (File.Exists(_logoPath))
-                {
-                    File.Delete(_logoPath);
-                }
-                File.Move(_tempLogoBackupPath, _logoPath);
-            }
-            else if (File.Exists(_logoPath))
-            {
-                File.Delete(_logoPath);
+                try { File.Delete(_logoPath); } catch { }
             }
         }
 
         [Test]
         public async Task GenerateReport_ShouldGeneratePdf_WhenLogoDoesNotExist()
         {
-            // Arrange: Ensure logo does not exist in target path
-            if (File.Exists(_logoPath))
-            {
-                File.Delete(_logoPath);
-            }
+            // Arrange: Temporary service instance with non-existent logo path
+            var nonExistentLogoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "non_existent.png");
+            var tempService = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object, null, nonExistentLogoPath);
 
             var order = new TestOrder
             {
@@ -76,7 +68,7 @@ namespace LabSystem.Tests
                            });
 
             // Act
-            string filepath = await _service.GenerateReportAsync(order);
+            string filepath = await tempService.GenerateReportAsync(order);
 
             // Assert
             Assert.IsTrue(File.Exists(filepath));
@@ -92,32 +84,7 @@ namespace LabSystem.Tests
         [Test]
         public async Task GenerateReport_ShouldGeneratePdf_WhenLogoExists()
         {
-            // Arrange: Find and copy the actual logo file to target path
-            string dir = AppDomain.CurrentDomain.BaseDirectory;
-            string sourceLogo = null;
-            while (dir != null)
-            {
-                string candidate = Path.Combine(dir, "LabSystem.UI", "logo.png");
-                if (File.Exists(candidate))
-                {
-                    sourceLogo = candidate;
-                    break;
-                }
-                dir = Path.GetDirectoryName(dir);
-            }
-
-            if (sourceLogo != null)
-            {
-                File.Copy(sourceLogo, _logoPath, true);
-            }
-            else
-            {
-                // Fallback to creating a dummy text file if logo not found (tests behavior when file is invalid/dummy,
-                // though we expect the actual image to exist and load correctly)
-                Assert.Inconclusive("Actual logo.png could not be found to test image embedding.");
-                return;
-            }
-
+            // Arrange
             var order = new TestOrder
             {
                 OrderId = 2,
@@ -144,6 +111,5 @@ namespace LabSystem.Tests
                 File.Delete(filepath);
             }
         }
-
     }
 }

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
+using Serilog;
 namespace LabSystem.UI.Views
 {
     public partial class PdfPreviewWindow : Window
@@ -41,6 +42,7 @@ namespace LabSystem.UI.Views
             }
             catch (Exception ex)
             {
+                Log.Error(ex, "Error loading PDF preview.");
                 MessageBox.Show($"Error loading preview: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -96,6 +98,7 @@ namespace LabSystem.UI.Views
             }
             catch (Exception ex)
             {
+                Log.Error(ex, "Error printing PDF");
                 MessageBox.Show($"Error printing PDF: {ex.Message}\nMake sure a default PDF viewer is installed and configured for printing.", "Print Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

@@ -123,8 +123,58 @@ namespace LabSystem.Tests
             await _service.AddResultAsync(result);
 
             // Assert
-            Assert.AreEqual(-999.0, result.Value);
+            Assert.IsNull(result.Value);
             Assert.IsFalse(result.IsAbnormal);
+        }
+
+        [Test]
+        public void AmendResult_ShouldThrow_WhenReasonIsEmpty()
+        {
+            // Act & Assert
+            Assert.ThrowsAsync<ArgumentException>(async () => 
+                await _service.AmendResultAsync(1, 15.0, "", 1));
+        }
+
+        [Test]
+        public async Task AmendResult_ShouldUpdateValue_AndSetIsAmendedFlag()
+        {
+            // Arrange
+            var result = new Result { ResultId = 1, TypeId = 1, OrderId = 10, Value = 15, IsAmended = false };
+            var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
+            
+            _mockResultRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(result);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.UpdateAsync(result, It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+
+            // Act
+            await _service.AmendResultAsync(1, 17.5, "Correction", 1);
+
+            // Assert
+            Assert.AreEqual(17.5, result.Value);
+            Assert.IsTrue(result.IsAmended);
+            Assert.AreEqual("Correction", result.AmendmentReason);
+            _mockResultRepo.Verify(r => r.UpdateAsync(result, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task AmendResult_ShouldReevaluateAbnormality_AfterAmendment()
+        {
+            // Arrange
+            var result = new Result { ResultId = 1, TypeId = 1, OrderId = 10, Value = 15, IsAbnormal = false };
+            var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
+            var patient = new Patient { Gender = "Male", DateOfBirth = DateTime.Today.AddYears(-30) };
+            var order = new TestOrder { OrderId = 10, Patient = patient };
+
+            _mockResultRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(result);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
+            _mockOrderRepo.Setup(r => r.GetByIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+            _mockResultRepo.Setup(r => r.UpdateAsync(result, It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+
+            // Act
+            await _service.AmendResultAsync(1, 25.0, "Input correction", 1);
+
+            // Assert
+            Assert.IsTrue(result.IsAbnormal);
         }
     }
 }

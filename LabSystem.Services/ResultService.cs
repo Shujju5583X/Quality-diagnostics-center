@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
+using LabSystem.Core.Services;
 
 namespace LabSystem.Services
 {
@@ -43,7 +44,7 @@ namespace LabSystem.Services
 
             if (isRejected)
             {
-                result.Value = -999.0;
+                result.Value = null;
                 result.IsAbnormal = false;
             }
             else if (testType != null)
@@ -55,7 +56,14 @@ namespace LabSystem.Services
             result.RecordedAt = DateTime.UtcNow;
             result.CreatedAt = DateTime.UtcNow;
             result.UpdatedAt = DateTime.UtcNow;
-            await _resultRepo.AddAsync(result, cancellationToken);
+            try
+            {
+                await _resultRepo.AddAsync(result, cancellationToken);
+            }
+            catch (Exception ex) when (ex.ToString().Contains("FOREIGN KEY") || ex.ToString().Contains("constraint") || ex.ToString().Contains("Constraint"))
+            {
+                throw new InvalidOperationException("Default staff record (ID=1) not found. Please ensure the database has been seeded correctly.", ex);
+            }
         }
 
         public async Task AmendResultAsync(int resultId, double newValue, string reason, int technicianId, CancellationToken cancellationToken = default)
@@ -69,7 +77,7 @@ namespace LabSystem.Services
 
             var testType = await _testTypeRepo.GetByIdAsync(result.TypeId, cancellationToken);
 
-            double oldValue = result.Value;
+            double? oldValue = result.Value;
             result.Value = newValue;
             result.IsAmended = true;
             result.AmendmentReason = reason;
@@ -83,46 +91,9 @@ namespace LabSystem.Services
             await _resultRepo.UpdateAsync(result, cancellationToken);
         }
 
-        private int CalculateAge(DateTime? dob, DateTime relativeTo)
+        private bool EvaluateIsAbnormal(double? value, TestType testType, Patient patient)
         {
-            if (!dob.HasValue) return 30; // default age
-            var birthDate = dob.Value;
-            int age = relativeTo.Year - birthDate.Year;
-            if (relativeTo.Month < birthDate.Month || (relativeTo.Month == birthDate.Month && relativeTo.Day < birthDate.Day))
-            {
-                age--;
-            }
-            return age < 0 ? 0 : age;
-        }
-
-        private bool EvaluateIsAbnormal(double value, TestType testType, Patient patient)
-        {
-            if (testType.ReferenceRanges != null && testType.ReferenceRanges.Count > 0 && patient != null)
-            {
-                int age = CalculateAge(patient.DateOfBirth, DateTime.UtcNow);
-                string gender = patient.Gender ?? "All";
-
-                var matchingRange = testType.ReferenceRanges.FirstOrDefault(r =>
-                    (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
-                    && age >= r.AgeMin && age <= r.AgeMax);
-
-                if (matchingRange != null)
-                {
-                    if (matchingRange.RangeLow.HasValue && value < matchingRange.RangeLow.Value)
-                        return true;
-                    if (matchingRange.RangeHigh.HasValue && value > matchingRange.RangeHigh.Value)
-                        return true;
-                    return false;
-                }
-            }
-
-            // Fallback to static range
-            if (testType.ReferenceRangeLow.HasValue && value < testType.ReferenceRangeLow.Value)
-                return true;
-            if (testType.ReferenceRangeHigh.HasValue && value > testType.ReferenceRangeHigh.Value)
-                return true;
-
-            return false;
+            return ReferenceRangeEvaluator.IsAbnormal(value, testType, patient);
         }
     }
 }
