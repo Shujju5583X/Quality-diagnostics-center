@@ -11,6 +11,7 @@ using LabSystem.Services;
 using SimpleInjector;
 using Serilog;
 using System.Reflection;
+using System.Threading;
 
 
 namespace LabSystem.UI
@@ -18,6 +19,9 @@ namespace LabSystem.UI
     public partial class App : Application
     {
         public static Container Container { get; private set; }
+
+        // Hold a reference so we can trigger backup on exit
+        private IBackupService _backupServiceForExit;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -32,8 +36,8 @@ namespace LabSystem.UI
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Warning()
                 .WriteTo.File(Path.Combine(logDir, "lab_.log"), rollingInterval: RollingInterval.Day,
-                    fileSizeLimitBytes: 5 * 1024 * 1024, // 5MB max per log file to avoid filling disk
-                    retainedFileCountLimit: 14) // Keep only 2 weeks of logs
+                    fileSizeLimitBytes: 5 * 1024 * 1024, // 5MB max per log file
+                    retainedFileCountLimit: 14)           // Keep only 2 weeks of logs
                 .CreateLogger();
 
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
@@ -42,7 +46,16 @@ namespace LabSystem.UI
                 MessageBox.Show("A critical error occurred. Please check the logs.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             };
 
-            InitializeDatabase();
+            try
+            {
+                InitializeDatabase();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Failed to initialize database.");
+                MessageBox.Show($"Database Init Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                throw;
+            }
 
             // Setup SimpleInjector
             Container = new Container();
@@ -57,14 +70,13 @@ namespace LabSystem.UI
             Container.Register<IResultRepository, ResultRepository>(Lifestyle.Transient);
             Container.Register<ITestTypeRepository, TestTypeRepository>(Lifestyle.Transient);
             Container.Register<IRepository<TestPanel>, TestPanelRepository>(Lifestyle.Transient);
-            Container.RegisterConditional(typeof(IRepository<>), typeof(Repository<>), Lifestyle.Transient, c => !c.Handled);
             Container.Register<IStaffRepository, StaffRepository>(Lifestyle.Transient);
-            Container.Register<IAuditLogRepository, AuditLogRepository>(Lifestyle.Transient);
             Container.Register<IReportRepository, ReportRepository>(Lifestyle.Transient);
-            Container.Register<IQCResultRepository, QCResultRepository>(Lifestyle.Transient);
+            
+            // Fallback for any other IRepository<T>
+            Container.RegisterConditional(typeof(IRepository<>), typeof(Repository<>), Lifestyle.Transient, c => !c.Handled);
 
             // Register Services
-            Container.Register<IAuthService, AuthService>(Lifestyle.Transient);
             Container.Register<IOrderService, OrderService>(Lifestyle.Transient);
             Container.Register<IResultService, ResultService>(Lifestyle.Transient);
             Container.Register<IPdfReportService>(() => new PdfReportService(
@@ -75,14 +87,37 @@ namespace LabSystem.UI
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
             Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
 
-            // Register ViewModels
+            // Register ViewModels (single-operator: no LoginViewModel)
             Container.Register<ViewModels.MainViewModel>();
-            Container.Register<ViewModels.LoginViewModel>();
             Container.Register<ViewModels.DashboardViewModel>();
+
+            // Hold a backup service reference for auto-backup on exit
+            _backupServiceForExit = Container.GetInstance<IBackupService>();
 
             var mainWindow = new MainWindow();
             mainWindow.DataContext = Container.GetInstance<ViewModels.MainViewModel>();
             mainWindow.Show();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            // Auto-backup on application close — fire-and-forget with 15s timeout
+            try
+            {
+                Log.Information("Application closing — triggering automatic backup.");
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
+                {
+                    _backupServiceForExit?.BackupNowAsync(cts.Token).GetAwaiter().GetResult();
+                    Log.Information("Auto-backup on exit completed successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Auto-backup on exit failed or timed out.");
+            }
+
+            Log.CloseAndFlush();
+            base.OnExit(e);
         }
 
         private static string GetLetterheadPath()
@@ -201,16 +236,25 @@ namespace LabSystem.UI
 
         private static void EnsureSchemaUpToDate(LabDbContext db)
         {
+            // Safe incremental column additions (idempotent — skipped if column already exists)
             var migrations = new[]
             {
-                new { Table = "Patients", Column = "Gender", Type = "TEXT" },
-                new { Table = "TestOrders", Column = "ReferredBy", Type = "TEXT" },
-                new { Table = "Staff", Column = "FailedLoginAttempts", Type = "INTEGER DEFAULT 0" },
-                new { Table = "Staff", Column = "LockoutEnd", Type = "TEXT" },
-                new { Table = "TestTypes", Column = "SampleType", Type = "TEXT" },
-                new { Table = "TestOrders", Column = "DoctorId", Type = "INTEGER" },
-                new { Table = "Invoices", Column = "DiscountAmount", Type = "REAL DEFAULT 0" },
-                new { Table = "Invoices", Column = "TaxAmount", Type = "REAL DEFAULT 0" },
+                new { Table = "Patients",    Column = "Gender",               Type = "TEXT" },
+                new { Table = "TestOrders",  Column = "ReferredBy",           Type = "TEXT" },
+                new { Table = "TestTypes",   Column = "SampleType",           Type = "TEXT" },
+                new { Table = "Invoices",    Column = "DiscountAmount",        Type = "REAL DEFAULT 0" },
+                new { Table = "Invoices",    Column = "TaxAmount",             Type = "REAL DEFAULT 0" },
+                // Audit timestamp columns for simplified single-person workflow
+                new { Table = "TestOrders",  Column = "CreatedAt",            Type = "DATETIME" },
+                new { Table = "TestOrders",  Column = "UpdatedAt",            Type = "DATETIME" },
+                new { Table = "Results",     Column = "CreatedAt",            Type = "DATETIME" },
+                new { Table = "Results",     Column = "UpdatedAt",            Type = "DATETIME" },
+                new { Table = "Invoices",    Column = "UpdatedAt",            Type = "DATETIME" },
+                // Remove legacy auth columns from Staff table
+                new { Table = "Staff",       Column = "Role",                 Type = "TEXT" },
+                new { Table = "Staff",       Column = "PinHash",              Type = "TEXT" },
+                new { Table = "Staff",       Column = "FailedLoginAttempts",  Type = "INTEGER DEFAULT 0" },
+                new { Table = "Staff",       Column = "LockoutEnd",           Type = "DATETIME" },
             };
 
             foreach (var migration in migrations)
@@ -228,17 +272,6 @@ namespace LabSystem.UI
 
             try
             {
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS Doctors (
-                        DoctorId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Name TEXT NOT NULL,
-                        Specialization TEXT,
-                        ClinicName TEXT,
-                        ContactPhone TEXT,
-                        CommissionPercent REAL DEFAULT 0
-                    );
-                ");
-                
                 db.Database.ExecuteSqlCommand(@"
                     CREATE TABLE IF NOT EXISTS Specimens (
                         SpecimenId INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -296,27 +329,9 @@ namespace LabSystem.UI
                     );
                 ");
 
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS QCResults (
-                        QCResultId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        TestTypeId INTEGER NOT NULL,
-                        ControlLevel TEXT NOT NULL,
-                        ExpectedMean REAL NOT NULL,
-                        StandardDeviation REAL NOT NULL,
-                        MeasuredValue REAL NOT NULL,
-                        RecordedAt DATETIME NOT NULL,
-                        TechnicianId INTEGER NOT NULL,
-                        Remarks TEXT,
-                        FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE,
-                        FOREIGN KEY(TechnicianId) REFERENCES Staff(StaffId) ON DELETE CASCADE
-                    );
-                ");
-
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_TestOrders_DoctorId ON TestOrders (DoctorId);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Specimens_OrderId ON Specimens (OrderId);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_ReferenceRanges_TestTypeId ON ReferenceRanges (TestTypeId);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Payments_InvoiceId ON Payments (InvoiceId);");
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QCResults_TestTypeId ON QCResults (TestTypeId);");
 
                 try
                 {
@@ -329,11 +344,11 @@ namespace LabSystem.UI
                     // Columns might already exist, ignore error
                 }
 
-                Log.Information("Phase 2/3/4 database tables verified/created.");
+                Log.Information("Schema tables verified/created.");
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to create Phase 2 tables.");
+                Log.Error(ex, "Failed to create/verify schema tables.");
             }
 
             try
@@ -345,19 +360,6 @@ namespace LabSystem.UI
                     UPDATE TestTypes SET SampleType = 'Urine' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'CLINICAL PATHOLOGY';
                     UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Name = 'Blood Grouping & Rh';
                 ");
-
-                // Check if Doctors table is empty
-                var doctorCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Doctors").FirstOrDefault();
-                if (doctorCount == 0)
-                {
-                    db.Database.ExecuteSqlCommand(@"
-                        INSERT INTO Doctors (Name, Specialization, ClinicName, ContactPhone, CommissionPercent) VALUES
-                        ('Dr. Robert Clark', 'Cardiologist', 'Metro Heart Care', '555-0199', 15.0),
-                        ('Dr. Alice Vance', 'General Physician', 'City Clinic', '555-0288', 10.0),
-                        ('Dr. Sarah Patel', 'Endocrinologist', 'Diabetes Care Center', '555-0377', 12.0);
-                    ");
-                    Log.Information("Seeded referring doctors.");
-                }
 
                 // Check if ReferenceRanges table is empty
                 var refRangeCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM ReferenceRanges").FirstOrDefault();
@@ -382,7 +384,7 @@ namespace LabSystem.UI
                         INSERT INTO TestPanels (Name, Description, Price) VALUES
                         ('Lipid Profile Panel', 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, VLDL, and non-HDL cholesterol.', 1200.00),
                         ('Thyroid Profile Panel', 'Thyroid Function Test including T3, T4, and TSH screening.', 900.00);
-                        
+
                         INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
                         ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Cholesterol, Total')),
                         ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triglycerides')),

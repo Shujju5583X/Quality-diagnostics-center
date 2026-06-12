@@ -11,22 +11,16 @@ namespace LabSystem.Services
     {
         private readonly IResultRepository _resultRepo;
         private readonly IRepository<TestType> _testTypeRepo;
-        private readonly IRepository<AuditLog> _auditRepo;
         private readonly ITestOrderRepository _orderRepo;
-        private readonly IQCResultRepository _qcRepo;
 
         public ResultService(
             IResultRepository resultRepo, 
-            IRepository<TestType> testTypeRepo, 
-            IRepository<AuditLog> auditRepo,
-            ITestOrderRepository orderRepo,
-            IQCResultRepository qcRepo)
+            IRepository<TestType> testTypeRepo,
+            ITestOrderRepository orderRepo)
         {
             _resultRepo = resultRepo;
             _testTypeRepo = testTypeRepo;
-            _auditRepo = auditRepo;
             _orderRepo = orderRepo;
-            _qcRepo = qcRepo;
         }
 
         public async Task AddResultAsync(Result result, CancellationToken cancellationToken = default)
@@ -59,18 +53,9 @@ namespace LabSystem.Services
             }
 
             result.RecordedAt = DateTime.UtcNow;
+            result.CreatedAt = DateTime.UtcNow;
+            result.UpdatedAt = DateTime.UtcNow;
             await _resultRepo.AddAsync(result, cancellationToken);
-
-            await _auditRepo.AddAsync(new AuditLog
-            {
-                Action = "Created",
-                EntityType = "Result",
-                EntityId = result.ResultId,
-                Timestamp = DateTime.UtcNow,
-                Details = isRejected 
-                    ? $"Result recorded as Sample Rejected for OrderId {result.OrderId}, TypeId {result.TypeId}."
-                    : $"Result added for OrderId {result.OrderId}."
-            }, cancellationToken);
         }
 
         public async Task AmendResultAsync(int resultId, double newValue, string reason, int technicianId, CancellationToken cancellationToken = default)
@@ -89,22 +74,13 @@ namespace LabSystem.Services
             result.IsAmended = true;
             result.AmendmentReason = reason;
             result.AmendedAt = DateTime.UtcNow;
+            result.UpdatedAt = DateTime.UtcNow;
 
             var order = await _orderRepo.GetByIdAsync(result.OrderId, cancellationToken);
             var patient = order?.Patient;
             result.IsAbnormal = EvaluateIsAbnormal(result.Value, testType, patient);
 
             await _resultRepo.UpdateAsync(result, cancellationToken);
-
-            await _auditRepo.AddAsync(new AuditLog
-            {
-                Action = "Amended",
-                EntityType = "Result",
-                EntityId = result.ResultId,
-                UserId = technicianId,
-                Timestamp = DateTime.UtcNow,
-                Details = $"Amended ResultId {result.ResultId} from {oldValue} to {newValue}. Reason: {reason}"
-            }, cancellationToken);
         }
 
         private int CalculateAge(DateTime? dob, DateTime relativeTo)

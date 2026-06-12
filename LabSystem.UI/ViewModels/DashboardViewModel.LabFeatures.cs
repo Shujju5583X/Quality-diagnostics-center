@@ -4,8 +4,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
 using LabSystem.Core.Models;
 using Serilog;
 
@@ -13,7 +11,7 @@ namespace LabSystem.UI.ViewModels
 {
     public partial class DashboardViewModel
     {
-        // Properties for Phase 2
+        // Specimen rejection check for the selected order
         public bool IsSelectedOrderSpecimenRejected
         {
             get
@@ -24,19 +22,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private Doctor _selectedDoctor;
-        public ObservableCollection<Doctor> Doctors { get; } = new ObservableCollection<Doctor>();
-        
-        public Doctor SelectedDoctor
-        {
-            get => _selectedDoctor;
-            set
-            {
-                _selectedDoctor = value;
-                OnPropertyChanged();
-            }
-        }
-
+        // Test Panel selection
         private TestPanel _selectedTestPanel;
         public ObservableCollection<TestPanel> TestPanels { get; } = new ObservableCollection<TestPanel>();
 
@@ -51,38 +37,38 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
+        // ReferredBy autocomplete — populated from distinct historical values in the DB
+        public ObservableCollection<string> ReferredByHistory { get; } = new ObservableCollection<string>();
 
-
-        // Catalog Doctor tab properties
-        private Doctor _catalogSelectedDoctor;
-        public ObservableCollection<Doctor> CatalogDoctors { get; } = new ObservableCollection<Doctor>();
-
-        public Doctor CatalogSelectedDoctor
+        private async Task LoadReferredByHistoryAsync()
         {
-            get => _catalogSelectedDoctor;
-            set
+            try
             {
-                _catalogSelectedDoctor = value;
-                OnPropertyChanged();
-                PopulateCatalogDoctorFields(value);
+                var orders = await _orderRepo.GetAllAsync();
+                var distinctReferrals = orders
+                    .Where(o => !string.IsNullOrWhiteSpace(o.ReferredBy))
+                    .Select(o => o.ReferredBy.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(s => s)
+                    .ToList();
+
+                ReferredByHistory.Clear();
+                // Always include SELF at top
+                if (!distinctReferrals.Any(s => s.Equals("SELF", StringComparison.OrdinalIgnoreCase)))
+                    ReferredByHistory.Add("SELF");
+                foreach (var r in distinctReferrals)
+                    ReferredByHistory.Add(r);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load ReferredBy history.");
             }
         }
 
-        private string _docName;
-        private string _docSpecialization;
-        private string _docClinicName;
-        private string _docContactPhone;
-
-        public string DocName { get => _docName; set { _docName = value; OnPropertyChanged(); } }
-        public string DocSpecialization { get => _docSpecialization; set { _docSpecialization = value; OnPropertyChanged(); } }
-        public string DocClinicName { get => _docClinicName; set { _docClinicName = value; OnPropertyChanged(); } }
-        public string DocContactPhone { get => _docContactPhone; set { _docContactPhone = value; OnPropertyChanged(); } }
-
-        // Logic methods
         private void OnTestPanelSelected(TestPanel panel)
         {
             if (panel == null) return;
-            
+
             // Unselect all test types
             foreach (var t in TestTypes)
             {
@@ -100,91 +86,6 @@ namespace LabSystem.UI.ViewModels
                         t.IsSelected = true;
                     }
                 }
-            }
-        }
-
-        private void PopulateCatalogDoctorFields(Doctor doc)
-        {
-            if (doc != null)
-            {
-                DocName = doc.Name;
-                DocSpecialization = doc.Specialization;
-                DocClinicName = doc.ClinicName;
-                DocContactPhone = doc.ContactPhone;
-            }
-            else
-            {
-                DocName = string.Empty;
-                DocSpecialization = string.Empty;
-                DocClinicName = string.Empty;
-                DocContactPhone = string.Empty;
-            }
-        }
-
-
-
-        private async Task ExecuteSaveCatalogDoctorAsync(object obj)
-        {
-            if (CatalogSelectedDoctor == null)
-            {
-                MessageBox.Show("Please select a doctor to edit.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(DocName))
-            {
-                MessageBox.Show("Doctor name cannot be empty.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            try
-            {
-                CatalogSelectedDoctor.Name = DocName;
-                CatalogSelectedDoctor.Specialization = DocSpecialization;
-                CatalogSelectedDoctor.ClinicName = DocClinicName;
-                CatalogSelectedDoctor.ContactPhone = DocContactPhone;
-
-                await _doctorRepo.UpdateAsync(CatalogSelectedDoctor);
-
-                await LoadDataAsync();
-                MessageBox.Show("Doctor details updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to update doctor.");
-                MessageBox.Show("Error updating doctor details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task ExecuteAddCatalogDoctorAsync(object obj)
-        {
-            if (string.IsNullOrWhiteSpace(DocName))
-            {
-                MessageBox.Show("Doctor Name is required.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            try
-            {
-                var doc = new Doctor
-                {
-                    Name = DocName,
-                    Specialization = DocSpecialization,
-                    ClinicName = DocClinicName,
-                    ContactPhone = DocContactPhone
-                };
-
-                await _doctorRepo.AddAsync(doc);
-
-                DocName = string.Empty;
-                DocSpecialization = string.Empty;
-                DocClinicName = string.Empty;
-                DocContactPhone = string.Empty;
-
-                await LoadDataAsync();
-                MessageBox.Show("Doctor added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to add doctor.");
-                MessageBox.Show("Error adding doctor.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -214,10 +115,9 @@ namespace LabSystem.UI.ViewModels
                 }
             }
 
-            // Fallback
+            // Fallback to TestType defaults
             ri.Low = testType?.ReferenceRangeLow;
             ri.High = testType?.ReferenceRangeHigh;
         }
     }
-
 }

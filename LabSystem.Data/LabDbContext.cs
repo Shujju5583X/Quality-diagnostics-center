@@ -21,14 +21,11 @@ namespace LabSystem.Data
         public DbSet<TestOrder> TestOrders { get; set; }
         public DbSet<Result> Results { get; set; }
         public DbSet<Report> Reports { get; set; }
-        public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
-        public DbSet<Doctor> Doctors { get; set; }
         public DbSet<Specimen> Specimens { get; set; }
         public DbSet<ReferenceRange> ReferenceRanges { get; set; }
         public DbSet<TestPanel> TestPanels { get; set; }
-        public DbSet<QCResult> QCResults { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -41,42 +38,26 @@ namespace LabSystem.Data
             modelBuilder.Entity<TestOrder>().ToTable("TestOrders");
             modelBuilder.Entity<Result>().ToTable("Results");
             modelBuilder.Entity<Report>().ToTable("Reports");
-            modelBuilder.Entity<AuditLog>().ToTable("AuditLogs");
             modelBuilder.Entity<Invoice>().ToTable("Invoices");
             modelBuilder.Entity<Payment>().ToTable("Payments");
-            modelBuilder.Entity<Doctor>().ToTable("Doctors");
             modelBuilder.Entity<Specimen>().ToTable("Specimens");
             modelBuilder.Entity<ReferenceRange>().ToTable("ReferenceRanges");
             modelBuilder.Entity<TestPanel>().ToTable("TestPanels");
-            modelBuilder.Entity<QCResult>().ToTable("QCResults");
 
             // SQLite explicit configurations
-            modelBuilder.Entity<AuditLog>().HasKey(a => a.LogId);
             modelBuilder.Entity<TestOrder>().HasKey(o => o.OrderId);
             modelBuilder.Entity<TestType>().HasKey(t => t.TypeId);
             modelBuilder.Entity<Invoice>().HasKey(i => i.InvoiceId);
             modelBuilder.Entity<Payment>().HasKey(p => p.PaymentId);
-            modelBuilder.Entity<Doctor>().HasKey(d => d.DoctorId);
             modelBuilder.Entity<Specimen>().HasKey(s => s.SpecimenId);
             modelBuilder.Entity<ReferenceRange>().HasKey(r => r.ReferenceRangeId);
             modelBuilder.Entity<TestPanel>().HasKey(p => p.PanelId);
-            modelBuilder.Entity<QCResult>().HasKey(q => q.QCResultId);
 
-            // Configure foreign key relations explicitly for SQLite compatibility
-            modelBuilder.Entity<AuditLog>()
-                .HasOptional(a => a.User)
-                .WithMany()
-                .HasForeignKey(a => a.UserId);
-
+            // Configure foreign key relations
             modelBuilder.Entity<TestOrder>()
                 .HasRequired(o => o.Patient)
                 .WithMany()
                 .HasForeignKey(o => o.PatientId);
-
-            modelBuilder.Entity<TestOrder>()
-                .HasOptional(o => o.Doctor)
-                .WithMany()
-                .HasForeignKey(o => o.DoctorId);
 
             modelBuilder.Entity<Specimen>()
                 .HasRequired(s => s.Order)
@@ -118,16 +99,6 @@ namespace LabSystem.Data
                 .WithMany(i => i.Payments)
                 .HasForeignKey(p => p.InvoiceId);
 
-            modelBuilder.Entity<QCResult>()
-                .HasRequired(q => q.TestType)
-                .WithMany()
-                .HasForeignKey(q => q.TestTypeId);
-
-            modelBuilder.Entity<QCResult>()
-                .HasRequired(q => q.Technician)
-                .WithMany()
-                .HasForeignKey(q => q.TechnicianId);
-
             modelBuilder.Entity<TestOrder>()
                 .HasMany(o => o.TestTypes)
                 .WithMany()
@@ -148,18 +119,12 @@ namespace LabSystem.Data
                     m.MapRightKey("TypeId");
                 });
 
-            // Add index configurations for foreign keys
+            // Index configurations
             modelBuilder.Entity<TestOrder>()
                 .Property(o => o.PatientId)
                 .HasColumnAnnotation(
                     IndexAnnotation.AnnotationName,
                     new IndexAnnotation(new IndexAttribute("IX_TestOrders_PatientId")));
-
-            modelBuilder.Entity<TestOrder>()
-                .Property(o => o.DoctorId)
-                .HasColumnAnnotation(
-                    IndexAnnotation.AnnotationName,
-                    new IndexAnnotation(new IndexAttribute("IX_TestOrders_DoctorId")));
 
             modelBuilder.Entity<Specimen>()
                 .Property(s => s.OrderId)
@@ -196,12 +161,6 @@ namespace LabSystem.Data
                 .HasColumnAnnotation(
                     IndexAnnotation.AnnotationName,
                     new IndexAnnotation(new IndexAttribute("IX_Reports_OrderId")));
-
-            modelBuilder.Entity<AuditLog>()
-                .Property(a => a.UserId)
-                .HasColumnAnnotation(
-                    IndexAnnotation.AnnotationName,
-                    new IndexAnnotation(new IndexAttribute("IX_AuditLogs_UserId")));
 
             base.OnModelCreating(modelBuilder);
         }

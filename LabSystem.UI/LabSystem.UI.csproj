@@ -15,7 +15,7 @@
     <Reference Include="System.Configuration" />
   </ItemGroup>
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net451</TargetFramework>
     <UseWPF>true</UseWPF>
     <LangVersion>10.0</LangVersion>

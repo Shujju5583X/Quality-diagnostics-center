@@ -4,7 +4,6 @@
     <ProjectReference Include="..\LabSystem.Data\LabSystem.Data.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="ClosedXML" Version="0.95.4" />
     <PackageReference Include="PDFsharp-MigraDoc" Version="1.50.5147" />
     <PackageReference Include="EntityFramework" Version="6.4.4" />

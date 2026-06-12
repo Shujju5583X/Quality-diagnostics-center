@@ -11,11 +11,13 @@ namespace LabSystem.Core.Models
         public DateTime OrderedAt { get; set; }
         public string Status { get; set; }
         public string Notes { get; set; }
+
+        // Simple string referral field (replaces Doctor entity FK)
         public string ReferredBy { get; set; }
-        
-        public int? DoctorId { get; set; }
-        public virtual Doctor Doctor { get; set; }
-        
+
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+
         public virtual ICollection<Specimen> Specimens { get; set; } = new HashSet<Specimen>();
         public virtual ICollection<TestType> TestTypes { get; set; } = new HashSet<TestType>();
     }

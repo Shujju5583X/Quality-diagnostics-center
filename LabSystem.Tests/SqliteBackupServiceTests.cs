@@ -20,7 +20,6 @@ namespace LabSystem.Tests
         private Mock<IResultRepository> _mockResultRepo;
         private Mock<IRepository<TestType>> _mockTestTypeRepo;
         private Mock<IRepository<Staff>> _mockStaffRepo;
-        private Mock<IRepository<AuditLog>> _mockAuditLogRepo;
 
         private SqliteBackupService _backupService;
         private string _backupsDir;
@@ -34,15 +33,13 @@ namespace LabSystem.Tests
             _mockResultRepo = new Mock<IResultRepository>();
             _mockTestTypeRepo = new Mock<IRepository<TestType>>();
             _mockStaffRepo = new Mock<IRepository<Staff>>();
-            _mockAuditLogRepo = new Mock<IRepository<AuditLog>>();
 
             _backupService = new SqliteBackupService(
                 _mockPatientRepo.Object,
                 _mockOrderRepo.Object,
                 _mockResultRepo.Object,
                 _mockTestTypeRepo.Object,
-                _mockStaffRepo.Object,
-                _mockAuditLogRepo.Object
+                _mockStaffRepo.Object
             );
 
             _backupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups");
@@ -87,11 +84,7 @@ namespace LabSystem.Tests
             _mockTestTypeRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(testTypes);
             _mockStaffRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Staff>
             {
-                new Staff { StaffId = 1, FullName = "Dr. Alice Smith", Role = "Technician", PinHash = "dummyhash", FailedLoginAttempts = 1, LockoutEnd = DateTime.Parse("2026-06-09 16:00:00") }
-            });
-            _mockAuditLogRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<AuditLog>
-            {
-                new AuditLog { LogId = 500, Action = "Backup", EntityType = "System", EntityId = null, Timestamp = new DateTime(2026, 6, 9), UserId = 1, Details = "Backup created" }
+                new Staff { StaffId = 1, FullName = "Dr. Alice Smith" }
             });
         }
 
@@ -132,7 +125,7 @@ namespace LabSystem.Tests
             // Load generated Excel file and verify content
             using (var workbook = new XLWorkbook(excelPath))
             {
-                Assert.AreEqual(6, workbook.Worksheets.Count, "Should contain exactly 6 worksheets.");
+                Assert.AreEqual(5, workbook.Worksheets.Count, "Should contain exactly 5 worksheets.");
 
                 // 1. Patients Worksheet
                 var wsPatients = workbook.Worksheet("Patients");
@@ -166,13 +159,6 @@ namespace LabSystem.Tests
                 var wsStaff = workbook.Worksheet("Staff Directory");
                 Assert.AreEqual(1, (double)wsStaff.Cell(4, 1).Value);
                 Assert.AreEqual("Dr. Alice Smith", wsStaff.Cell(4, 2).Value.ToString());
-                Assert.AreEqual(1, (double)wsStaff.Cell(4, 4).Value);
-                Assert.AreEqual("2026-06-09 16:00:00", wsStaff.Cell(4, 5).Value.ToString());
-
-                // 6. Audit Logs Worksheet
-                var wsLogs = workbook.Worksheet("Audit Logs");
-                Assert.AreEqual(500, (double)wsLogs.Cell(4, 1).Value);
-                Assert.AreEqual("Dr. Alice Smith", wsLogs.Cell(4, 6).Value.ToString(), "User ID should be mapped to Staff name");
             }
         }
     }

@@ -5,9 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:viewmodels="clr-namespace:LabSystem.UI.ViewModels"
-
+             xmlns:converters="clr-namespace:LabSystem.UI.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="768" d:DesignWidth="1200">
+             d:DesignHeight="768" d:DesignWidth="1366">
+
     <UserControl.Resources>
         <!-- Sidebar Navigation ListBoxItem Style -->
         <Style x:Key="SidebarItemStyle" TargetType="ListBoxItem">
@@ -36,29 +37,40 @@
                                 <Setter TargetName="Border" Property="Background" Value="#25FFFFFF"/>
                                 <Setter Property="TextElement.Foreground" Value="White"/>
                             </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5"/>
-                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
         <CollectionViewSource x:Key="GroupedTestTypes" Source="{Binding TestTypes}">
             <CollectionViewSource.GroupDescriptions>
                 <PropertyGroupDescription PropertyName="GroupName" />
             </CollectionViewSource.GroupDescriptions>
         </CollectionViewSource>
+
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <converters:InvertBoolConverter x:Key="InvertBool" />
+
+        <!-- Row style: highlight abnormal results in red -->
+        <Style x:Key="AbnormalRowStyle" TargetType="DataGridRow">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAbnormal}" Value="True">
+                    <Setter Property="Background" Value="#FFEBEE"/>
+                    <Setter Property="Foreground" Value="#B71C1C"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="220" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Left Sidebar Navigation -->
+        <!-- ══════════════ LEFT SIDEBAR NAVIGATION ══════════════ -->
         <Border Grid.Column="0" Background="#1E1926" BorderThickness="0">
             <Grid>
                 <Grid.RowDefinitions>
@@ -70,120 +82,68 @@
                 <!-- Brand / Logo -->
                 <StackPanel Grid.Row="0" Margin="16 28 16 20">
                     <materialDesign:PackIcon Kind="Microscope" Width="42" Height="42" HorizontalAlignment="Center" Foreground="#B39DDB" Margin="0 0 0 10"/>
-                    <TextBlock Text="LAB NAVIGATION" FontSize="11" FontWeight="Bold" Foreground="#9E8FB2" HorizontalAlignment="Center"/>
+                    <TextBlock Text="QDC SYSTEM" FontSize="11" FontWeight="Bold" Foreground="#9E8FB2" HorizontalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Navigation ListBox -->
+                <!-- Navigation ListBox synced to MainTabControl -->
                 <ListBox Grid.Row="1" 
-                          Background="Transparent" 
-                          BorderThickness="0"
-                          SelectedIndex="{Binding ElementName=MainTabControl, Path=SelectedIndex}"
-                          ItemContainerStyle="{StaticResource SidebarItemStyle}">
-                    
-                    <!-- Overview -->
+                         Background="Transparent" 
+                         BorderThickness="0"
+                         SelectedIndex="{Binding ElementName=MainTabControl, Path=SelectedIndex}"
+                         ItemContainerStyle="{StaticResource SidebarItemStyle}">
+
                     <ListBoxItem>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="Home" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Overview" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
-                    <!-- Patients -->
                     <ListBoxItem>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="AccountGroup" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Patients" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
-                    
-                    <!-- Create Orders -->
+
                     <ListBoxItem>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="ClipboardText" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
-                            <TextBlock Grid.Column="1" Text="Create Orders" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                            <TextBlock Grid.Column="1" Text="New Order" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
-                    
-                    <!-- Results Entry -->
+
+                    <!-- Tab 3: Work Queue (3-column layout) -->
                     <ListBoxItem>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="TestTube" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
-                            <TextBlock Grid.Column="1" Text="Results Entry" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                            <TextBlock Grid.Column="1" Text="Work Queue" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
-
-
-                    <!-- Quality Control (Phase 4) -->
                     <ListBoxItem>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="ChartSankeyVariant" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
-                            <TextBlock Grid.Column="1" Text="Quality Control" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
-                        </Grid>
-                    </ListBoxItem>
-
-
-
-                    <!-- Billing -->
-                    <ListBoxItem>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Billing" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
-                    <!-- Test Catalog (Admin only) -->
-                    <ListBoxItem Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                    <ListBoxItem>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="Database" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Test Catalog" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
-
-                    
-                    <!-- Settings -->
                     <ListBoxItem>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="Cog" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Settings" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
                 </ListBox>
 
-                <!-- Sidebar Footer Account Info -->
+                <!-- Sidebar Footer -->
                 <Border Grid.Row="2" Background="#14111A" Padding="16 14" BorderBrush="#2A2235" BorderThickness="0 1 0 0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -192,15 +152,15 @@
                         </Grid.ColumnDefinitions>
                         <materialDesign:PackIcon Grid.Column="0" Kind="AccountCircle" Width="24" Height="24" Foreground="#B39DDB" VerticalAlignment="Center"/>
                         <StackPanel Grid.Column="1" Margin="10 0 0 0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding CurrentStaffName, TargetNullValue='Technician'}" Foreground="White" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="Staff Account" Foreground="#7E7094" FontSize="10" FontWeight="Regular"/>
+                            <TextBlock Text="Lab Technician" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="Single Operator Mode" Foreground="#7E7094" FontSize="10" FontWeight="Regular"/>
                         </StackPanel>
                     </Grid>
                 </Border>
             </Grid>
         </Border>
 
-        <!-- Right Main Content Panels -->
+        <!-- ══════════════ RIGHT CONTENT AREA ══════════════ -->
         <TabControl x:Name="MainTabControl" Grid.Column="1" BorderThickness="0" Background="#F5F5F7">
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem">
@@ -208,7 +168,7 @@
                 </Style>
             </TabControl.ItemContainerStyle>
 
-            <!-- Tab 0: Overview -->
+            <!-- ─── TAB 0: OVERVIEW ─── -->
             <TabItem>
                 <Grid Margin="24">
                     <Grid.RowDefinitions>
@@ -216,10 +176,9 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
-                    <!-- Banner -->
+
                     <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline5TextBlock}" Text="System Overview" Margin="4 0 0 20" FontWeight="Bold"/>
-                    
+
                     <!-- Stats Cards -->
                     <Grid Grid.Row="1" Margin="0 0 0 24">
                         <Grid.ColumnDefinitions>
@@ -228,8 +187,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        
-                        <!-- Card 1: Patients -->
+
                         <materialDesign:Card Grid.Column="0" Margin="4" Padding="20" UniformCornerRadius="8" Background="#EDE7F6" materialDesign:ShadowAssist.ShadowDepth="Depth1">
                             <StackPanel>
                                 <materialDesign:PackIcon Kind="AccountGroup" Width="32" Height="32" Foreground="#5E35B1" Margin="0 0 0 8"/>
@@ -238,7 +196,6 @@
                             </StackPanel>
                         </materialDesign:Card>
 
-                        <!-- Card 2: Pending Orders -->
                         <materialDesign:Card Grid.Column="1" Margin="4" Padding="20" UniformCornerRadius="8" Background="#FFF3E0" materialDesign:ShadowAssist.ShadowDepth="Depth1">
                             <StackPanel>
                                 <materialDesign:PackIcon Kind="Clock" Width="32" Height="32" Foreground="#EF6C00" Margin="0 0 0 8"/>
@@ -247,26 +204,24 @@
                             </StackPanel>
                         </materialDesign:Card>
 
-                        <!-- Card 3: Completed Orders -->
                         <materialDesign:Card Grid.Column="2" Margin="4" Padding="20" UniformCornerRadius="8" Background="#E0F2F1" materialDesign:ShadowAssist.ShadowDepth="Depth1">
                             <StackPanel>
                                 <materialDesign:PackIcon Kind="ClipboardCheck" Width="32" Height="32" Foreground="#00796B" Margin="0 0 0 8"/>
-                                <TextBlock Text="COMPLETED TESTS" FontSize="11" FontWeight="Bold" Foreground="#26A69A"/>
+                                <TextBlock Text="COMPLETED" FontSize="11" FontWeight="Bold" Foreground="#26A69A"/>
                                 <TextBlock Text="{Binding CompletedOrders}" FontSize="36" FontWeight="Bold" Foreground="#004D40" Margin="0 4 0 0"/>
                             </StackPanel>
                         </materialDesign:Card>
 
-                        <!-- Card 4: Abnormal Flags -->
                         <materialDesign:Card Grid.Column="3" Margin="4" Padding="20" UniformCornerRadius="8" Background="#FFEBEE" materialDesign:ShadowAssist.ShadowDepth="Depth1">
                             <StackPanel>
                                 <materialDesign:PackIcon Kind="AlertDecagram" Width="32" Height="32" Foreground="#C62828" Margin="0 0 0 8"/>
-                                <TextBlock Text="ABNORMAL CASES" FontSize="11" FontWeight="Bold" Foreground="#EF5350"/>
+                                <TextBlock Text="ABNORMAL FLAGS" FontSize="11" FontWeight="Bold" Foreground="#EF5350"/>
                                 <TextBlock Text="{Binding AbnormalResultsFlagged}" FontSize="36" FontWeight="Bold" Foreground="#B71C1C" Margin="0 4 0 0"/>
                             </StackPanel>
                         </materialDesign:Card>
                     </Grid>
-                    
-                    <!-- Recent Orders List -->
+
+                    <!-- Recent Orders -->
                     <materialDesign:Card Grid.Row="2" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -279,7 +234,7 @@
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="Auto" />
                                     <DataGridTextColumn Header="Patient Name" Binding="{Binding Patient.FullName}" Width="*" />
-                                    <DataGridTextColumn Header="Order Date" Binding="{Binding OrderedAt}" Width="Auto" />
+                                    <DataGridTextColumn Header="Order Date" Binding="{Binding OrderedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="Auto" />
                                     <DataGridTextColumn Header="Referred By" Binding="{Binding ReferredBy, TargetNullValue='SELF'}" Width="Auto" />
                                     <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="Auto" />
                                 </DataGrid.Columns>
@@ -289,15 +244,14 @@
                 </Grid>
             </TabItem>
 
-            <!-- Tab 1: Patients -->
+            <!-- ─── TAB 1: PATIENTS ─── -->
             <TabItem>
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
                         <ColumnDefinition Width="2*" />
                     </Grid.ColumnDefinitions>
-                    
-                    <!-- Left: Patients Grid -->
+
                     <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -307,112 +261,79 @@
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            
+
                             <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Registered Patients" />
-                            
-                            <!-- Patient Search -->
-                            <TextBox Grid.Row="1" 
-                                     x:Name="PatientsGridSearchBox"
-                                     materialDesign:HintAssist.Hint="Search patient by name, ID, phone..."
+
+                            <TextBox Grid.Row="1" materialDesign:HintAssist.Hint="Search patient by name, ID, phone..."
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                      materialDesign:TextFieldAssist.HasClearButton="True"
                                      Margin="4 0 4 16"
-                                     Text="{Binding PatientSearchQuery, UpdateSourceTrigger=PropertyChanged}">
-                                <TextBox.InputBindings>
-                                    <!-- Prevent accidental submissions on enter -->
-                                </TextBox.InputBindings>
-                            </TextBox>
+                                     Text="{Binding PatientSearchQuery, UpdateSourceTrigger=PropertyChanged}"/>
 
-                            <!-- Date Range Filters -->
-                            <WrapPanel Grid.Row="2" Margin="4 0 4 12" VerticalAlignment="Center">
-                                <DatePicker materialDesign:HintAssist.Hint="From Reg. Date" 
-                                            SelectedDate="{Binding PatientStartDate}"
-                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
-                                            Width="135" Margin="0 0 12 0" />
-                                <DatePicker materialDesign:HintAssist.Hint="To Reg. Date" 
-                                            SelectedDate="{Binding PatientEndDate}"
-                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
-                                            Width="135" />
+                            <WrapPanel Grid.Row="2" Margin="4 0 4 12">
+                                <DatePicker materialDesign:HintAssist.Hint="From Reg. Date" SelectedDate="{Binding PatientStartDate}"
+                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Width="135" Margin="0 0 12 0" />
+                                <DatePicker materialDesign:HintAssist.Hint="To Reg. Date" SelectedDate="{Binding PatientEndDate}"
+                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}" Width="135" />
                             </WrapPanel>
-                            
-                            <DataGrid Grid.Row="3" 
-                                      x:Name="PatientsGrid" 
-                                      ItemsSource="{Binding Patients}" 
-                                      SelectedItem="{Binding SelectedPatient}" 
-                                      AutoGenerateColumns="False" 
-                                      IsReadOnly="True" 
-                                      SelectionMode="Single"
-                                      Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC"
-                                      EnableRowVirtualization="True"
-                                      VirtualizingStackPanel.IsVirtualizing="True"
-                                      VirtualizingStackPanel.VirtualizationMode="Recycling">
+
+                            <DataGrid Grid.Row="3" ItemsSource="{Binding Patients}" SelectedItem="{Binding SelectedPatient}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                                      Margin="4 0 4 4" AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding PatientId}" Width="Auto" />
                                     <DataGridTextColumn Header="UHID" Binding="{Binding Uhid}" Width="Auto" />
                                     <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
                                     <DataGridTextColumn Header="Gender" Binding="{Binding Gender, TargetNullValue='Male'}" Width="Auto" />
                                     <DataGridTextColumn Header="Date of Birth" Binding="{Binding DateOfBirth, StringFormat=yyyy-MM-dd}" Width="Auto" />
                                     <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
-                                    <DataGridTextColumn Header="Email" Binding="{Binding ContactEmail}" Width="Auto" />
                                 </DataGrid.Columns>
                             </DataGrid>
 
-                            <!-- Pagination Controls -->
                             <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="4 8 4 4">
-                                <Button Style="{StaticResource MaterialDesignFlatButton}"
-                                        Command="{Binding PreviousPatientPageCommand}"
-                                        Content="&lt; Prev" />
-                                <TextBlock Text="{Binding PatientPageInfo}" 
-                                           VerticalAlignment="Center" 
-                                           Margin="16 0" 
-                                           FontWeight="SemiBold" />
-                                <Button Style="{StaticResource MaterialDesignFlatButton}"
-                                        Command="{Binding NextPatientPageCommand}"
-                                        Content="Next &gt;" />
+                                <Button Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding PreviousPatientPageCommand}" Content="&lt; Prev" />
+                                <TextBlock Text="{Binding PatientPageInfo}" VerticalAlignment="Center" Margin="16 0" FontWeight="SemiBold" />
+                                <Button Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding NextPatientPageCommand}" Content="Next &gt;" />
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
 
-                    <!-- Right: Add Patient Card -->
                     <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Register New Patient" />
-                                
-                                <TextBox materialDesign:HintAssist.Hint="Full Name" 
-                                         Text="{Binding NewPatientName, UpdateSourceTrigger=PropertyChanged}" 
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+
+                                <TextBox materialDesign:HintAssist.Hint="Full Name *"
+                                         Text="{Binding NewPatientName, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                          materialDesign:TextFieldAssist.HasClearButton="True"
                                          Margin="0 0 0 20" />
-                                
+
                                 <ComboBox materialDesign:HintAssist.Hint="Gender"
-                                          SelectedValue="{Binding NewPatientGender}"
-                                          SelectedValuePath="Content"
-                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                                          Margin="0 0 0 20">
+                                          SelectedValue="{Binding NewPatientGender}" SelectedValuePath="Content"
+                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 20">
                                     <ComboBoxItem Content="Male" IsSelected="True" />
                                     <ComboBoxItem Content="Female" />
                                     <ComboBoxItem Content="Other" />
                                 </ComboBox>
 
-                                <DatePicker materialDesign:HintAssist.Hint="Date of Birth" 
-                                            SelectedDate="{Binding NewPatientDOB}" 
-                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}" 
+                                <DatePicker materialDesign:HintAssist.Hint="Date of Birth"
+                                            SelectedDate="{Binding NewPatientDOB}"
+                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
                                             Margin="0 0 0 20" />
-                                
-                                <TextBox materialDesign:HintAssist.Hint="Contact Phone" 
-                                         Text="{Binding NewPatientPhone, UpdateSourceTrigger=PropertyChanged}" 
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+
+                                <TextBox materialDesign:HintAssist.Hint="Contact Phone"
+                                         Text="{Binding NewPatientPhone, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                          materialDesign:TextFieldAssist.HasClearButton="True"
                                          Margin="0 0 0 20" />
-                                
-                                <TextBox materialDesign:HintAssist.Hint="Contact Email" 
-                                         Text="{Binding NewPatientEmail, UpdateSourceTrigger=PropertyChanged}" 
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+
+                                <TextBox materialDesign:HintAssist.Hint="Contact Email"
+                                         Text="{Binding NewPatientEmail, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                          materialDesign:TextFieldAssist.HasClearButton="True"
                                          Margin="0 0 0 32" />
-                                
+
                                 <Button Command="{Binding AddPatientCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="46">
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="AccountPlus" Margin="0 0 8 0" VerticalAlignment="Center" Width="20" Height="20" />
@@ -425,16 +346,16 @@
                 </Grid>
             </TabItem>
 
-            <!-- Tab 2: Orders -->
+            <!-- ─── TAB 2: NEW ORDER ─── -->
             <TabItem>
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
                         <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="280" />
+                        <ColumnDefinition Width="260" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Left: Select Patient -->
+                    <!-- Select Patient -->
                     <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -443,54 +364,34 @@
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            
+
                             <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="1. Select Patient" />
-                            
-                            <!-- Search -->
-                            <TextBox Grid.Row="1"
-                                     x:Name="OrderPatientsSearchBox"
-                                     materialDesign:HintAssist.Hint="Search patient by name or ID..."
+
+                            <TextBox Grid.Row="1" materialDesign:HintAssist.Hint="Search patient..."
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                      materialDesign:TextFieldAssist.HasClearButton="True"
                                      Margin="4 0 4 16"
                                      Text="{Binding PatientSearchQuery, UpdateSourceTrigger=PropertyChanged}"/>
-                            
-                            <DataGrid Grid.Row="2" 
-                                      x:Name="OrderPatientsGrid"
-                                      ItemsSource="{Binding Patients}" 
-                                      SelectedItem="{Binding SelectedPatient}" 
-                                      AutoGenerateColumns="False" 
-                                      IsReadOnly="True" 
-                                      SelectionMode="Single"
-                                      Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC"
-                                      EnableRowVirtualization="True"
-                                      VirtualizingStackPanel.IsVirtualizing="True"
-                                      VirtualizingStackPanel.VirtualizationMode="Recycling">
+
+                            <DataGrid Grid.Row="2" ItemsSource="{Binding Patients}" SelectedItem="{Binding SelectedPatient}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                                      Margin="4 0 4 4" AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True" VirtualizingStackPanel.IsVirtualizing="True">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding PatientId}" Width="Auto" />
                                     <DataGridTextColumn Header="UHID" Binding="{Binding Uhid}" Width="Auto" />
                                     <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
                                 </DataGrid.Columns>
                             </DataGrid>
 
-                            <!-- Pagination Controls -->
                             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="4 8 4 4">
-                                <Button Style="{StaticResource MaterialDesignFlatButton}"
-                                        Command="{Binding PreviousPatientPageCommand}"
-                                        Content="&lt; Prev" />
-                                <TextBlock Text="{Binding PatientPageInfo}" 
-                                           VerticalAlignment="Center" 
-                                           Margin="16 0" 
-                                           FontWeight="SemiBold" />
-                                <Button Style="{StaticResource MaterialDesignFlatButton}"
-                                        Command="{Binding NextPatientPageCommand}"
-                                        Content="Next &gt;" />
+                                <Button Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding PreviousPatientPageCommand}" Content="&lt; Prev" />
+                                <TextBlock Text="{Binding PatientPageInfo}" VerticalAlignment="Center" Margin="16 0" FontWeight="SemiBold" />
+                                <Button Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding NextPatientPageCommand}" Content="Next &gt;" />
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
 
-                    <!-- Middle: Select Tests -->
+                    <!-- Select Tests -->
                     <materialDesign:Card Grid.Column="1" Margin="12 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -498,7 +399,7 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 16" Text="2. Select Tests" />
-                            
+
                             <ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource GroupedTestTypes}}" BorderThickness="0" Background="Transparent" Margin="4 0 4 4"
                                      VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
                                 <ListBox.GroupStyle>
@@ -521,18 +422,14 @@
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                
                                                 <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0 0 12 0" />
-                                                
-                                                <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="#333333" VerticalAlignment="Center"/>
-                                                
+                                                <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" Foreground="#333333" VerticalAlignment="Center"/>
                                                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="Ref: " Foreground="#888888" FontSize="12"/>
-                                                    <TextBlock Text="{Binding Low}" Foreground="#444444" FontWeight="SemiBold" FontSize="12"/>
-                                                    <TextBlock Text=" - " Foreground="#888888" FontSize="12"/>
-                                                    <TextBlock Text="{Binding High}" Foreground="#444444" FontWeight="SemiBold" FontSize="12"/>
-                                                    <TextBlock Text=" " Foreground="#888888" FontSize="12"/>
-                                                    <TextBlock Text="{Binding Unit}" Foreground="#888888" FontSize="12"/>
+                                                    <TextBlock Text="{Binding Low}" Foreground="#444444" FontSize="11"/>
+                                                    <TextBlock Text=" – " Foreground="#888888" FontSize="11"/>
+                                                    <TextBlock Text="{Binding High}" Foreground="#444444" FontSize="11"/>
+                                                    <TextBlock Text=" " Foreground="#888888" FontSize="11"/>
+                                                    <TextBlock Text="{Binding Unit}" Foreground="#888888" FontSize="11"/>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -542,53 +439,50 @@
                         </Grid>
                     </materialDesign:Card>
 
-                    <!-- Right: Submit Order -->
+                    <!-- Confirm Order -->
                     <materialDesign:Card Grid.Column="2" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="3. Confirm Order" />
-                            
-                            <StackPanel Grid.Row="1" VerticalAlignment="Top" Margin="0 8 0 0">
-                                <materialDesign:PackIcon Kind="ClipboardText" Width="48" Height="48" Foreground="#673AB7" HorizontalAlignment="Center" Margin="0 0 0 16"/>
-                                <TextBlock Text="SELECTED PATIENT" FontSize="11" FontWeight="Bold" Foreground="Gray" HorizontalAlignment="Center" Margin="0 0 0 6"/>
-                                
-                                <Border Background="#F1EBF9" CornerRadius="6" Padding="12 16" Margin="0 0 0 16">
-                                    <TextBlock Text="{Binding SelectedPatient.FullName, TargetNullValue='No patient selected'}" 
-                                               FontWeight="Bold" 
-                                               FontSize="15" 
-                                               Foreground="#311B92"
-                                               HorizontalAlignment="Center" 
-                                               TextAlignment="Center" 
-                                               TextWrapping="Wrap"/>
-                                </Border>
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="3. Confirm Order" />
 
-                                <ComboBox materialDesign:HintAssist.Hint="Select Test Panel / Package"
-                                          ItemsSource="{Binding TestPanels}"
-                                          SelectedItem="{Binding SelectedTestPanel}"
-                                          DisplayMemberPath="Name"
-                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                                          Margin="0 0 0 16" />
+                            <Border Grid.Row="1" Background="#F1EBF9" CornerRadius="6" Padding="12 14" Margin="0 0 0 16">
+                                <TextBlock Text="{Binding SelectedPatient.FullName, TargetNullValue='No patient selected'}"
+                                           FontWeight="Bold" FontSize="14" Foreground="#311B92"
+                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                            </Border>
 
-                                <ComboBox materialDesign:HintAssist.Hint="Select Referring Doctor"
-                                          ItemsSource="{Binding Doctors}"
-                                          SelectedItem="{Binding SelectedDoctor}"
-                                          DisplayMemberPath="Name"
-                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                                          Margin="0 0 0 16" />
-                            </StackPanel>
-                            
-                            <TextBox Grid.Row="2" materialDesign:HintAssist.Hint="Other Referral Text (if not selected)" 
-                                     Text="{Binding OrderReferredBy, UpdateSourceTrigger=PropertyChanged}" 
+                            <ComboBox Grid.Row="2" materialDesign:HintAssist.Hint="Apply Test Panel / Package"
+                                      ItemsSource="{Binding TestPanels}"
+                                      SelectedItem="{Binding SelectedTestPanel}"
+                                      DisplayMemberPath="Name"
+                                      Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                      Margin="0 0 0 16" />
+
+                            <!-- ReferredBy ComboBox with editable text for autocomplete -->
+                            <ComboBox Grid.Row="3"
+                                      IsEditable="True"
+                                      materialDesign:HintAssist.Hint="Referred By"
+                                      ItemsSource="{Binding ReferredByHistory}"
+                                      Text="{Binding OrderReferredBy, UpdateSourceTrigger=PropertyChanged}"
+                                      Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                      Margin="0 0 0 16" />
+
+                            <TextBox Grid.Row="4" materialDesign:HintAssist.Hint="Order Notes (optional)"
+                                     Text="{Binding OrderNotes, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                     AcceptsReturn="True" TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto" Height="80"
                                      Margin="0 0 0 24" />
 
-                            <Button Grid.Row="3" Command="{Binding CreateOrderCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="46" VerticalAlignment="Bottom">
+                            <Button Grid.Row="5" Command="{Binding CreateOrderCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="46">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="Send" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
                                     <TextBlock Text="SUBMIT ORDER" VerticalAlignment="Center" FontWeight="Bold"/>
@@ -599,80 +493,497 @@
                 </Grid>
             </TabItem>
 
-            <!-- Tab 3: Results -->
+            <!-- ─── TAB 3: WORK QUEUE (3-COLUMN SINGLE-SCREEN) ─── -->
             <TabItem>
-                <Grid Margin="24">
+                <Grid Margin="12">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="4*" />
+                        <!-- Column 1: Queue -->
+                        <ColumnDefinition Width="280" />
+                        <!-- Column 2: Action (Results Entry) -->
+                        <ColumnDefinition Width="*" />
+                        <!-- Column 3: Output (Actions) -->
+                        <ColumnDefinition Width="240" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Left: Orders List -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <!-- ═══ COLUMN 1: PENDING ORDER QUEUE ═══ -->
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="0" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Background="#311B92" CornerRadius="8 8 0 0" Padding="16 12">
+                                <StackPanel>
+                                    <TextBlock Text="PENDING QUEUE" FontWeight="Bold" FontSize="13" Foreground="White"/>
+                                    <TextBlock Text="{Binding PendingOrders, StringFormat='({0} orders awaiting)'}" FontSize="11" Foreground="#CE93D8"/>
+                                </StackPanel>
+                            </Border>
+
+                            <ListView Grid.Row="1" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}"
+                                      SelectionMode="Single" BorderThickness="0" Background="Transparent"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="BorderThickness" Value="0 0 0 1"/>
+                                        <Setter Property="BorderBrush" Value="#EEE"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                                <Setter Property="Background" Value="#FFFDE7"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Status}" Value="Complete">
+                                                <Setter Property="Background" Value="#F1F8E9"/>
+                                            </DataTrigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#EDE7F6"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="12 10">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid Grid.Row="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Patient.FullName}" FontWeight="Bold" FontSize="13" Foreground="#1A1A2E" TextTrimming="CharacterEllipsis"/>
+                                                <!-- Status Badge -->
+                                                <Border Grid.Column="1" CornerRadius="8" Padding="6 2" Margin="4 0 0 0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                                                    <Setter Property="Background" Value="#FF8F00"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Complete">
+                                                                    <Setter Property="Background" Value="#388E3C"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding Status}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                                </Border>
+                                            </Grid>
+                                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0 3 0 0">
+                                                <materialDesign:PackIcon Kind="ClockOutline" Width="12" Height="12" Foreground="#888" VerticalAlignment="Center" Margin="0 0 4 0"/>
+                                                <TextBlock Text="{Binding OrderedAt, StringFormat={}{0:dd MMM HH:mm}}" FontSize="11" Foreground="#666"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0 2 0 0">
+                                                <TextBlock Text="{Binding TestTypes.Count, StringFormat='{}{0} test(s)'}" FontSize="11" Foreground="#7E57C2" FontWeight="SemiBold"/>
+                                                <TextBlock Text=" · " Foreground="#AAA" FontSize="11"/>
+                                                <TextBlock Text="{Binding ReferredBy, TargetNullValue='SELF'}" FontSize="11" Foreground="#888" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- ═══ COLUMN 2: RESULTS DATA ENTRY GRID ═══ -->
+                    <materialDesign:Card Grid.Column="1" Margin="8 0 8 0" Padding="0" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            
-                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Orders" />
-                            
-                            <!-- Search -->
-                            <TextBox Grid.Row="1"
-                                     x:Name="OrdersSearchBox"
-                                     materialDesign:HintAssist.Hint="Search orders by patient, ID, status..."
-                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                     materialDesign:TextFieldAssist.HasClearButton="True"
-                                     Margin="4 0 4 16"
-                                     TextChanged="OrdersSearchBox_TextChanged"/>
-                            
-                            <DataGrid Grid.Row="2" 
-                                      x:Name="OrdersGrid" 
-                                      ItemsSource="{Binding Orders}" 
-                                      SelectedItem="{Binding SelectedOrder}" 
-                                      AutoGenerateColumns="False" 
-                                      IsReadOnly="True" 
+
+                            <!-- Header with patient info -->
+                            <Border Grid.Row="0" Background="#1565C0" CornerRadius="8 8 0 0" Padding="16 12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="RESULT ENTRY" FontWeight="Bold" FontSize="13" Foreground="White"/>
+                                        <TextBlock Text="{Binding SelectedOrder.Patient.FullName, TargetNullValue='Select an order from the queue →'}"
+                                                   FontSize="12" Foreground="#90CAF9" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedOrder.Status, TargetNullValue=''}"
+                                                   FontSize="12" Foreground="#FFE082" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                        <TextBlock Text="{Binding SelectedOrder.OrderedAt, StringFormat={}{0:dd MMM yyyy}}"
+                                                   FontSize="11" Foreground="#90CAF9" HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Specimen rejection warning -->
+                            <Border Grid.Row="1" Background="#FFEBEE" Padding="16 8"
+                                    Visibility="{Binding IsSelectedOrderSpecimenRejected, Converter={StaticResource BoolToVis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="AlertCircle" Width="18" Height="18" Foreground="#C62828" VerticalAlignment="Center" Margin="0 0 8 0"/>
+                                    <TextBlock Text="⚠ One or more specimens have been REJECTED for this order." Foreground="#C62828" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Results DataGrid -->
+                            <DataGrid Grid.Row="2"
+                                      ItemsSource="{Binding SelectedOrderResults}"
+                                      AutoGenerateColumns="False"
                                       SelectionMode="Single"
-                                      Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC"
-                                      EnableRowVirtualization="True"
-                                      VirtualizingStackPanel.IsVirtualizing="True"
-                                      VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      CanUserResizeRows="False"
+                                      AlternatingRowBackground="#FAFAFA"
+                                      GridLinesVisibility="Horizontal"
+                                      RowStyle="{StaticResource AbnormalRowStyle}"
+                                      BorderThickness="0">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="Auto" />
-                                    <DataGridTextColumn Header="Patient" Binding="{Binding Patient.FullName}" Width="*" />
-                                    
-                                    <!-- Custom Badge Style for Order Status -->
+                                    <!-- Test Name (read-only) -->
+                                    <DataGridTextColumn Header="Test" Binding="{Binding TestName}" Width="*" IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="Padding" Value="8 6"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Value — editable TextBox or ComboBox depending on HasOptions -->
+                                    <DataGridTemplateColumn Header="Result Value" Width="160">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <!-- Text input for numeric results -->
+                                                    <TextBox Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged}"
+                                                             IsReadOnly="{Binding IsReadOnly}"
+                                                             BorderThickness="0"
+                                                             Background="Transparent"
+                                                             VerticalAlignment="Center"
+                                                             Padding="8 6"
+                                                             Visibility="{Binding HasOptions, Converter={StaticResource BoolToVis}}">
+                                                        <TextBox.Style>
+                                                            <Style TargetType="TextBox">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding HasOptions}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding HasOptions}" Value="False">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBox.Style>
+                                                    </TextBox>
+                                                    <!-- Dropdown for qualitative results -->
+                                                    <ComboBox ItemsSource="{Binding Options}"
+                                                              SelectedItem="{Binding SelectedOption}"
+                                                              DisplayMemberPath="Display"
+                                                              IsEnabled="{Binding IsReadOnly, Converter={StaticResource InvertBool}}"
+                                                              BorderThickness="0"
+                                                              Background="Transparent"
+                                                              VerticalAlignment="Center"
+                                                              Padding="4 2">
+                                                        <ComboBox.Style>
+                                                            <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding HasOptions}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding HasOptions}" Value="False">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </ComboBox.Style>
+                                                    </ComboBox>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Unit (read-only) -->
+                                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="80" IsReadOnly="True">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="Foreground" Value="#666"/>
+                                                <Setter Property="Padding" Value="4 6"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <!-- Reference Range -->
+                                    <DataGridTemplateColumn Header="Ref. Range" Width="120" IsReadOnly="True">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4 0">
+                                                    <TextBlock Text="{Binding Low}" FontSize="12" Foreground="#555"/>
+                                                    <TextBlock Text=" – " FontSize="12" Foreground="#AAA"/>
+                                                    <TextBlock Text="{Binding High}" FontSize="12" Foreground="#555"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Abnormal Flag badge -->
+                                    <DataGridTemplateColumn Header="Flag" Width="80" IsReadOnly="True">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="10" Padding="6 3" HorizontalAlignment="Center" Margin="0 4"
+                                                        Visibility="{Binding IsAbnormal, Converter={StaticResource BoolToVis}}">
+                                                    <Border.Background>
+                                                        <SolidColorBrush Color="#FFCDD2"/>
+                                                    </Border.Background>
+                                                    <TextBlock Text="ABNORMAL" Foreground="#C62828" FontWeight="Bold" FontSize="10"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <!-- Error message -->
+                            <TextBlock Grid.Row="3" Text="{Binding ResultErrorMessage}" Foreground="#C62828"
+                                       HorizontalAlignment="Left" Margin="16 6" FontWeight="Medium"
+                                       Visibility="{Binding ResultErrorMessage, Converter={StaticResource BoolToVis}}"/>
+
+                            <!-- Action buttons bottom -->
+                            <Border Grid.Row="4" Background="#F5F5F7" BorderBrush="#E0E0E0" BorderThickness="0 1 0 0" Padding="16 12">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Command="{Binding SaveResultsCommand}" Margin="0 0 12 0" Height="42">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                            <TextBlock Text="VERIFY &amp; SAVE" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Complete">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                    <Button Command="{Binding GenerateReportCommand}" Margin="0 0 12 0" Height="42">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="FilePdfBox" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                            <TextBlock Text="REPRINT PDF" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Complete">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                    <Button Command="{Binding RefreshCommand}" Style="{StaticResource MaterialDesignFlatButton}" Height="42">
+                                        <materialDesign:PackIcon Kind="Refresh" Width="18" Height="18"/>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- ═══ COLUMN 3: OUTPUT / QUICK ACTIONS ═══ -->
+                    <materialDesign:Card Grid.Column="2" Margin="8 0 0 0" Padding="0" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Background="#4A148C" CornerRadius="8 8 0 0" Padding="16 12">
+                                <TextBlock Text="QUICK ACTIONS" FontWeight="Bold" FontSize="13" Foreground="White"/>
+                            </Border>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="16">
+                                    <!-- Selected Order Info -->
+                                    <Border Background="#F3E5F5" CornerRadius="8" Padding="14" Margin="0 0 0 16">
+                                        <StackPanel>
+                                            <TextBlock Text="SELECTED ORDER" FontSize="10" FontWeight="Bold" Foreground="#7B1FA2" Margin="0 0 0 6"/>
+                                            <TextBlock Text="{Binding SelectedOrder.Patient.FullName, TargetNullValue='None selected'}"
+                                                       FontSize="13" FontWeight="Bold" Foreground="#4A148C" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding SelectedOrder.OrderId, StringFormat='Order #{0}', TargetNullValue=''}"
+                                                       FontSize="11" Foreground="#9C27B0" Margin="0 2 0 0"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Divider label -->
+                                    <TextBlock Text="REPORTS" FontSize="10" FontWeight="Bold" Foreground="#9E9E9E" Margin="0 0 0 8"/>
+
+                                    <!-- Generate PDF Report -->
+                                    <Button Command="{Binding GenerateReportCommand}"
+                                            Style="{StaticResource MaterialDesignRaisedButton}"
+                                            Background="#1565C0" BorderBrush="#1565C0"
+                                            Height="48" Width="208" HorizontalAlignment="Stretch"
+                                            Margin="0 0 0 10">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="FilePdfBox" Width="22" Height="22" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Generate Report" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Generate Bill -->
+                                    <Button Command="{Binding GenerateBillCommand}"
+                                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                                            Height="44" HorizontalAlignment="Stretch"
+                                            Margin="0 0 0 20">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Receipt" Width="20" Height="20" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="View / Print Bill" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Divider label -->
+                                    <TextBlock Text="COLLECT PAYMENT" FontSize="10" FontWeight="Bold" Foreground="#9E9E9E" Margin="0 0 0 8"/>
+
+                                    <!-- Invoice Status -->
+                                    <Border Margin="0 0 0 12" CornerRadius="6" Padding="10">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="False">
+                                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                                        <Setter Property="BorderBrush" Value="#FFCDD2"/>
+                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="True">
+                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                        <Setter Property="BorderBrush" Value="#C8E6C9"/>
+                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding SelectedInvoice.TotalAmount, StringFormat='Amount: ₹{0:N2}', TargetNullValue='No invoice'}"
+                                                       FontWeight="Bold" FontSize="13"/>
+                                            <TextBlock FontSize="11" FontWeight="SemiBold" Margin="0 2 0 0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="False">
+                                                                <Setter Property="Text" Value="⬤ UNPAID"/>
+                                                                <Setter Property="Foreground" Value="#C62828"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="True">
+                                                                <Setter Property="Text" Value="✔ PAID"/>
+                                                                <Setter Property="Foreground" Value="#2E7D32"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Cash Payment Button -->
+                                    <Button Command="{Binding AddPaymentCashCommand}"
+                                            Style="{StaticResource MaterialDesignRaisedButton}"
+                                            Background="#2E7D32" BorderBrush="#2E7D32"
+                                            Height="48" HorizontalAlignment="Stretch"
+                                            Margin="0 0 0 10">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Cash" Width="22" Height="22" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="💵 Cash Payment" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- UPI Payment Button -->
+                                    <Button Command="{Binding AddPaymentUpiCommand}"
+                                            Style="{StaticResource MaterialDesignRaisedButton}"
+                                            Background="#E65100" BorderBrush="#E65100"
+                                            Height="48" HorizontalAlignment="Stretch"
+                                            Margin="0 0 0 20">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="QrcodeScan" Width="22" Height="22" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="📱 UPI Payment" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Divider -->
+                                    <Separator Margin="0 0 0 16"/>
+
+                                    <!-- Manual Backup -->
+                                    <Button Command="{Binding BackupCommand}"
+                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                            Height="40" HorizontalAlignment="Stretch">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="DatabaseSync" Width="18" Height="18" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Manual Backup" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- ─── TAB 4: BILLING ─── -->
+            <TabItem>
+                <Grid Margin="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="3*" />
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Invoices" />
+                            <DataGrid Grid.Row="1" x:Name="InvoicesGrid" ItemsSource="{Binding Invoices}" SelectedItem="{Binding SelectedInvoice}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                                      Margin="4 0 4 4" AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True" VirtualizingStackPanel.IsVirtualizing="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Inv #" Binding="{Binding InvoiceId}" Width="Auto" />
+                                    <DataGridTextColumn Header="Patient" Binding="{Binding Order.Patient.FullName}" Width="*" />
+                                    <DataGridTextColumn Header="Amount" Binding="{Binding TotalAmount, StringFormat='₹{0:N0}'}" Width="Auto" />
                                     <DataGridTemplateColumn Header="Status" Width="Auto">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Border CornerRadius="12" Padding="8 4" HorizontalAlignment="Center" UseLayoutRounding="True" Margin="0 2">
+                                                <Border CornerRadius="10" Padding="8 4" HorizontalAlignment="Center" Margin="0 2">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Pending">
-                                                                    <Setter Property="Background" Value="#FFF3E0"/>
-                                                                    <Setter Property="BorderBrush" Value="#FFE0B2"/>
-                                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                                <DataTrigger Binding="{Binding IsPaid}" Value="False">
+                                                                    <Setter Property="Background" Value="#FFEBEE"/>
                                                                 </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Status}" Value="Complete">
+                                                                <DataTrigger Binding="{Binding IsPaid}" Value="True">
                                                                     <Setter Property="Background" Value="#E0F2F1"/>
-                                                                    <Setter Property="BorderBrush" Value="#B2DFDB"/>
-                                                                    <Setter Property="BorderThickness" Value="1"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <TextBlock Text="{Binding Status}" FontWeight="SemiBold" FontSize="11">
+                                                    <TextBlock FontWeight="SemiBold" FontSize="11">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Pending">
-                                                                        <Setter Property="Foreground" Value="#E65100"/>
+                                                                    <DataTrigger Binding="{Binding IsPaid}" Value="False">
+                                                                        <Setter Property="Foreground" Value="#C62828"/>
+                                                                        <Setter Property="Text" Value="Pending"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Complete">
+                                                                    <DataTrigger Binding="{Binding IsPaid}" Value="True">
                                                                         <Setter Property="Foreground" Value="#00796B"/>
+                                                                        <Setter Property="Text" Value="Paid"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -687,764 +998,223 @@
                         </Grid>
                     </materialDesign:Card>
 
-                    <!-- Right: Results Entry Card -->
                     <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Patient Summary Banner -->
                             <Border Grid.Row="0" Background="#F1EBF9" CornerRadius="8" Padding="16" Margin="0 0 0 16">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <materialDesign:PackIcon Grid.Column="0" Kind="AccountBox" Width="36" Height="36" Foreground="#673AB7" VerticalAlignment="Center"/>
-                                    <StackPanel Grid.Column="1" Margin="16 0 0 0" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding SelectedOrder.Patient.FullName, TargetNullValue='No Patient Selected'}" FontSize="16" FontWeight="Bold" Foreground="#311B92"/>
+                                    <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="36" Height="36" Foreground="#673AB7" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Margin="16 0 0 0">
+                                        <TextBlock Text="{Binding SelectedInvoice.Order.Patient.FullName, TargetNullValue='No Invoice Selected'}" FontSize="16" FontWeight="Bold" Foreground="#311B92"/>
                                         <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
-                                            <TextBlock Text="Order ID: " Foreground="#5C6BC0" FontSize="12"/>
-                                            <TextBlock Text="{Binding SelectedOrder.OrderId, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
-                                            <TextBlock Text="Ref: " Foreground="#5C6BC0" FontSize="12"/>
-                                            <TextBlock Text="{Binding SelectedOrder.ReferredBy, TargetNullValue='SELF'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
-                                            <TextBlock Text="Status: " Foreground="#5C6BC0" FontSize="12"/>
-                                            <TextBlock Text="{Binding SelectedOrder.Status, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12"/>
+                                            <TextBlock Text="Invoice #" Foreground="#5C6BC0" FontSize="12"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.InvoiceId, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
+                                            <TextBlock Text="Total: ₹" Foreground="#5C6BC0" FontSize="12"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.TotalAmount, StringFormat='{}{0:N2}', TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
                             </Border>
 
-                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedOrderResults}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single" Margin="0 0 0 8">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Test Name" Binding="{Binding TestName}" Width="*" IsReadOnly="True" />
-                                    <DataGridTextColumn Header="Ref Range" Width="Auto" IsReadOnly="True">
-                                        <DataGridTextColumn.Binding>
-                                            <MultiBinding StringFormat="{}{0} - {1}">
-                                                <Binding Path="Low" TargetNullValue="0" />
-                                                <Binding Path="High" TargetNullValue="0" />
-                                            </MultiBinding>
-                                        </DataGridTextColumn.Binding>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="Auto" IsReadOnly="True" />
-                                    
-                                    <!-- Value Template supporting Editing and Flagging -->
-                                    <DataGridTemplateColumn Header="Value" Width="140">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Grid>
-                                                    <!-- Edit mode (TextBox): Pending + No Options -->
-                                                    <TextBox Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Left" Margin="2 0">
-                                                        <TextBox.Style>
-                                                            <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding HasOptions}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBox.Style>
-                                                    </TextBox>
-
-                                                    <!-- Edit mode (ComboBox): Pending + Has Options -->
-                                                    <ComboBox ItemsSource="{Binding Options}"
-                                                              DisplayMemberPath="Display"
-                                                              SelectedValuePath="Value"
-                                                              SelectedItem="{Binding SelectedOption}"
-                                                              Width="120" HorizontalAlignment="Left" Margin="2 0">
-                                                        <ComboBox.Style>
-                                                            <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Style.Triggers>
-                                                                    <MultiDataTrigger>
-                                                                        <MultiDataTrigger.Conditions>
-                                                                            <Condition Binding="{Binding IsReadOnly}" Value="False"/>
-                                                                            <Condition Binding="{Binding HasOptions}" Value="True"/>
-                                                                        </MultiDataTrigger.Conditions>
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </MultiDataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </ComboBox.Style>
-                                                    </ComboBox>
-
-                                                    <!-- Read-only mode: Complete -->
-                                                    <StackPanel Orientation="Horizontal" Margin="2 0">
-                                                        <StackPanel.Style>
-                                                            <Style TargetType="StackPanel">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </StackPanel.Style>
-                                                        <TextBlock Text="{Binding DisplayValue}" VerticalAlignment="Center" FontWeight="Bold" Margin="0 0 8 0" />
-                                                        <Border Background="#FFEBEE" BorderBrush="#FFCDD2" BorderThickness="1" CornerRadius="4" Padding="6 2" Visibility="Collapsed">
-                                                            <Border.Style>
-                                                                <Style TargetType="Border">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsAbnormal}" Value="True">
-                                                                            <Setter Property="Visibility" Value="Visible" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Border.Style>
-                                                            <TextBlock Text="ABNORMAL" Foreground="#C62828" FontWeight="Bold" FontSize="10" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
-
-                            <TextBlock Grid.Row="2" Text="{Binding ResultErrorMessage}" Foreground="Red" HorizontalAlignment="Left" Margin="4 8" FontWeight="Medium" />
-
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 8 0 0">
-                                <!-- Save results button (only for Pending) -->
-                                <Button Command="{Binding SaveResultsCommand}" Margin="0 0 12 0" Height="44">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
-                                        <TextBlock Text="VERIFY &amp; SAVE RESULTS" VerticalAlignment="Center" FontWeight="Bold"/>
-                                    </StackPanel>
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Complete">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-
-                                <!-- Report generation button (only for Complete) -->
-                                <Button Command="{Binding GenerateReportCommand}" Margin="0 0 12 0" Height="44">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="FilePdfBox" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
-                                        <TextBlock Text="GENERATE PDF REPORT" VerticalAlignment="Center" FontWeight="Bold"/>
-                                    </StackPanel>
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Complete">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-
-                                <!-- Generate Bill button (visible when an order is selected) -->
-                                <Button Command="{Binding GenerateBillCommand}" Height="44" Style="{StaticResource MaterialDesignOutlinedButton}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Receipt" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
-                                        <TextBlock Text="GENERATE BILL" VerticalAlignment="Center" FontWeight="Bold"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-
-
-                        </Grid>
-                    </materialDesign:Card>
-                </Grid>
-            </TabItem>
-
-
-
-            <!-- Tab 4: Quality Control -->
-            <TabItem>
-                <Grid Margin="24">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline5TextBlock}" FontWeight="Bold" Foreground="#311B92" Margin="0 0 0 16" Text="Quality Control Module" />
-
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="350"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Add QC Result -->
-                        <materialDesign:Card Grid.Column="0" Margin="0 0 16 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="Add QC Result" />
-                                    
-                                    <ComboBox materialDesign:HintAssist.Hint="Select Test Type" 
-                                              ItemsSource="{Binding CatalogTestTypes}" 
-                                              SelectedItem="{Binding SelectedQcTestType}" 
-                                              DisplayMemberPath="Name" 
-                                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
-                                              Margin="0 0 0 16" />
-                                              
-                                    <ComboBox materialDesign:HintAssist.Hint="Control Level"
-                                              SelectedValue="{Binding QcControlLevel}"
-                                              SelectedValuePath="Content"
-                                              Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                                              Margin="0 0 0 16">
-                                        <ComboBoxItem Content="Level 1" IsSelected="True" />
-                                        <ComboBoxItem Content="Level 2" />
-                                        <ComboBoxItem Content="Level 3" />
-                                    </ComboBox>
-
-                                    <TextBox materialDesign:HintAssist.Hint="Expected Mean" 
-                                             Text="{Binding QcExpectedMean, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="0 0 0 16" />
-
-                                    <TextBox materialDesign:HintAssist.Hint="Standard Deviation (1SD)" 
-                                             Text="{Binding QcStandardDeviation, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="0 0 0 16" />
-
-                                    <TextBox materialDesign:HintAssist.Hint="Measured Value" 
-                                             Text="{Binding QcMeasuredValue, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="0 0 0 16" />
-
-                                    <TextBox materialDesign:HintAssist.Hint="Remarks" 
-                                             Text="{Binding QcRemarks, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="0 0 0 24" />
-
-                                    <Button Command="{Binding SaveQcCommand}" Style="{StaticResource MaterialDesignRaisedButton}">
+                            <StackPanel Grid.Row="1">
+                                <TextBlock Text="PAYMENT ACTIONS" FontSize="12" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 16"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Command="{Binding AddPaymentCashCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140" Margin="0 0 16 0">
                                         <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="SAVE QC RESULT" VerticalAlignment="Center" FontWeight="Bold"/>
+                                            <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="ADD CASH" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Command="{Binding AddPaymentUpiCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="QrcodeScan" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="ADD UPI" VerticalAlignment="Center" FontWeight="Bold"/>
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
-                            </ScrollViewer>
-                        </materialDesign:Card>
-
-                        <!-- QC Results Grid -->
-                        <materialDesign:Card Grid.Column="1" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
-                                    <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Recent QC Runs" />
-                                    <Button Command="{Binding RefreshQcCommand}" Style="{StaticResource MaterialDesignFlatButton}" Content="REFRESH" Margin="12 0 0 12"/>
-                                </StackPanel>
-
-                                <DataGrid Grid.Row="1" 
-                                          ItemsSource="{Binding QCResults}" 
-                                          AutoGenerateColumns="False" 
-                                          IsReadOnly="True" 
-                                          SelectionMode="Single"
-                                          AlternatingRowBackground="#FAF9FC">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Test Type" Binding="{Binding TestType.Name}" Width="*" />
-                                        <DataGridTextColumn Header="Level" Binding="{Binding ControlLevel}" Width="Auto" />
-                                        <DataGridTextColumn Header="Mean" Binding="{Binding ExpectedMean}" Width="Auto" />
-                                        <DataGridTextColumn Header="Measured" Binding="{Binding MeasuredValue}" Width="Auto" />
-                                        
-                                        <!-- Status Badge -->
-                                        <DataGridTemplateColumn Header="Status" Width="Auto">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <Border CornerRadius="8" Padding="6 2" HorizontalAlignment="Center" Margin="0 2">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsOutOfRange}" Value="False">
-                                                                        <Setter Property="Background" Value="#E8F5E9"/>
-                                                                        <Setter Property="BorderBrush" Value="#C8E6C9"/>
-                                                                        <Setter Property="BorderThickness" Value="1"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding IsOutOfRange}" Value="True">
-                                                                        <Setter Property="Background" Value="#FFEBEE"/>
-                                                                        <Setter Property="BorderBrush" Value="#FFCDD2"/>
-                                                                        <Setter Property="BorderThickness" Value="1"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock FontSize="11" FontWeight="SemiBold">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsOutOfRange}" Value="False">
-                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
-                                                                            <Setter Property="Text" Value="Passed"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding IsOutOfRange}" Value="True">
-                                                                            <Setter Property="Foreground" Value="#C62828"/>
-                                                                            <Setter Property="Text" Value="Failed (>2SD)"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-
-                                        <DataGridTextColumn Header="Date" Binding="{Binding RecordedAt, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="120" />
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </Grid>
-                        </materialDesign:Card>
-                    </Grid>
-                </Grid>
-            </TabItem>
-
-
-
-            <!-- Tab 6: Billing -->
-            <TabItem>
-                <TabControl BorderThickness="0" Background="Transparent">
-                    <TabItem Header="Invoices &amp; Payments" FontSize="14" FontWeight="SemiBold">
-                        <Grid Margin="12 24 12 12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="3*" />
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Left: Invoices List -->
-                            <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Invoices" />
-                                    
-                                    <!-- Search -->
-                                    <TextBox Grid.Row="1"
-                                             x:Name="InvoicesSearchBox"
-                                             materialDesign:HintAssist.Hint="Search invoices by patient, ID..."
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                             materialDesign:TextFieldAssist.HasClearButton="True"
-                                             Margin="4 0 4 16"
-                                             TextChanged="InvoicesSearchBox_TextChanged"/>
-                                    
-                                    <DataGrid Grid.Row="2" 
-                                              x:Name="InvoicesGrid" 
-                                              ItemsSource="{Binding Invoices}" 
-                                              SelectedItem="{Binding SelectedInvoice}" 
-                                              AutoGenerateColumns="False" 
-                                              IsReadOnly="True" 
-                                              SelectionMode="Single"
-                                              Margin="4 0 4 4"
-                                              AlternatingRowBackground="#FAF9FC"
-                                              EnableRowVirtualization="True"
-                                              VirtualizingStackPanel.IsVirtualizing="True"
-                                              VirtualizingStackPanel.VirtualizationMode="Recycling">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Invoice ID" Binding="{Binding InvoiceId}" Width="Auto" />
-                                            <DataGridTextColumn Header="Patient" Binding="{Binding Order.Patient.FullName}" Width="*" />
-                                            <DataGridTextColumn Header="Amount" Binding="{Binding TotalAmount}" Width="Auto" />
-                                            
-                                            <!-- Custom Badge Style for Invoice Status -->
-                                            <DataGridTemplateColumn Header="Status" Width="Auto">
-                                                <DataGridTemplateColumn.CellTemplate>
-                                                    <DataTemplate>
-                                                        <Border CornerRadius="12" Padding="8 4" HorizontalAlignment="Center" UseLayoutRounding="True" Margin="0 2">
-                                                            <Border.Style>
-                                                                <Style TargetType="Border">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsPaid}" Value="False">
-                                                                            <Setter Property="Background" Value="#FFEBEE"/>
-                                                                            <Setter Property="BorderBrush" Value="#FFCDD2"/>
-                                                                            <Setter Property="BorderThickness" Value="1"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding IsPaid}" Value="True">
-                                                                            <Setter Property="Background" Value="#E0F2F1"/>
-                                                                            <Setter Property="BorderBrush" Value="#B2DFDB"/>
-                                                                            <Setter Property="BorderThickness" Value="1"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Border.Style>
-                                                            <TextBlock FontWeight="SemiBold" FontSize="11">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsPaid}" Value="False">
-                                                                                <Setter Property="Foreground" Value="#C62828"/>
-                                                                                <Setter Property="Text" Value="Pending"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding IsPaid}" Value="True">
-                                                                                <Setter Property="Foreground" Value="#00796B"/>
-                                                                                <Setter Property="Text" Value="Paid"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </DataGridTemplateColumn.CellTemplate>
-                                            </DataGridTemplateColumn>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                </Grid>
-                            </materialDesign:Card>
-
-                            <!-- Right: Invoice Details Card -->
-                            <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-
-                                    <!-- Summary Banner -->
-                                    <Border Grid.Row="0" Background="#F1EBF9" CornerRadius="8" Padding="16" Margin="0 0 0 16">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="36" Height="36" Foreground="#673AB7" VerticalAlignment="Center"/>
-                                            <StackPanel Grid.Column="1" Margin="16 0 0 0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding SelectedInvoice.Order.Patient.FullName, TargetNullValue='No Invoice Selected'}" FontSize="16" FontWeight="Bold" Foreground="#311B92"/>
-                                                <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
-                                                    <TextBlock Text="Invoice ID: " Foreground="#5C6BC0" FontSize="12"/>
-                                                    <TextBlock Text="{Binding SelectedInvoice.InvoiceId, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
-                                                    <TextBlock Text="Total: " Foreground="#5C6BC0" FontSize="12"/>
-                                                    <TextBlock Text="{Binding SelectedInvoice.TotalAmount, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
-                                                    <TextBlock Text="Status: " Foreground="#5C6BC0" FontSize="12"/>
-                                                    <TextBlock Text="{Binding SelectedInvoice.IsPaid, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="False">
-                                                                        <Setter Property="Text" Value="Pending"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="True">
-                                                                        <Setter Property="Text" Value="Paid"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-
-                                    <StackPanel Grid.Row="1" Margin="0 16">
-                                        <TextBlock Text="FINANCIAL ACTIONS" FontSize="12" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 16"/>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 12">
-                                            <Button Command="{Binding UpdateFinancialsCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="40" Width="296">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="TicketPercent" Width="20" Height="20" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="UPDATE DISCOUNT &amp; TAX" VerticalAlignment="Center" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button Command="{Binding AddPaymentCashCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140" Margin="0 0 16 0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="ADD CASH" VerticalAlignment="Center" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Command="{Binding AddPaymentUpiCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="QrcodeScan" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="ADD UPI" VerticalAlignment="Center" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Grid>
-                            </materialDesign:Card>
-                        </Grid>
-                    </TabItem>
-                </TabControl>
-            </TabItem>
-
-            <!-- Tab 5: Reference Catalog -->
-            <TabItem>
-                <TabControl BorderThickness="0" Background="Transparent">
-                    <TabItem Header="Test Catalog" FontSize="14" FontWeight="SemiBold">
-                        <Grid Margin="12 24 12 12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="4*" />
-                                <ColumnDefinition Width="3*" />
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Catalog List Card -->
-                            <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Reference Range Catalog" />
-                                    
-                                    <TextBox Grid.Row="1" 
-                                             x:Name="CatalogSearchBox"
-                                             materialDesign:HintAssist.Hint="Search catalog by name, category, group..."
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                             materialDesign:TextFieldAssist.HasClearButton="True"
-                                             Margin="4 0 4 16"
-                                             TextChanged="CatalogSearchBox_TextChanged"/>
-
-                                    <DataGrid Grid.Row="2" 
-                                              x:Name="CatalogGrid"
-                                              ItemsSource="{Binding CatalogTestTypes}" 
-                                              SelectedItem="{Binding SelectedCatalogTest}" 
-                                              AutoGenerateColumns="False" 
-                                              IsReadOnly="True" 
-                                              SelectionMode="Single"
-                                              Margin="4 0 4 4"
-                                              AlternatingRowBackground="#FAF9FC"
-                                              EnableRowVirtualization="True"
-                                              VirtualizingStackPanel.IsVirtualizing="True"
-                                              VirtualizingStackPanel.VirtualizationMode="Recycling">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ID" Binding="{Binding TypeId}" Width="Auto" />
-                                            <DataGridTextColumn Header="Test Name" Binding="{Binding Name}" Width="*" />
-                                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="Auto" />
-                                            <DataGridTextColumn Header="Group Name" Binding="{Binding GroupName}" Width="Auto" />
-                                            <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="Auto" />
-                                            <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="Auto" />
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                </Grid>
-                            </materialDesign:Card>
-
-                            <!-- Edit Form Card -->
-                            <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Manage Test Type" />
-
-                                        <TextBox materialDesign:HintAssist.Hint="Test Name" 
-                                                 Text="{Binding CatalogTestName, UpdateSourceTrigger=PropertyChanged}" 
-                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                 Margin="0 0 0 16" />
-
-                                        <Grid Margin="0 0 0 16">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Category (e.g. SEROLOGY)" 
-                                                     Text="{Binding CatalogTestCategory, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                     Margin="0 0 8 0" />
-                                            <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Group (e.g. Widal Test)" 
-                                                     Text="{Binding CatalogTestGroupName, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                     Margin="8 0 0 0" />
-                                        </Grid>
-
-                                        <Grid Margin="0 0 0 16">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Unit (e.g. g/dL)" 
-                                                     Text="{Binding CatalogTestUnit, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                     Margin="0 0 8 0" />
-                                            <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Sort Order" 
-                                                     Text="{Binding CatalogTestSortOrder, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                     Margin="8 0 0 0" />
-                                        </Grid>
-
-                                        <Grid Margin="0 0 0 16">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Ref Range Low (Numeric)" 
-                                                     Text="{Binding CatalogTestLow, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                     Margin="0 0 8 0" />
-                                            <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Ref Range High (Numeric)" 
-                                                     Text="{Binding CatalogTestHigh, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                     Margin="8 0 0 0" />
-                                        </Grid>
-
-                                        <TextBox materialDesign:HintAssist.Hint="Method (e.g. ELISA)" 
-                                                 Text="{Binding CatalogTestMethod, UpdateSourceTrigger=PropertyChanged}" 
-                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                 Margin="0 0 0 16" />
-
-                                        <TextBox materialDesign:HintAssist.Hint="Interpretation Notes" 
-                                                 Text="{Binding CatalogTestInterpretation, UpdateSourceTrigger=PropertyChanged}" 
-                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                 AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="80"
-                                                 Margin="0 0 0 16" />
-
-                                        <CheckBox Content="Is Active Test" IsChecked="{Binding CatalogTestIsActive}" Margin="0 0 0 24" />
-
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <Button Grid.Column="0" Command="{Binding SaveCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 6 0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                                    <TextBlock Text="SAVE CHANGES" VerticalAlignment="Center" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Grid.Column="1" Command="{Binding AddCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Margin="6 0 0 0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Plus" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                                    <TextBlock Text="ADD NEW" VerticalAlignment="Center" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </Grid>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </materialDesign:Card>
-                        </Grid>
-                    </TabItem>
-
-                    <TabItem Header="Referring Doctors" FontSize="14" FontWeight="SemiBold">
-                        <Grid Margin="12 24 12 12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="4*" />
-                                <ColumnDefinition Width="3*" />
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Doctors Grid -->
-                            <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Referring Doctors List" />
-                                    
-                                    <DataGrid Grid.Row="1" 
-                                              ItemsSource="{Binding CatalogDoctors}" 
-                                              SelectedItem="{Binding CatalogSelectedDoctor}" 
-                                              AutoGenerateColumns="False" 
-                                              IsReadOnly="True" 
-                                              SelectionMode="Single"
-                                              AlternatingRowBackground="#FAF9FC"
-                                              EnableRowVirtualization="True"
-                                              VirtualizingStackPanel.IsVirtualizing="True"
-                                              VirtualizingStackPanel.VirtualizationMode="Recycling">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ID" Binding="{Binding DoctorId}" Width="Auto" />
-                                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
-                                            <DataGridTextColumn Header="Specialization" Binding="{Binding Specialization}" Width="*" />
-                                            <DataGridTextColumn Header="Clinic Name" Binding="{Binding ClinicName}" Width="*" />
-                                            <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                </Grid>
-                            </materialDesign:Card>
-
-                            <!-- CRUD Form -->
-                            <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Manage Doctor Profile" />
-                                        
-                                        <TextBox materialDesign:HintAssist.Hint="Doctor Name" 
-                                                 Text="{Binding DocName, UpdateSourceTrigger=PropertyChanged}" 
-                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                 Margin="0 0 0 16" />
-                                        
-                                        <TextBox materialDesign:HintAssist.Hint="Specialization" 
-                                                 Text="{Binding DocSpecialization, UpdateSourceTrigger=PropertyChanged}" 
-                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                 Margin="0 0 0 16" />
-                                        
-                                        <TextBox materialDesign:HintAssist.Hint="Clinic Name" 
-                                                 Text="{Binding DocClinicName, UpdateSourceTrigger=PropertyChanged}" 
-                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                 Margin="0 0 0 16" />
-                                        
-                                        <TextBox materialDesign:HintAssist.Hint="Contact Phone" 
-                                                 Text="{Binding DocContactPhone, UpdateSourceTrigger=PropertyChanged}" 
-                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                                 Margin="0 0 0 16" />
-                                        
-                                                 
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <Button Grid.Column="0" Command="{Binding SaveCatalogDoctorCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 6 0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                                    <TextBlock Text="SAVE CHANGES" VerticalAlignment="Center" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Grid.Column="1" Command="{Binding AddCatalogDoctorCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Margin="6 0 0 0">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon Kind="Plus" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                                    <TextBlock Text="ADD NEW" VerticalAlignment="Center" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </Grid>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </materialDesign:Card>
-                        </Grid>
-                    </TabItem>
-                </TabControl>
-            </TabItem>
-
-
-
-            <!-- Tab 6: Settings -->
-            <TabItem>
-                <Grid Margin="24">
-                    <materialDesign:Card Padding="40" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <StackPanel HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="DatabaseSettings" Width="72" Height="72" HorizontalAlignment="Center" Foreground="#673AB7" Margin="0 0 0 20" />
-                            <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" Text="System Management" HorizontalAlignment="Center" Margin="0 0 0 10" FontWeight="Bold"/>
-                            
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 24">
-                                <TextBlock Text="Logged in as: " Foreground="Gray" FontSize="14"/>
-                                <TextBlock Text="{Binding CurrentStaffName}" FontWeight="Bold" FontSize="14" Foreground="#311B92"/>
                             </StackPanel>
-
-                            <TextBlock TextWrapping="Wrap" Text="To secure database integrity, you can trigger a live SQLite database backup. A timestamped copy of your laboratory database will be generated in your project backups directory immediately." 
-                                       TextAlignment="Center" Margin="0 0 0 32" Foreground="#666666" LineHeight="20"/>
-
-                            <Button Command="{Binding BackupCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Width="280" Height="46">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="DatabaseSync" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
-                                    <TextBlock Text="BACKUP LIVE DATABASE NOW" VerticalAlignment="Center" FontWeight="Bold"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
+                        </Grid>
                     </materialDesign:Card>
                 </Grid>
             </TabItem>
+
+            <!-- ─── TAB 5: TEST CATALOG ─── -->
+            <TabItem>
+                <Grid Margin="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4*" />
+                        <ColumnDefinition Width="3*" />
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Reference Range Catalog" />
+
+                            <TextBox Grid.Row="1" x:Name="CatalogSearchBox"
+                                     materialDesign:HintAssist.Hint="Search by name, category, group..."
+                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                     materialDesign:TextFieldAssist.HasClearButton="True"
+                                     Margin="4 0 4 16"
+                                     TextChanged="CatalogSearchBox_TextChanged"/>
+
+                            <DataGrid Grid.Row="2" x:Name="CatalogGrid"
+                                      ItemsSource="{Binding CatalogTestTypes}" SelectedItem="{Binding SelectedCatalogTest}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                                      Margin="4 0 4 4" AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True" VirtualizingStackPanel.IsVirtualizing="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Test Name" Binding="{Binding Name}" Width="*" />
+                                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="Auto" />
+                                    <DataGridTextColumn Header="Group" Binding="{Binding GroupName}" Width="Auto" />
+                                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="Auto" />
+                                    <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="Auto" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Manage Test Type" />
+
+                                <TextBox materialDesign:HintAssist.Hint="Test Name *"
+                                         Text="{Binding CatalogTestName, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
+
+                                <Grid Margin="0 0 0 16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Category"
+                                             Text="{Binding CatalogTestCategory, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 8 0" />
+                                    <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Group Name"
+                                             Text="{Binding CatalogTestGroupName, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="8 0 0 0" />
+                                </Grid>
+
+                                <Grid Margin="0 0 0 16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Unit"
+                                             Text="{Binding CatalogTestUnit, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 8 0" />
+                                    <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Sort Order"
+                                             Text="{Binding CatalogTestSortOrder, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="8 0 0 0" />
+                                </Grid>
+
+                                <Grid Margin="0 0 0 16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Ref Range Low"
+                                             Text="{Binding CatalogTestLow, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 8 0" />
+                                    <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Ref Range High"
+                                             Text="{Binding CatalogTestHigh, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="8 0 0 0" />
+                                </Grid>
+
+                                <TextBox materialDesign:HintAssist.Hint="Method (e.g. ELISA)"
+                                         Text="{Binding CatalogTestMethod, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
+
+                                <TextBox materialDesign:HintAssist.Hint="Interpretation Notes"
+                                         Text="{Binding CatalogTestInterpretation, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                         AcceptsReturn="True" TextWrapping="Wrap" Height="70" Margin="0 0 0 16" />
+
+                                <CheckBox Content="Is Active Test" IsChecked="{Binding CatalogTestIsActive}" Margin="0 0 0 24" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Command="{Binding SaveCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 6 0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                            <TextBlock Text="SAVE" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Grid.Column="1" Command="{Binding AddCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Margin="6 0 0 0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Plus" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                            <TextBlock Text="ADD NEW" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- ─── TAB 6: SETTINGS / BACKUP ─── -->
+            <TabItem>
+                <Grid Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="600">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" Text="Settings &amp; Backup" FontWeight="Bold" Margin="0 0 0 24"/>
+
+                        <materialDesign:Card Padding="24" UniformCornerRadius="8" Margin="0 0 0 16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Database Backup" Margin="0 0 0 12"/>
+                                <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0 0 0 16"
+                                           Text="The system automatically creates an encrypted backup when the application closes. You can also trigger a manual backup at any time."/>
+                                <Button Command="{Binding BackupCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="46" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="DatabaseSync" Margin="0 0 8 0" VerticalAlignment="Center" Width="20" Height="20" />
+                                        <TextBlock Text="BACKUP NOW" VerticalAlignment="Center" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <materialDesign:Card Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="System Information" Margin="0 0 0 12"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Mode:" Foreground="Gray" Margin="0 0 16 8" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Single Operator (Authentication Disabled)" Margin="0 0 0 8"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Patients:" Foreground="Gray" Margin="0 0 16 8" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TotalPatients}" Margin="0 0 0 8"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Pending Orders:" Foreground="Gray" Margin="0 0 16 0" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PendingOrders}"/>
+                                </Grid>
+                            </StackPanel>
+                        </materialDesign:Card>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
         </TabControl>
     </Grid>
 </UserControl>

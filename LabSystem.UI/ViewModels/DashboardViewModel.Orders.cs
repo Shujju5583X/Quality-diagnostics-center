@@ -16,6 +16,7 @@ namespace LabSystem.UI.ViewModels
             set { _orderNotes = value; OnPropertyChanged(); }
         }
 
+        // Free-text referral field with autocomplete from ReferredByHistory
         public string OrderReferredBy
         {
             get => _orderReferredBy;
@@ -40,14 +41,15 @@ namespace LabSystem.UI.ViewModels
             try
             {
                 var testIds = selectedTests.Select(t => t.TypeId).ToList();
-                
+
                 var order = new TestOrder
                 {
                     PatientId = SelectedPatient.PatientId,
                     Status = "Pending",
                     Notes = OrderNotes ?? "",
-                    DoctorId = SelectedDoctor?.DoctorId,
-                    ReferredBy = SelectedDoctor != null ? SelectedDoctor.Name : (string.IsNullOrWhiteSpace(OrderReferredBy) ? "SELF" : OrderReferredBy)
+                    ReferredBy = string.IsNullOrWhiteSpace(OrderReferredBy) ? "SELF" : OrderReferredBy.Trim(),
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 await _orderService.CreateOrderAsync(order, testIds);
@@ -55,7 +57,6 @@ namespace LabSystem.UI.ViewModels
 
                 // Generate Invoice automatically
                 await _billingService.GenerateInvoiceAsync(order.OrderId);
-
 
                 // Unselect test checkboxes
                 foreach (var t in TestTypes)
@@ -65,7 +66,6 @@ namespace LabSystem.UI.ViewModels
 
                 OrderReferredBy = "SELF";
                 OrderNotes = string.Empty;
-                SelectedDoctor = null;
                 SelectedTestPanel = null;
 
                 await LoadDataAsync();

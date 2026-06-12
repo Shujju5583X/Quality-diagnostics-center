@@ -27,32 +27,19 @@ CREATE TABLE IF NOT EXISTS TestTypes (
 
 CREATE TABLE IF NOT EXISTS Staff (
     StaffId INTEGER PRIMARY KEY AUTOINCREMENT,
-    FullName TEXT NOT NULL,
-    Role TEXT,
-    PinHash TEXT NOT NULL,
-    FailedLoginAttempts INTEGER DEFAULT 0,
-    LockoutEnd DATETIME
-);
-
-CREATE TABLE IF NOT EXISTS Doctors (
-    DoctorId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Name TEXT NOT NULL,
-    Specialization TEXT,
-    ClinicName TEXT,
-    ContactPhone TEXT,
-    CommissionPercent REAL DEFAULT 0
+    FullName TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS TestOrders (
     OrderId INTEGER PRIMARY KEY AUTOINCREMENT,
     PatientId INTEGER NOT NULL,
-    DoctorId INTEGER,
     OrderedAt DATETIME NOT NULL,
     Status TEXT,
     Notes TEXT,
     ReferredBy TEXT,
-    FOREIGN KEY(PatientId) REFERENCES Patients(PatientId),
-    FOREIGN KEY(DoctorId) REFERENCES Doctors(DoctorId)
+    CreatedAt DATETIME NOT NULL,
+    UpdatedAt DATETIME NOT NULL,
+    FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
 );
 
 CREATE TABLE IF NOT EXISTS OrderTestTypes (
@@ -133,23 +120,10 @@ CREATE TABLE IF NOT EXISTS Reports (
     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId)
 );
 
-CREATE TABLE IF NOT EXISTS AuditLogs (
-    LogId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Action TEXT NOT NULL,
-    EntityType TEXT,
-    EntityId INTEGER,
-    UserId INTEGER,
-    Timestamp DATETIME NOT NULL,
-    Details TEXT,
-    FOREIGN KEY(UserId) REFERENCES Staff(StaffId)
-);
-
 CREATE INDEX IF NOT EXISTS IX_TestOrders_PatientId ON TestOrders (PatientId);
-CREATE INDEX IF NOT EXISTS IX_TestOrders_DoctorId ON TestOrders (DoctorId);
 CREATE INDEX IF NOT EXISTS IX_Results_OrderId ON Results (OrderId);
 CREATE INDEX IF NOT EXISTS IX_Results_TypeId ON Results (TypeId);
 CREATE INDEX IF NOT EXISTS IX_Results_TechnicianId ON Results (TechnicianId);
 CREATE INDEX IF NOT EXISTS IX_Reports_OrderId ON Reports (OrderId);
-CREATE INDEX IF NOT EXISTS IX_AuditLogs_UserId ON AuditLogs (UserId);
 CREATE INDEX IF NOT EXISTS IX_Specimens_OrderId ON Specimens (OrderId);
 CREATE INDEX IF NOT EXISTS IX_ReferenceRanges_TestTypeId ON ReferenceRanges (TestTypeId);

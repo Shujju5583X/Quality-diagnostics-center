@@ -4,9 +4,8 @@ INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, Created
 INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender, Uhid) VALUES ('Alice Johnson', '1975-02-10', '555-8765', 'alice@example.com', '2026-06-08T00:00:00Z', 'Female', 'QDC-2026-00003');
 INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender, Uhid) VALUES ('Yash M. Patel', '2005-08-25', '0123456789', 'yash@example.com', '2026-06-09T00:00:00Z', 'Male', 'QDC-2026-00004');
 
--- Seed Staff (Password is '1234' hashed with BCrypt)
-INSERT INTO Staff (FullName, Role, PinHash, FailedLoginAttempts, LockoutEnd) VALUES ('Dr. Robert Brown', 'Admin', '$2a$11$/kj.NC923I71HcIDmIOASeJhA7Il5NLBh6Mb/nO8Thz/J2ooDHwIC', 0, NULL);
-INSERT INTO Staff (FullName, Role, PinHash, FailedLoginAttempts, LockoutEnd) VALUES ('Tech Sarah', 'Technician', '$2a$11$/kj.NC923I71HcIDmIOASeJhA7Il5NLBh6Mb/nO8Thz/J2ooDHwIC', 0, NULL);
+-- Seed Staff (Single-operator mode - no authentication)
+INSERT INTO Staff (FullName) VALUES ('Lab Technician');
 
 -- Seed Test Catalog (TestTypes)
 
@@ -281,12 +280,6 @@ UPDATE TestTypes SET SampleType = 'Blood' WHERE Category = 'HEMATOLOGY';
 UPDATE TestTypes SET SampleType = 'Serum' WHERE Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
 UPDATE TestTypes SET SampleType = 'Urine' WHERE Category = 'CLINICAL PATHOLOGY';
 UPDATE TestTypes SET SampleType = 'Blood' WHERE Name = 'Blood Grouping & Rh';
-
--- Seed Doctors
-INSERT INTO Doctors (Name, Specialization, ClinicName, ContactPhone, CommissionPercent) VALUES
-('Dr. Robert Clark', 'Cardiologist', 'Metro Heart Care', '555-0199', 15.0),
-('Dr. Alice Vance', 'General Physician', 'City Clinic', '555-0288', 10.0),
-('Dr. Sarah Patel', 'Endocrinologist', 'Diabetes Care Center', '555-0377', 12.0);
 
 -- Seed ReferenceRanges
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES

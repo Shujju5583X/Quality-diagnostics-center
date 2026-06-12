@@ -1,6 +1,8 @@
 # ==========================================
-# Core build outputs
+# Quality Diagnostics Center - .gitignore
 # ==========================================
+
+# Core build & publish outputs
 [Bb]in/
 [Oo]bj/
 [Ww]in32/
@@ -9,10 +11,9 @@
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
+publish/
 
-# ==========================================
 # Visual Studio files
-# ==========================================
 .vs/
 *.suo
 *.user
@@ -21,34 +22,25 @@ bld/
 *.suo.tmp
 *.cache
 *.dbmdl
+*.opendb
 
-# ==========================================
 # JetBrains Rider & IntelliJ files
-# ==========================================
 .idea/
 *.sln.iml
 
-# ==========================================
 # VS Code files
-# ==========================================
 .vscode/
 
-# ==========================================
 # NuGet Packages
-# ==========================================
 packages/
 project.lock.json
 project.assets.json
 
-# ==========================================
 # Test results
-# ==========================================
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
-# ==========================================
 # Local Databases, Logs, Backups, and Reports
-# ==========================================
 *.db
 *.sqlite
 *.sqlite3
@@ -61,16 +53,12 @@ project.assets.json
 [Rr]eports/
 [Ii]nvoices/
 
-# ==========================================
 # OS generated files
-# ==========================================
 .DS_Store
 Thumbs.db
 ehthumbs.db
 
-# ==========================================
 # Python scripts output & virtual envs
-# ==========================================
 __pycache__/
 *.pyc
 *.pyo
@@ -79,14 +67,9 @@ env/
 venv/
 ENV/
 
-# ==========================================
 # Application output
-# ==========================================
 [Ss]ample\ reports/*.pdf
 ![Ss]ample\ reports/Sample_Verification_Report.pdf
 
-# ==========================================
 # Local AI prompt/history files
-# ==========================================
 initial_prompt.txt
-

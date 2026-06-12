@@ -20,15 +20,5 @@ namespace LabSystem.Data.Repositories
             return await _dbSet.AsNoTracking()
                          .FirstOrDefaultAsync(s => s.FullName == fullName, cancellationToken);
         }
-
-        public async Task<IEnumerable<Staff>> GetByRoleAsync(string role, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(role))
-                return await GetAllAsync(cancellationToken);
-
-            return await _dbSet.AsNoTracking()
-                         .Where(s => s.Role == role)
-                         .ToListAsync(cancellationToken);
-        }
     }
 }

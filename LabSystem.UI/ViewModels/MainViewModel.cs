@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using System.Windows.Input;
 using LabSystem.Core.Interfaces;
 
@@ -17,20 +16,18 @@ namespace LabSystem.UI.ViewModels
 
         public MainViewModel(IBackupService backupService)
         {
-            // Set up Login View
-            var loginVm = App.Container.GetInstance<LoginViewModel>();
-            loginVm.LoginSuccessful += staffId =>
+            // Single-operator mode: go directly to Dashboard — no login required
+            var dashboardVm = App.Container.GetInstance<DashboardViewModel>();
+            CurrentViewModel = dashboardVm;
+
+            BackupCommand = new RelayCommand(async o =>
             {
-                var dashboardVm = App.Container.GetInstance<DashboardViewModel>();
-                dashboardVm.StaffId = staffId;
-                CurrentViewModel = dashboardVm;
-            };
-
-            CurrentViewModel = loginVm;
-
-            BackupCommand = new RelayCommand(async o => {
                 await backupService.BackupNowAsync();
-                System.Windows.MessageBox.Show("Database (SQLite) and technician-friendly report (Excel) backed up successfully to the backups directory!", "Backup Completed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                System.Windows.MessageBox.Show(
+                    "Database (SQLite) and technician-friendly report (Excel) backed up successfully to the backups directory!",
+                    "Backup Completed",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information);
             });
         }
     }

@@ -50,7 +50,9 @@ namespace LabSystem.UI.ViewModels
                         OrderId = SelectedOrder.OrderId,
                         TypeId = r.TypeId,
                         Value = val,
-                        TechnicianId = StaffId
+                        TechnicianId = DefaultStaffId,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     };
 
                     await _resultService.AddResultAsync(result);

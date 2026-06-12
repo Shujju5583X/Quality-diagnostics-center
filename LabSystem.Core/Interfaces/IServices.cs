@@ -16,18 +16,12 @@ namespace LabSystem.Core.Interfaces
         Task BackupNowAsync(CancellationToken cancellationToken = default);
     }
 
-    public interface IAuthService
-    {
-        Task<bool> VerifyPinAsync(int staffId, string pin, CancellationToken cancellationToken = default);
-        string HashPin(string pin);
-    }
-    
     public interface IOrderService
     {
         Task CreateOrderAsync(TestOrder order, List<int> testTypeIds, CancellationToken cancellationToken = default);
         Task UpdateOrderStatusAsync(int orderId, string status, CancellationToken cancellationToken = default);
     }
-    
+
     public interface IResultService
     {
         Task AddResultAsync(Result result, CancellationToken cancellationToken = default);

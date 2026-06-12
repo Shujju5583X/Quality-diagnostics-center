@@ -14,9 +14,7 @@ namespace LabSystem.Tests
     {
         private Mock<IResultRepository> _mockResultRepo;
         private Mock<IRepository<TestType>> _mockTestTypeRepo;
-        private Mock<IRepository<AuditLog>> _mockAuditRepo;
         private Mock<ITestOrderRepository> _mockOrderRepo;
-        private Mock<IQCResultRepository> _mockQcRepo;
         private ResultService _service;
 
         [SetUp]
@@ -24,15 +22,11 @@ namespace LabSystem.Tests
         {
             _mockResultRepo = new Mock<IResultRepository>();
             _mockTestTypeRepo = new Mock<IRepository<TestType>>();
-            _mockAuditRepo = new Mock<IRepository<AuditLog>>();
             _mockOrderRepo = new Mock<ITestOrderRepository>();
-            _mockQcRepo = new Mock<IQCResultRepository>();
             _service = new ResultService(
                 _mockResultRepo.Object, 
                 _mockTestTypeRepo.Object, 
-                _mockAuditRepo.Object, 
-                _mockOrderRepo.Object,
-                _mockQcRepo.Object);
+                _mockOrderRepo.Object);
         }
 
         [Test]
@@ -42,7 +36,6 @@ namespace LabSystem.Tests
             var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
             _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
             _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             var result = new Result { TypeId = 1, Value = 25 };
 
@@ -52,7 +45,6 @@ namespace LabSystem.Tests
             // Assert
             Assert.IsTrue(result.IsAbnormal);
             _mockResultRepo.Verify(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>()), Times.Once);
-            _mockAuditRepo.Verify(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -62,7 +54,6 @@ namespace LabSystem.Tests
             var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
             _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
             _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             var result = new Result { TypeId = 1, Value = 15 };
 
@@ -95,7 +86,6 @@ namespace LabSystem.Tests
             _mockOrderRepo.Setup(r => r.GetByIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(order);
             _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
             _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             var result = new Result { OrderId = 10, TypeId = 1, Value = 15 }; // 15 is abnormal for female (range 5-12), but normal for fallback (10-20)
 
@@ -126,7 +116,6 @@ namespace LabSystem.Tests
             _mockOrderRepo.Setup(r => r.GetByIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(order);
             _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
             _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             var result = new Result { OrderId = 10, TypeId = 1, Value = 15 };
 

@@ -13,7 +13,6 @@ namespace LabSystem.Tests
     public class OrderServiceTests
     {
         private Mock<ITestOrderRepository> _mockOrderRepo;
-        private Mock<IRepository<AuditLog>> _mockAuditRepo;
         private Mock<ITestTypeRepository> _mockTestTypeRepo;
         private Mock<IRepository<Specimen>> _mockSpecimenRepo;
         private OrderService _service;
@@ -22,24 +21,21 @@ namespace LabSystem.Tests
         public void SetUp()
         {
             _mockOrderRepo = new Mock<ITestOrderRepository>();
-            _mockAuditRepo = new Mock<IRepository<AuditLog>>();
             _mockTestTypeRepo = new Mock<ITestTypeRepository>();
             _mockSpecimenRepo = new Mock<IRepository<Specimen>>();
             _service = new OrderService(
                 _mockOrderRepo.Object, 
-                _mockAuditRepo.Object, 
                 _mockTestTypeRepo.Object, 
                 _mockSpecimenRepo.Object);
         }
 
         [Test]
-        public async Task UpdateOrderStatus_ShouldUpdateStatus_AndAddAuditLog()
+        public async Task UpdateOrderStatus_ShouldUpdateStatus()
         {
             // Arrange
             var order = new TestOrder { OrderId = 1, Status = "Pending" };
             _mockOrderRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(order);
             _mockOrderRepo.Setup(r => r.UpdateAsync(order, It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             // Act
             await _service.UpdateOrderStatusAsync(1, "Complete");
@@ -47,7 +43,6 @@ namespace LabSystem.Tests
             // Assert
             Assert.AreEqual("Complete", order.Status);
             _mockOrderRepo.Verify(r => r.UpdateAsync(order, It.IsAny<CancellationToken>()), Times.Once);
-            _mockAuditRepo.Verify(r => r.AddAsync(It.Is<AuditLog>(a => a.Action == "Updated" && a.EntityType == "TestOrder"), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -67,7 +62,6 @@ namespace LabSystem.Tests
 
             _mockOrderRepo.Setup(r => r.AddOrderWithTestTypesAsync(order, testTypeIds, It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
             _mockSpecimenRepo.Setup(r => r.AddAsync(It.IsAny<Specimen>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
-            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             // Act
             await _service.CreateOrderAsync(order, testTypeIds);
@@ -78,12 +72,5 @@ namespace LabSystem.Tests
             _mockSpecimenRepo.Verify(r => r.AddAsync(It.IsAny<Specimen>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
-        [Test]
-        public void PrintCorrectHash()
-        {
-            var hash = BCrypt.Net.BCrypt.HashPassword("1234");
-            Console.WriteLine("CORRECT_HASH: " + hash);
-            Assert.Pass();
-        }
     }
 }

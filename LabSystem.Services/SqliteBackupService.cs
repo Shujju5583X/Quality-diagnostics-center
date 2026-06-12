@@ -17,22 +17,19 @@ namespace LabSystem.Services
         private readonly IResultRepository _resultRepo;
         private readonly IRepository<TestType> _testTypeRepo;
         private readonly IRepository<Staff> _staffRepo;
-        private readonly IRepository<AuditLog> _auditLogRepo;
 
         public SqliteBackupService(
             IPatientRepository patientRepo,
             ITestOrderRepository orderRepo,
             IResultRepository resultRepo,
             IRepository<TestType> testTypeRepo,
-            IRepository<Staff> staffRepo,
-            IRepository<AuditLog> auditLogRepo)
+            IRepository<Staff> staffRepo)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
             _resultRepo = resultRepo;
             _testTypeRepo = testTypeRepo;
             _staffRepo = staffRepo;
-            _auditLogRepo = auditLogRepo;
         }
 
         public async Task BackupNowAsync(CancellationToken cancellationToken = default)
@@ -66,7 +63,6 @@ namespace LabSystem.Services
             var staffDict = (await _staffRepo.GetAllAsync(cancellationToken)).ToDictionary(s => s.StaffId);
             var ordersDict = (await _orderRepo.GetAllAsync(cancellationToken)).ToDictionary(o => o.OrderId);
             var resultsList = await _resultRepo.GetAllAsync(cancellationToken);
-            var auditLogsList = await _auditLogRepo.GetAllAsync(cancellationToken);
 
             using (var workbook = new XLWorkbook())
             {
@@ -265,13 +261,13 @@ namespace LabSystem.Services
 
                 // Banner
                 wsStaff.Cell(1, 1).Value = "Quality Diagnostics Center - Active Staff Directory";
-                var rStaffTitle = wsStaff.Range(1, 1, 1, 5);
+                var rStaffTitle = wsStaff.Range(1, 1, 1, 2);
                 rStaffTitle.Merge();
                 StyleTitleRange(rStaffTitle, sidebarDark, headerTextColor);
                 wsStaff.Row(1).Height = 40;
 
                 // Headers
-                string[] sHeaders = { "Staff ID", "Full Name", "Assigned Role", "Failed Attempts", "Lockout End" };
+                string[] sHeaders = { "Staff ID", "Full Name" };
                 StyleHeaderRow(wsStaff, 3, sHeaders, staffAccent, headerTextColor, staffBorder);
                 wsStaff.Row(3).Height = 28;
 
@@ -280,49 +276,11 @@ namespace LabSystem.Services
                 {
                     wsStaff.Cell(sRow, 1).Value = staff.StaffId;
                     wsStaff.Cell(sRow, 2).Value = staff.FullName;
-                    wsStaff.Cell(sRow, 3).Value = staff.Role;
-                    wsStaff.Cell(sRow, 4).Value = staff.FailedLoginAttempts;
-                    wsStaff.Cell(sRow, 5).SetValue<string>(staff.LockoutEnd.HasValue ? staff.LockoutEnd.Value.ToString("yyyy-MM-dd HH:mm:ss") : "");
 
-                    StyleDataRow(wsStaff, sRow, 5);
+                    StyleDataRow(wsStaff, sRow, 2);
                     sRow++;
                 }
                 wsStaff.Columns().AdjustToContents();
-
-                // ==========================================
-                // 6. Audit Logs Worksheet
-                // ==========================================
-                var wsLogs = workbook.Worksheets.Add("Audit Logs");
-                var logAccent = XLColor.FromHtml("#795548"); // Brown
-                var logBorder = XLColor.FromHtml("#4E342E");
-
-                // Banner
-                wsLogs.Cell(1, 1).Value = "Quality Diagnostics Center - System Audit Logs";
-                var rLogTitle = wsLogs.Range(1, 1, 1, 7);
-                rLogTitle.Merge();
-                StyleTitleRange(rLogTitle, sidebarDark, headerTextColor);
-                wsLogs.Row(1).Height = 40;
-
-                // Headers
-                string[] lHeaders = { "Log ID", "Action", "Entity Type", "Entity ID", "Timestamp", "Performed By", "Details" };
-                StyleHeaderRow(wsLogs, 3, lHeaders, logAccent, headerTextColor, logBorder);
-                wsLogs.Row(3).Height = 28;
-
-                int lRow = 4;
-                foreach (var log in auditLogsList.OrderByDescending(x => x.LogId))
-                {
-                    wsLogs.Cell(lRow, 1).Value = log.LogId;
-                    wsLogs.Cell(lRow, 2).Value = log.Action;
-                    wsLogs.Cell(lRow, 3).Value = log.EntityType;
-                    wsLogs.Cell(lRow, 4).Value = log.EntityId.HasValue ? log.EntityId.Value : "";
-                    wsLogs.Cell(lRow, 5).Value = log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
-                    wsLogs.Cell(lRow, 6).Value = log.UserId.HasValue && staffDict.TryGetValue(log.UserId.Value, out var user) ? user.FullName : "System";
-                    wsLogs.Cell(lRow, 7).Value = log.Details;
-
-                    StyleDataRow(wsLogs, lRow, 7);
-                    lRow++;
-                }
-                wsLogs.Columns().AdjustToContents();
 
                 // Save completed Excel Workbook
                 workbook.SaveAs(filePath);

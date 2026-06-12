@@ -76,7 +76,6 @@ dotnet add LabSystem.Data/LabSystem.Data.csproj package System.Data.SQLite.EF6 -
 dotnet add LabSystem.Data/LabSystem.Data.csproj package System.Data.SQLite -v 1.0.118
 dotnet add LabSystem.Services/LabSystem.Services.csproj package MigraDoc -v 1.50.5147
 dotnet add LabSystem.Services/LabSystem.Services.csproj package ClosedXML -v 0.95.4
-dotnet add LabSystem.Services/LabSystem.Services.csproj package BCrypt.Net-Next -v 4.0.3
 dotnet add LabSystem.UI/LabSystem.UI.csproj package SimpleInjector -v 5.4.1
 dotnet add LabSystem.UI/LabSystem.UI.csproj package Serilog -v 2.10.0
 dotnet add LabSystem.UI/LabSystem.UI.csproj package Serilog.Sinks.File -v 5.0.0

@@ -14,10 +14,14 @@ namespace LabSystem.Core.Models
         public int TechnicianId { get; set; }
         public virtual Staff Technician { get; set; }
         public bool IsAbnormal { get; set; }
-        
-        // Phase 4: Amendment Tracking
+
+        // Amendment tracking
         public bool IsAmended { get; set; }
         public string AmendmentReason { get; set; }
         public DateTime? AmendedAt { get; set; }
+
+        // Audit timestamps
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

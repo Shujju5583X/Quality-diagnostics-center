@@ -18,22 +18,19 @@ namespace LabSystem.UI.ViewModels
         private readonly ITestOrderRepository _orderRepo;
         private readonly IResultRepository _resultRepo;
         private readonly IRepository<TestType> _testTypeRepo;
-        private readonly IRepository<Staff> _staffRepo;
         private readonly IOrderService _orderService;
         private readonly IResultService _resultService;
         private readonly IPdfReportService _reportService;
         private readonly IBackupService _backupService;
         private readonly IBillingService _billingService;
-        private readonly IRepository<Doctor> _doctorRepo;
         private readonly IRepository<TestPanel> _testPanelRepo;
-        private readonly IQCResultRepository _qcRepo;
 
-        private int _staffId;
-        private string _currentStaffName;
-        private bool _isAdmin;
+        // Fixed operator identity — single-person mode, no login required
+        public const int DefaultStaffId = 1;
+
         private Patient _selectedPatient;
         private TestOrder _selectedOrder;
-        
+
         // Patient tab fields
         private string _newPatientName;
         private DateTime? _newPatientDOB;
@@ -76,35 +73,10 @@ namespace LabSystem.UI.ViewModels
         private string _catalogTestInterpretation;
         private int _catalogTestSortOrder;
 
-
-
-        public int StaffId
-        {
-            get => _staffId;
-            set
-            {
-                _staffId = value;
-                LoadStaffName();
-                OnPropertyChanged();
-            }
-        }
-
-        public string CurrentStaffName
-        {
-            get => _currentStaffName;
-            set { _currentStaffName = value; OnPropertyChanged(); }
-        }
-
-        public bool IsAdmin
-        {
-            get => _isAdmin;
-            set { _isAdmin = value; OnPropertyChanged(); }
-        }
-
         public ObservableCollection<Patient> Patients { get; } = new ObservableCollection<Patient>();
         public ObservableCollection<TestOrder> Orders { get; } = new ObservableCollection<TestOrder>();
         public ObservableCollection<TestTypeSelection> TestTypes { get; } = new ObservableCollection<TestTypeSelection>();
-        
+
         // Items for entering results for the selected order
         public ObservableCollection<ResultInput> SelectedOrderResults { get; } = new ObservableCollection<ResultInput>();
 
@@ -113,8 +85,6 @@ namespace LabSystem.UI.ViewModels
 
         // Billing Items
         public ObservableCollection<Invoice> Invoices { get; } = new ObservableCollection<Invoice>();
-
-
 
         public Patient SelectedPatient
         {
@@ -125,9 +95,9 @@ namespace LabSystem.UI.ViewModels
         public TestOrder SelectedOrder
         {
             get => _selectedOrder;
-            set 
-            { 
-                _selectedOrder = value; 
+            set
+            {
+                _selectedOrder = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsSelectedOrderSpecimenRejected));
                 LoadResultsForSelectedOrder();
@@ -175,48 +145,33 @@ namespace LabSystem.UI.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand SaveCatalogTestCommand { get; }
         public ICommand AddCatalogTestCommand { get; }
-
         public ICommand AddPaymentCashCommand { get; }
         public ICommand AddPaymentUpiCommand { get; }
-
-
-
         public ICommand PreviousPatientPageCommand { get; }
         public ICommand NextPatientPageCommand { get; }
-        
-        // Commands for Phase 2
-
-        public ICommand SaveCatalogDoctorCommand { get; }
-        public ICommand AddCatalogDoctorCommand { get; }
 
         public DashboardViewModel(
             IPatientRepository patientRepo,
             ITestOrderRepository orderRepo,
             IResultRepository resultRepo,
             IRepository<TestType> testTypeRepo,
-            IRepository<Staff> staffRepo,
             IOrderService orderService,
             IResultService resultService,
             IPdfReportService reportService,
             IBackupService backupService,
             IBillingService billingService,
-            IRepository<Doctor> doctorRepo,
-            IRepository<TestPanel> testPanelRepo,
-            IQCResultRepository qcRepo)
+            IRepository<TestPanel> testPanelRepo)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
             _resultRepo = resultRepo;
             _testTypeRepo = testTypeRepo;
-            _staffRepo = staffRepo;
             _orderService = orderService;
             _resultService = resultService;
             _reportService = reportService;
             _backupService = backupService;
             _billingService = billingService;
-            _doctorRepo = doctorRepo;
             _testPanelRepo = testPanelRepo;
-            _qcRepo = qcRepo;
 
             AddPatientCommand = new RelayCommand(async o => await ExecuteAddPatientAsync(o));
             CreateOrderCommand = new RelayCommand(async o => await ExecuteCreateOrderAsync(o));
@@ -230,11 +185,7 @@ namespace LabSystem.UI.ViewModels
             AddPaymentCashCommand = new RelayCommand(async o => await ExecuteAddPaymentAsync("Cash"));
             AddPaymentUpiCommand = new RelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
 
-
-            SaveCatalogDoctorCommand = new RelayCommand(async o => await ExecuteSaveCatalogDoctorAsync(o));
-            AddCatalogDoctorCommand = new RelayCommand(async o => await ExecuteAddCatalogDoctorAsync(o));
-
-            PreviousPatientPageCommand = new RelayCommand(async o => 
+            PreviousPatientPageCommand = new RelayCommand(async o =>
             {
                 if (PatientCurrentPage > 1)
                 {
@@ -243,7 +194,7 @@ namespace LabSystem.UI.ViewModels
                 }
             });
 
-            NextPatientPageCommand = new RelayCommand(async o => 
+            NextPatientPageCommand = new RelayCommand(async o =>
             {
                 if (PatientCurrentPage < PatientTotalPages)
                 {
@@ -253,26 +204,7 @@ namespace LabSystem.UI.ViewModels
             });
 
             _ = LoadDataAsync();
-            // Load abnormal count once at startup
             _ = RefreshAbnormalCountAsync();
-        }
-
-        private async void LoadStaffName()
-        {
-            try
-            {
-                var staff = await _staffRepo.GetByIdAsync(StaffId);
-                CurrentStaffName = staff?.FullName ?? "Unknown Staff";
-                IsAdmin = staff?.Role == "Admin";
-                _ = LoadDataAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load staff details.");
-                CurrentStaffName = "Admin User";
-                IsAdmin = true;
-                _ = LoadDataAsync();
-            }
         }
 
         private async Task LoadDataAsync()
@@ -289,27 +221,17 @@ namespace LabSystem.UI.ViewModels
                 {
                     if (t.IsActive)
                     {
-                        TestTypes.Add(new TestTypeSelection 
-                        { 
-                            TypeId = t.TypeId, 
-                            Name = t.Name, 
-                            Unit = t.Unit, 
-                            Low = t.ReferenceRangeLow, 
+                        TestTypes.Add(new TestTypeSelection
+                        {
+                            TypeId = t.TypeId,
+                            Name = t.Name,
+                            Unit = t.Unit,
+                            Low = t.ReferenceRangeLow,
                             High = t.ReferenceRangeHigh,
                             GroupName = t.GroupName,
                             Category = t.Category
                         });
                     }
-                }
-
-                // Load Doctors
-                Doctors.Clear();
-                CatalogDoctors.Clear();
-                var doctors = await _doctorRepo.GetAllAsync();
-                foreach (var d in doctors)
-                {
-                    Doctors.Add(d);
-                    CatalogDoctors.Add(d);
                 }
 
                 // Load Test Panels
@@ -319,8 +241,6 @@ namespace LabSystem.UI.ViewModels
                 {
                     TestPanels.Add(p);
                 }
-
-
 
                 // Load Orders
                 Orders.Clear();
@@ -345,10 +265,10 @@ namespace LabSystem.UI.ViewModels
                     Invoices.Add(inv);
                 }
 
-                // Load QC Results
-                await ExecuteRefreshQcAsync();
+                // Load ReferredBy autocomplete history
+                await LoadReferredByHistoryAsync();
 
-                // Calculate Dashboard Statistics from already-loaded data
+                // Calculate Dashboard Statistics
                 CalculateDashboardStatsFromLoadedData();
             }
             catch (Exception ex)

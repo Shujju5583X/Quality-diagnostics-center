@@ -11,18 +11,15 @@ namespace LabSystem.Services
     public class OrderService : IOrderService
     {
         private readonly ITestOrderRepository _orderRepo;
-        private readonly IRepository<AuditLog> _auditRepo;
         private readonly ITestTypeRepository _testTypeRepo;
         private readonly IRepository<Specimen> _specimenRepo;
 
         public OrderService(
             ITestOrderRepository orderRepo, 
-            IRepository<AuditLog> auditRepo,
             ITestTypeRepository testTypeRepo,
             IRepository<Specimen> specimenRepo)
         {
             _orderRepo = orderRepo;
-            _auditRepo = auditRepo;
             _testTypeRepo = testTypeRepo;
             _specimenRepo = specimenRepo;
         }
@@ -30,6 +27,8 @@ namespace LabSystem.Services
         public async Task CreateOrderAsync(TestOrder order, List<int> testTypeIds, CancellationToken cancellationToken = default)
         {
             order.OrderedAt = DateTime.UtcNow;
+            order.CreatedAt = DateTime.UtcNow;
+            order.UpdatedAt = DateTime.UtcNow;
             await _orderRepo.AddOrderWithTestTypesAsync(order, testTypeIds, cancellationToken);
 
             var sampleTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -59,15 +58,6 @@ namespace LabSystem.Services
                 await _specimenRepo.AddAsync(specimen, cancellationToken);
                 index++;
             }
-            
-            await _auditRepo.AddAsync(new AuditLog
-            {
-                Action = "Created",
-                EntityType = "TestOrder",
-                EntityId = order.OrderId,
-                Timestamp = DateTime.UtcNow,
-                Details = $"New test order created with {sampleTypes.Count} specimen(s)."
-            }, cancellationToken);
         }
 
         public async Task UpdateOrderStatusAsync(int orderId, string status, CancellationToken cancellationToken = default)
@@ -76,16 +66,8 @@ namespace LabSystem.Services
             if (order != null)
             {
                 order.Status = status;
+                order.UpdatedAt = DateTime.UtcNow;
                 await _orderRepo.UpdateAsync(order, cancellationToken);
-                
-                await _auditRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "TestOrder",
-                    EntityId = orderId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Order status updated to {status}."
-                }, cancellationToken);
             }
         }
     }

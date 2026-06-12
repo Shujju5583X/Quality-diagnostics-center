@@ -166,11 +166,7 @@ namespace LabSystem.Services
             pr1.Cells[5].AddParagraph(order.Patient?.Uhid ?? order.PatientId.ToString());
 
             string referredBy = "SELF";
-            if (order.Doctor != null)
-            {
-                referredBy = order.Doctor.Name;
-            }
-            else if (!string.IsNullOrWhiteSpace(order.ReferredBy))
+            if (!string.IsNullOrWhiteSpace(order.ReferredBy))
             {
                 referredBy = order.ReferredBy;
             }
@@ -621,11 +617,7 @@ namespace LabSystem.Services
             row1.Cells[5].AddParagraph(invoice.Order?.Patient?.Uhid ?? "");
 
             string invoiceReferredBy = "SELF";
-            if (invoice.Order?.Doctor != null)
-            {
-                invoiceReferredBy = invoice.Order.Doctor.Name;
-            }
-            else if (!string.IsNullOrWhiteSpace(invoice.Order?.ReferredBy))
+            if (!string.IsNullOrWhiteSpace(invoice.Order?.ReferredBy))
             {
                 invoiceReferredBy = invoice.Order.ReferredBy;
             }

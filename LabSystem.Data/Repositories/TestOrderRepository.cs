@@ -16,7 +16,6 @@ namespace LabSystem.Data.Repositories
         {
             return await _dbSet
                          .Include(o => o.Patient)
-                         .Include(o => o.Doctor)
                          .Include(o => o.Specimens)
                          .Include(o => o.TestTypes)
                          .FirstOrDefaultAsync(o => o.OrderId == id, cancellationToken);
@@ -26,7 +25,6 @@ namespace LabSystem.Data.Repositories
         {
             return await _dbSet.AsNoTracking()
                          .Include(o => o.Patient)
-                         .Include(o => o.Doctor)
                          .Include(o => o.Specimens)
                          .Include(o => o.TestTypes)
                          .ToListAsync(cancellationToken);
@@ -36,7 +34,6 @@ namespace LabSystem.Data.Repositories
         {
             return await _dbSet.AsNoTracking()
                          .Include(o => o.Patient)
-                         .Include(o => o.Doctor)
                          .Include(o => o.Specimens)
                          .Include(o => o.TestTypes)
                          .Where(o => o.PatientId == patientId)
@@ -47,7 +44,6 @@ namespace LabSystem.Data.Repositories
         {
             return await _dbSet.AsNoTracking()
                          .Include(o => o.Patient)
-                         .Include(o => o.Doctor)
                          .Include(o => o.Specimens)
                          .Include(o => o.TestTypes)
                          .Where(o => o.Status == status)
