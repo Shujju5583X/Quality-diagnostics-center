@@ -19,12 +19,12 @@ namespace LabSystem.Data.Repositories
             _dbSet = context.Set<T>();
         }
 
-        public async Task<T> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public virtual async Task<T> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _dbSet.FindAsync(cancellationToken, id);
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _dbSet.AsNoTracking().ToListAsync(cancellationToken);
         }
@@ -33,13 +33,19 @@ namespace LabSystem.Data.Repositories
         {
             _dbSet.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
+            _context.Entry(entity).State = EntityState.Detached;
         }
 
         public async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
         {
-            _dbSet.Attach(entity);
-            _context.Entry(entity).State = EntityState.Modified;
+            var entry = _context.Entry(entity);
+            if (entry.State == EntityState.Detached)
+            {
+                _dbSet.Attach(entity);
+            }
+            entry.State = EntityState.Modified;
             await _context.SaveChangesAsync(cancellationToken);
+            entry.State = EntityState.Detached;
         }
 
         public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)

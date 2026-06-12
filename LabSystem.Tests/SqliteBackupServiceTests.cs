@@ -60,27 +60,34 @@ namespace LabSystem.Tests
                 Directory.Delete(_backupsDir, true);
             }
 
-            // Arrange mocks to return default empty lists to avoid exceptions
-            _mockPatientRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Patient>
-            {
-                new Patient { PatientId = 1, FullName = "John Doe", DateOfBirth = "1990-01-01", Gender = "Male", ContactPhone = "123456", ContactEmail = "john@example.com", CreatedAt = "2026-06-09" }
-            });
-            _mockOrderRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<TestOrder>
-            {
-                new TestOrder { OrderId = 10, PatientId = 1, Status = "Pending", OrderedAt = "2026-06-09", Notes = "101,102", ReferredBy = "Dr. Clark" }
-            });
-            _mockResultRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Result>
-            {
-                new Result { ResultId = 50, OrderId = 10, TypeId = 101, Value = 5.5, IsAbnormal = false, RecordedAt = "2026-06-09", TechnicianId = 1 }
-            });
-            _mockTestTypeRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<TestType>
+            var testTypes = new List<TestType>
             {
                 new TestType { TypeId = 101, Name = "Blood Sugar", Unit = "mg/dL", ReferenceRangeLow = 70, ReferenceRangeHigh = 100, IsActive = true },
                 new TestType { TypeId = 102, Name = "Hemoglobin", Unit = "g/dL", ReferenceRangeLow = 12, ReferenceRangeHigh = 16, IsActive = true }
+            };
+
+            // Arrange mocks to return default empty lists to avoid exceptions
+            _mockPatientRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Patient>
+            {
+                new Patient { PatientId = 1, FullName = "John Doe", DateOfBirth = DateTime.Parse("1990-01-01"), Gender = "Male", ContactPhone = "123456", ContactEmail = "john@example.com", CreatedAt = DateTime.Parse("2026-06-09"), Uhid = "QDC-2026-00001" }
             });
+
+            var order = new TestOrder { OrderId = 10, PatientId = 1, Status = "Pending", OrderedAt = DateTime.Parse("2026-06-09"), Notes = "101,102", ReferredBy = "Dr. Clark" };
+            foreach (var tt in testTypes)
+            {
+                order.TestTypes.Add(tt);
+            }
+
+            _mockOrderRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<TestOrder> { order });
+
+            _mockResultRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Result>
+            {
+                new Result { ResultId = 50, OrderId = 10, TypeId = 101, Value = 5.5, IsAbnormal = false, RecordedAt = DateTime.Parse("2026-06-09"), TechnicianId = 1 }
+            });
+            _mockTestTypeRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(testTypes);
             _mockStaffRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Staff>
             {
-                new Staff { StaffId = 1, FullName = "Dr. Alice Smith", Role = "Technician", PinHash = "dummyhash", FailedLoginAttempts = 1, LockoutEnd = "2026-06-09T16:00:00Z" }
+                new Staff { StaffId = 1, FullName = "Dr. Alice Smith", Role = "Technician", PinHash = "dummyhash", FailedLoginAttempts = 1, LockoutEnd = DateTime.Parse("2026-06-09 16:00:00") }
             });
             _mockAuditLogRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<AuditLog>
             {
@@ -160,7 +167,7 @@ namespace LabSystem.Tests
                 Assert.AreEqual(1, (double)wsStaff.Cell(4, 1).Value);
                 Assert.AreEqual("Dr. Alice Smith", wsStaff.Cell(4, 2).Value.ToString());
                 Assert.AreEqual(1, (double)wsStaff.Cell(4, 4).Value);
-                Assert.AreEqual("2026-06-09T16:00:00Z", wsStaff.Cell(4, 5).Value.ToString());
+                Assert.AreEqual("2026-06-09 16:00:00", wsStaff.Cell(4, 5).Value.ToString());
 
                 // 6. Audit Logs Worksheet
                 var wsLogs = workbook.Worksheet("Audit Logs");

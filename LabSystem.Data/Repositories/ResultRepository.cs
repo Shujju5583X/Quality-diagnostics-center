@@ -20,5 +20,15 @@ namespace LabSystem.Data.Repositories
                          .Where(r => r.OrderId == orderId)
                          .ToListAsync(cancellationToken);
         }
+
+        public async Task<IEnumerable<Result>> GetPatientHistoryAsync(int patientId, int testTypeId)
+        {
+            return await _dbSet.AsNoTracking()
+                         .Include(r => r.Order)
+                         .Include(r => r.TestType)
+                         .Where(r => r.Order.PatientId == patientId && r.TypeId == testTypeId && r.Value != -999.0)
+                         .OrderBy(r => r.RecordedAt)
+                         .ToListAsync();
+        }
     }
 }

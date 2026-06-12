@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -15,17 +16,24 @@ namespace LabSystem.Services
     {
         private readonly IResultRepository _resultRepo;
         private readonly IRepository<TestType> _testTypeRepo;
+        private readonly IRepository<TestPanel> _testPanelRepo;
         private readonly string _letterheadPath;
 
         public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo)
-            : this(resultRepo, testTypeRepo, GetDefaultLetterheadPath())
+            : this(resultRepo, testTypeRepo, null, GetDefaultLetterheadPath())
         {
         }
 
         public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo, string letterheadPath)
+            : this(resultRepo, testTypeRepo, null, letterheadPath)
+        {
+        }
+
+        public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo, IRepository<TestPanel> testPanelRepo, string letterheadPath)
         {
             _resultRepo = resultRepo;
             _testTypeRepo = testTypeRepo;
+            _testPanelRepo = testPanelRepo;
             _letterheadPath = letterheadPath;
         }
 
@@ -55,6 +63,7 @@ namespace LabSystem.Services
         public async Task<string> GenerateReportAsync(TestOrder order, bool includeLetterhead = true, CancellationToken cancellationToken = default)
         {
             var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId, cancellationToken);
+            bool isAmendedReport = results.Any(r => r.IsAmended);
             string dateStr = DateTime.Today.ToString("yyyy-MM-dd");
             
             Document document = new Document();
@@ -107,6 +116,17 @@ namespace LabSystem.Services
                 headerPara.Format.SpaceAfter = "1.5cm";
             }
 
+            if (isAmendedReport)
+            {
+                var amendedPara = section.AddParagraph();
+                amendedPara.Format.Alignment = ParagraphAlignment.Center;
+                amendedPara.Format.SpaceBefore = "0.5cm";
+                amendedPara.Format.SpaceAfter = "0.5cm";
+                var amendedText = amendedPara.AddFormattedText("*** AMENDED REPORT ***", TextFormat.Bold);
+                amendedText.Font.Size = 16;
+                amendedText.Color = Colors.Red;
+            }
+
             // Style configuration
             Style style = document.Styles["Normal"];
             style.Font.Name = "Arial";
@@ -126,40 +146,40 @@ namespace LabSystem.Services
             string gender = !string.IsNullOrWhiteSpace(order.Patient?.Gender) ? order.Patient.Gender : "Unknown";
             
             string ageStr = "";
-            if (!string.IsNullOrEmpty(order.Patient?.DateOfBirth))
+            if (order.Patient?.DateOfBirth != null)
             {
-                if (DateTime.TryParse(order.Patient.DateOfBirth, out DateTime dob))
-                {
-                    int age = DateTime.Today.Year - dob.Year;
-                    if (dob > DateTime.Today.AddYears(-age)) age--;
-                    ageStr = age.ToString();
-                }
-                else
-                {
-                    ageStr = order.Patient.DateOfBirth;
-                }
+                DateTime dob = order.Patient.DateOfBirth.Value;
+                int age = DateTime.Today.Year - dob.Year;
+                if (dob > DateTime.Today.AddYears(-age)) age--;
+                ageStr = age.ToString();
             }
 
-            string orderedDateStr = order.OrderedAt;
-            if (DateTime.TryParse(order.OrderedAt, out DateTime orderedTime))
-            {
-                orderedDateStr = orderedTime.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt");
-            }
+            string orderedDateStr = order.OrderedAt.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt");
 
             var pr1 = patientTable.AddRow();
             pr1.Height = "0.6cm";
             pr1.Cells[0].AddParagraph("Patient Name").Format.Font.Bold = true;
             pr1.Cells[1].AddParagraph(":").Format.Font.Bold = true;
             pr1.Cells[2].AddParagraph(patientName);
-            pr1.Cells[3].AddParagraph("Report.No").Format.Font.Bold = true;
+            pr1.Cells[3].AddParagraph("UHID / Ref No").Format.Font.Bold = true;
             pr1.Cells[4].AddParagraph(":").Format.Font.Bold = true;
-            pr1.Cells[5].AddParagraph(order.OrderId.ToString());
+            pr1.Cells[5].AddParagraph(order.Patient?.Uhid ?? order.PatientId.ToString());
+
+            string referredBy = "SELF";
+            if (order.Doctor != null)
+            {
+                referredBy = order.Doctor.Name;
+            }
+            else if (!string.IsNullOrWhiteSpace(order.ReferredBy))
+            {
+                referredBy = order.ReferredBy;
+            }
 
             var pr2 = patientTable.AddRow();
             pr2.Height = "0.6cm";
             pr2.Cells[0].AddParagraph("Referred By").Format.Font.Bold = true;
             pr2.Cells[1].AddParagraph(":").Format.Font.Bold = true;
-            pr2.Cells[2].AddParagraph(!string.IsNullOrWhiteSpace(order.ReferredBy) ? order.ReferredBy : "SELF");
+            pr2.Cells[2].AddParagraph(referredBy);
             pr2.Cells[3].AddParagraph("Age/Gender").Format.Font.Bold = true;
             pr2.Cells[4].AddParagraph(":").Format.Font.Bold = true;
             pr2.Cells[5].AddParagraph($"{ageStr} /{gender}");
@@ -169,11 +189,60 @@ namespace LabSystem.Services
             pr3.Cells[0].AddParagraph("Collected On").Format.Font.Bold = true;
             pr3.Cells[1].AddParagraph(":").Format.Font.Bold = true;
             pr3.Cells[2].AddParagraph(orderedDateStr);
-            pr3.Cells[3].AddParagraph("");
-            pr3.Cells[4].AddParagraph(":");
-            pr3.Cells[5].AddParagraph("");
+            pr3.Cells[3].AddParagraph("Order ID").Format.Font.Bold = true;
+            pr3.Cells[4].AddParagraph(":").Format.Font.Bold = true;
+            pr3.Cells[5].AddParagraph(order.OrderId.ToString());
 
             section.AddParagraph().Format.SpaceAfter = "0.5cm";
+
+            // Specimen Details Section
+            if (order.Specimens != null && order.Specimens.Any())
+            {
+                var specimenTable = section.AddTable();
+                specimenTable.Borders.Width = 0.5;
+                specimenTable.Borders.Color = Colors.LightGray;
+                specimenTable.AddColumn("4.5cm");  // Barcode
+                specimenTable.AddColumn("3.5cm");  // Sample Type
+                specimenTable.AddColumn("5.0cm");  // Collection Time
+                specimenTable.AddColumn("5.0cm");  // Status / Reason
+
+                var specHeader = specimenTable.AddRow();
+                specHeader.Shading.Color = Colors.LightGray;
+                specHeader.Height = "0.5cm";
+                specHeader.VerticalAlignment = VerticalAlignment.Center;
+                specHeader.Cells[0].AddParagraph("Specimen Barcode").Format.Font.Bold = true;
+                specHeader.Cells[1].AddParagraph("Sample Type").Format.Font.Bold = true;
+                specHeader.Cells[2].AddParagraph("Collection Time").Format.Font.Bold = true;
+                specHeader.Cells[3].AddParagraph("Status").Format.Font.Bold = true;
+
+                foreach (var spec in order.Specimens)
+                {
+                    var specRow = specimenTable.AddRow();
+                    specRow.Height = "0.5cm";
+                    specRow.VerticalAlignment = VerticalAlignment.Center;
+                    specRow.Cells[0].AddParagraph(spec.Barcode ?? "");
+                    specRow.Cells[1].AddParagraph(spec.SampleType ?? "");
+                    specRow.Cells[2].AddParagraph(spec.CollectionTime.HasValue ? spec.CollectionTime.Value.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt") : "N/A");
+                    
+                    var statusCell = specRow.Cells[3];
+                    if (string.Equals(spec.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var statusPara = statusCell.AddParagraph();
+                        var statusText = statusPara.AddFormattedText("REJECTED", TextFormat.Bold);
+                        statusText.Color = Colors.Red;
+                        if (!string.IsNullOrWhiteSpace(spec.RejectionReason))
+                        {
+                            statusPara.AddFormattedText($" ({spec.RejectionReason})");
+                        }
+                    }
+                    else
+                    {
+                        statusCell.AddParagraph(spec.Status ?? "");
+                    }
+                }
+
+                section.AddParagraph().Format.SpaceAfter = "0.5cm";
+            }
 
             // Group Results by GroupName
             var groupedResults = results
@@ -246,7 +315,7 @@ namespace LabSystem.Services
                     
                     row.Cells[2].AddParagraph(r.TestType.Unit ?? "");
                     
-                    string refRangeStr = FormatReferenceRange(r.TestType);
+                    string refRangeStr = FormatReferenceRange(r.TestType, order.Patient);
                     row.Cells[3].AddParagraph(refRangeStr);
 
                     if (r.IsAbnormal)
@@ -256,7 +325,7 @@ namespace LabSystem.Services
                         valText.Color = Color.FromRgb(198, 40, 40); // Soft dark red for abnormal
                         
                         string flagStr = " High";
-                        if (r.TestType.ReferenceRangeLow.HasValue && r.Value < r.TestType.ReferenceRangeLow.Value)
+                        if (IsValueLow(r.Value, r.TestType, order.Patient))
                         {
                             flagStr = " Low";
                         }
@@ -311,6 +380,19 @@ namespace LabSystem.Services
                 }
             }
 
+            if (isAmendedReport)
+            {
+                var amendments = results.Where(r => r.IsAmended).ToList();
+                foreach (var r in amendments)
+                {
+                    var reasonPara = section.AddParagraph($"* Amendment for {r.TestType.Name}: {r.AmendmentReason}");
+                    reasonPara.Format.Font.Size = 8;
+                    reasonPara.Format.Font.Italic = true;
+                    reasonPara.Format.Font.Color = Colors.Red;
+                }
+                section.AddParagraph().Format.SpaceAfter = "0.5cm";
+            }
+
             // End of Report Text
             var endPara = section.AddParagraph();
             endPara.Format.Alignment = ParagraphAlignment.Center;
@@ -343,6 +425,10 @@ namespace LabSystem.Services
 
         private string FormatResultValue(double value, TestType testType)
         {
+            if (value == -999.0)
+            {
+                return "Sample Rejected";
+            }
             if (testType.Unit == "Blood Group")
             {
                 switch ((int)value)
@@ -383,10 +469,67 @@ namespace LabSystem.Services
             return value.ToString();
         }
 
-        private string FormatReferenceRange(TestType tt)
+        private int CalculateAge(DateTime? dob, DateTime relativeTo)
+        {
+            if (!dob.HasValue) return 30; // default age
+            var birthDate = dob.Value;
+            int age = relativeTo.Year - birthDate.Year;
+            if (relativeTo.Month < birthDate.Month || (relativeTo.Month == birthDate.Month && relativeTo.Day < birthDate.Day))
+            {
+                age--;
+            }
+            return age < 0 ? 0 : age;
+        }
+
+        private bool IsValueLow(double value, TestType tt, Patient patient)
+        {
+            if (tt.ReferenceRanges != null && tt.ReferenceRanges.Count > 0 && patient != null)
+            {
+                int age = CalculateAge(patient.DateOfBirth, DateTime.UtcNow);
+                string gender = patient.Gender ?? "All";
+
+                var matchingRange = tt.ReferenceRanges.FirstOrDefault(r =>
+                    (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
+                    && age >= r.AgeMin && age <= r.AgeMax);
+
+                if (matchingRange != null)
+                {
+                    return matchingRange.RangeLow.HasValue && value < matchingRange.RangeLow.Value;
+                }
+            }
+            return tt.ReferenceRangeLow.HasValue && value < tt.ReferenceRangeLow.Value;
+        }
+
+        private string FormatReferenceRange(TestType tt, Patient patient)
         {
             if (tt == null) return "N/A";
             
+            if (tt.ReferenceRanges != null && tt.ReferenceRanges.Count > 0 && patient != null)
+            {
+                int age = CalculateAge(patient.DateOfBirth, DateTime.UtcNow);
+                string gender = patient.Gender ?? "All";
+
+                var matchingRange = tt.ReferenceRanges.FirstOrDefault(r =>
+                    (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
+                    && age >= r.AgeMin && age <= r.AgeMax);
+
+                if (matchingRange != null)
+                {
+                    if (matchingRange.RangeLow.HasValue && matchingRange.RangeHigh.HasValue)
+                    {
+                        return $"{matchingRange.RangeLow.Value} - {matchingRange.RangeHigh.Value}";
+                    }
+                    if (matchingRange.RangeLow.HasValue)
+                    {
+                        return $">= {matchingRange.RangeLow.Value}";
+                    }
+                    if (matchingRange.RangeHigh.HasValue)
+                    {
+                        return $"<= {matchingRange.RangeHigh.Value}";
+                    }
+                }
+            }
+
             if (tt.Unit == "Blood Group")
             {
                 return "A/B/O/AB Rh +/-";
@@ -467,32 +610,41 @@ namespace LabSystem.Services
             string patientName = invoice.Order?.Patient?.FullName ?? "Unknown Patient";
             string invoiceId = invoice.InvoiceId.ToString();
             string orderId = invoice.OrderId.ToString();
-            string createdDate = invoice.CreatedAt;
-            if (DateTime.TryParse(invoice.CreatedAt, out DateTime ct))
-            {
-                createdDate = ct.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt");
-            }
+            string createdDate = invoice.CreatedAt.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt");
 
             var row1 = infoTable.AddRow();
             row1.Cells[0].AddParagraph("Patient Name").Format.Font.Bold = true;
             row1.Cells[1].AddParagraph(":");
             row1.Cells[2].AddParagraph(patientName);
-            row1.Cells[3].AddParagraph("Invoice No").Format.Font.Bold = true;
+            row1.Cells[3].AddParagraph("UHID").Format.Font.Bold = true;
             row1.Cells[4].AddParagraph(":");
-            row1.Cells[5].AddParagraph(invoiceId);
+            row1.Cells[5].AddParagraph(invoice.Order?.Patient?.Uhid ?? "");
+
+            string invoiceReferredBy = "SELF";
+            if (invoice.Order?.Doctor != null)
+            {
+                invoiceReferredBy = invoice.Order.Doctor.Name;
+            }
+            else if (!string.IsNullOrWhiteSpace(invoice.Order?.ReferredBy))
+            {
+                invoiceReferredBy = invoice.Order.ReferredBy;
+            }
 
             var row2 = infoTable.AddRow();
             row2.Cells[0].AddParagraph("Referred By").Format.Font.Bold = true;
             row2.Cells[1].AddParagraph(":");
-            row2.Cells[2].AddParagraph(!string.IsNullOrWhiteSpace(invoice.Order?.ReferredBy) ? invoice.Order.ReferredBy : "SELF");
-            row2.Cells[3].AddParagraph("Order ID").Format.Font.Bold = true;
+            row2.Cells[2].AddParagraph(invoiceReferredBy);
+            row2.Cells[3].AddParagraph("Invoice No").Format.Font.Bold = true;
             row2.Cells[4].AddParagraph(":");
-            row2.Cells[5].AddParagraph(orderId);
+            row2.Cells[5].AddParagraph(invoiceId);
 
             var row3 = infoTable.AddRow();
             row3.Cells[0].AddParagraph("Date").Format.Font.Bold = true;
             row3.Cells[1].AddParagraph(":");
             row3.Cells[2].AddParagraph(createdDate);
+            row3.Cells[3].AddParagraph("Order ID").Format.Font.Bold = true;
+            row3.Cells[4].AddParagraph(":");
+            row3.Cells[5].AddParagraph(orderId);
             
             section.AddParagraph().Format.SpaceAfter = "1.0cm";
 
@@ -516,25 +668,56 @@ namespace LabSystem.Services
             int sno = 1;
             decimal calculatedTotal = 0;
 
-            if (invoice.Order != null && !string.IsNullOrWhiteSpace(invoice.Order.Notes))
+            if (invoice.Order != null && invoice.Order.TestTypes != null && invoice.Order.TestTypes.Any())
             {
-                var testIds = invoice.Order.Notes.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                     .Select(id => int.Parse(id)).ToList();
-                
-                var allTests = await _testTypeRepo.GetAllAsync(cancellationToken);
-                var tests = allTests.Where(t => testIds.Contains(t.TypeId)).ToList();
+                var tests = invoice.Order.TestTypes.ToList();
+                var testTypesAppliedToPanels = new HashSet<int>();
+
+                if (_testPanelRepo != null)
+                {
+                    var panelsTask = _testPanelRepo.GetAllAsync(CancellationToken.None);
+                    panelsTask.Wait();
+                    var panels = panelsTask.Result;
+
+                    var orderedTestTypeIds = new HashSet<int>(tests.Select(t => t.TypeId));
+
+                    foreach (var panel in panels.OrderByDescending(p => p.TestTypes.Count))
+                    {
+                        var panelTestTypeIds = panel.TestTypes.Select(t => t.TypeId).ToList();
+                        if (panelTestTypeIds.Count > 0 && panelTestTypeIds.All(id => orderedTestTypeIds.Contains(id) && !testTypesAppliedToPanels.Contains(id)))
+                        {
+                            var row = itemTable.AddRow();
+                            row.Height = "0.6cm";
+                            row.VerticalAlignment = VerticalAlignment.Center;
+                            row.Cells[0].AddParagraph(sno.ToString());
+                            row.Cells[1].AddParagraph($"{panel.Name} (Package)");
+                            row.Cells[2].AddParagraph(panel.Price.ToString("F2"));
+                            
+                            calculatedTotal += panel.Price;
+                            sno++;
+
+                            foreach (var id in panelTestTypeIds)
+                            {
+                                testTypesAppliedToPanels.Add(id);
+                            }
+                        }
+                    }
+                }
 
                 foreach (var test in tests)
                 {
-                    var row = itemTable.AddRow();
-                    row.Height = "0.6cm";
-                    row.VerticalAlignment = VerticalAlignment.Center;
-                    row.Cells[0].AddParagraph(sno.ToString());
-                    row.Cells[1].AddParagraph(test.Name);
-                    row.Cells[2].AddParagraph(test.Price.ToString("F2"));
-                    
-                    calculatedTotal += test.Price;
-                    sno++;
+                    if (!testTypesAppliedToPanels.Contains(test.TypeId))
+                    {
+                        var row = itemTable.AddRow();
+                        row.Height = "0.6cm";
+                        row.VerticalAlignment = VerticalAlignment.Center;
+                        row.Cells[0].AddParagraph(sno.ToString());
+                        row.Cells[1].AddParagraph(test.Name);
+                        row.Cells[2].AddParagraph(test.Price.ToString("F2"));
+                        
+                        calculatedTotal += test.Price;
+                        sno++;
+                    }
                 }
             }
 
@@ -543,13 +726,78 @@ namespace LabSystem.Services
             totalRow.Height = "0.8cm";
             totalRow.VerticalAlignment = VerticalAlignment.Center;
             totalRow.Cells[0].MergeRight = 1;
-            var totalLbl = totalRow.Cells[0].AddParagraph("TOTAL AMOUNT");
+            var totalLbl = totalRow.Cells[0].AddParagraph("SUBTOTAL");
             totalLbl.Format.Font.Bold = true;
             totalLbl.Format.Alignment = ParagraphAlignment.Right;
             totalRow.Cells[0].Format.RightIndent = "0.5cm";
             
             var totalVal = totalRow.Cells[2].AddParagraph(invoice.TotalAmount.ToString("F2"));
             totalVal.Format.Font.Bold = true;
+
+            if (invoice.DiscountAmount > 0)
+            {
+                var discountRow = itemTable.AddRow();
+                discountRow.Height = "0.6cm";
+                discountRow.VerticalAlignment = VerticalAlignment.Center;
+                discountRow.Cells[0].MergeRight = 1;
+                var discountLbl = discountRow.Cells[0].AddParagraph("DISCOUNT");
+                discountLbl.Format.Alignment = ParagraphAlignment.Right;
+                discountRow.Cells[0].Format.RightIndent = "0.5cm";
+                discountRow.Cells[2].AddParagraph("-" + invoice.DiscountAmount.ToString("F2"));
+            }
+
+            if (invoice.TaxAmount > 0)
+            {
+                var taxRow = itemTable.AddRow();
+                taxRow.Height = "0.6cm";
+                taxRow.VerticalAlignment = VerticalAlignment.Center;
+                taxRow.Cells[0].MergeRight = 1;
+                var taxLbl = taxRow.Cells[0].AddParagraph("TAX");
+                taxLbl.Format.Alignment = ParagraphAlignment.Right;
+                taxRow.Cells[0].Format.RightIndent = "0.5cm";
+                taxRow.Cells[2].AddParagraph(invoice.TaxAmount.ToString("F2"));
+            }
+
+            decimal grandTotal = invoice.TotalAmount - invoice.DiscountAmount + invoice.TaxAmount;
+            decimal paidAmount = 0;
+            if (invoice.Payments != null) {
+                paidAmount = invoice.Payments.Sum(p => p.Amount);
+            }
+            decimal balance = Math.Max(0, grandTotal - paidAmount);
+
+            var grandTotalRow = itemTable.AddRow();
+            grandTotalRow.Height = "0.8cm";
+            grandTotalRow.VerticalAlignment = VerticalAlignment.Center;
+            grandTotalRow.Shading.Color = Colors.LightGray;
+            grandTotalRow.Cells[0].MergeRight = 1;
+            var grandTotalLbl = grandTotalRow.Cells[0].AddParagraph("GRAND TOTAL");
+            grandTotalLbl.Format.Font.Bold = true;
+            grandTotalLbl.Format.Alignment = ParagraphAlignment.Right;
+            grandTotalRow.Cells[0].Format.RightIndent = "0.5cm";
+            
+            var grandTotalVal = grandTotalRow.Cells[2].AddParagraph(grandTotal.ToString("F2"));
+            grandTotalVal.Format.Font.Bold = true;
+
+            var paidRow = itemTable.AddRow();
+            paidRow.Height = "0.6cm";
+            paidRow.VerticalAlignment = VerticalAlignment.Center;
+            paidRow.Cells[0].MergeRight = 1;
+            var paidLbl = paidRow.Cells[0].AddParagraph("PAID AMOUNT");
+            paidLbl.Format.Alignment = ParagraphAlignment.Right;
+            paidRow.Cells[0].Format.RightIndent = "0.5cm";
+            paidRow.Cells[2].AddParagraph(paidAmount.ToString("F2"));
+
+            var balanceRow = itemTable.AddRow();
+            balanceRow.Height = "0.6cm";
+            balanceRow.VerticalAlignment = VerticalAlignment.Center;
+            balanceRow.Cells[0].MergeRight = 1;
+            var balanceLbl = balanceRow.Cells[0].AddParagraph("BALANCE DUE");
+            balanceLbl.Format.Font.Bold = true;
+            balanceLbl.Format.Alignment = ParagraphAlignment.Right;
+            balanceRow.Cells[0].Format.RightIndent = "0.5cm";
+            var balanceVal = balanceRow.Cells[2].AddParagraph(balance.ToString("F2"));
+            balanceVal.Format.Font.Bold = true;
+            if (balance > 0) balanceVal.Format.Font.Color = Colors.Red;
 
             section.AddParagraph().Format.SpaceAfter = "1.0cm";
 

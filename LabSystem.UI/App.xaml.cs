@@ -1,8 +1,10 @@
 using System;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using LabSystem.Core.Interfaces;
+using LabSystem.Core.Models;
 using LabSystem.Data;
 using LabSystem.Data.Repositories;
 using LabSystem.Services;
@@ -28,8 +30,10 @@ namespace LabSystem.UI
             string logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
             Directory.CreateDirectory(logDir);
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .WriteTo.File(Path.Combine(logDir, "lab_.log"), rollingInterval: RollingInterval.Day)
+                .MinimumLevel.Warning()
+                .WriteTo.File(Path.Combine(logDir, "lab_.log"), rollingInterval: RollingInterval.Day,
+                    fileSizeLimitBytes: 5 * 1024 * 1024, // 5MB max per log file to avoid filling disk
+                    retainedFileCountLimit: 14) // Keep only 2 weeks of logs
                 .CreateLogger();
 
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
@@ -48,14 +52,16 @@ namespace LabSystem.UI
             Container.Register<LabDbContext>(Lifestyle.Transient);
 
             // Register Repositories
-            Container.Register(typeof(IRepository<>), typeof(Repository<>), Lifestyle.Transient);
             Container.Register<IPatientRepository, PatientRepository>(Lifestyle.Transient);
             Container.Register<ITestOrderRepository, TestOrderRepository>(Lifestyle.Transient);
             Container.Register<IResultRepository, ResultRepository>(Lifestyle.Transient);
             Container.Register<ITestTypeRepository, TestTypeRepository>(Lifestyle.Transient);
+            Container.Register<IRepository<TestPanel>, TestPanelRepository>(Lifestyle.Transient);
+            Container.RegisterConditional(typeof(IRepository<>), typeof(Repository<>), Lifestyle.Transient, c => !c.Handled);
             Container.Register<IStaffRepository, StaffRepository>(Lifestyle.Transient);
             Container.Register<IAuditLogRepository, AuditLogRepository>(Lifestyle.Transient);
             Container.Register<IReportRepository, ReportRepository>(Lifestyle.Transient);
+            Container.Register<IQCResultRepository, QCResultRepository>(Lifestyle.Transient);
 
             // Register Services
             Container.Register<IAuthService, AuthService>(Lifestyle.Transient);
@@ -64,6 +70,7 @@ namespace LabSystem.UI
             Container.Register<IPdfReportService>(() => new PdfReportService(
                 Container.GetInstance<IResultRepository>(),
                 Container.GetInstance<IRepository<LabSystem.Core.Models.TestType>>(),
+                Container.GetInstance<IRepository<LabSystem.Core.Models.TestPanel>>(),
                 GetLetterheadPath()), Lifestyle.Transient);
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
             Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
@@ -200,6 +207,10 @@ namespace LabSystem.UI
                 new { Table = "TestOrders", Column = "ReferredBy", Type = "TEXT" },
                 new { Table = "Staff", Column = "FailedLoginAttempts", Type = "INTEGER DEFAULT 0" },
                 new { Table = "Staff", Column = "LockoutEnd", Type = "TEXT" },
+                new { Table = "TestTypes", Column = "SampleType", Type = "TEXT" },
+                new { Table = "TestOrders", Column = "DoctorId", Type = "INTEGER" },
+                new { Table = "Invoices", Column = "DiscountAmount", Type = "REAL DEFAULT 0" },
+                new { Table = "Invoices", Column = "TaxAmount", Type = "REAL DEFAULT 0" },
             };
 
             foreach (var migration in migrations)
@@ -207,12 +218,190 @@ namespace LabSystem.UI
                 try
                 {
                     db.Database.ExecuteSqlCommand($"ALTER TABLE {migration.Table} ADD COLUMN {migration.Column} {migration.Type};");
-                    Log.Debug("Applied migration: Added column {Column} to {Table}", migration.Column, migration.Table);
+                    Log.Information("Applied migration: Added column {Column} to {Table}", migration.Column, migration.Table);
                 }
                 catch (Exception ex)
                 {
                     Log.Debug(ex, "Migration skipped (column may already exist): {Table}.{Column}", migration.Table, migration.Column);
                 }
+            }
+
+            try
+            {
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS Doctors (
+                        DoctorId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL,
+                        Specialization TEXT,
+                        ClinicName TEXT,
+                        ContactPhone TEXT,
+                        CommissionPercent REAL DEFAULT 0
+                    );
+                ");
+                
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS Specimens (
+                        SpecimenId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        OrderId INTEGER NOT NULL,
+                        Barcode TEXT NOT NULL UNIQUE,
+                        SampleType TEXT NOT NULL,
+                        CollectionTime DATETIME,
+                        CollectedBy TEXT,
+                        Status TEXT NOT NULL,
+                        RejectionReason TEXT,
+                        FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId) ON DELETE CASCADE
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS ReferenceRanges (
+                        ReferenceRangeId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        TestTypeId INTEGER NOT NULL,
+                        Gender TEXT NOT NULL,
+                        AgeMin INTEGER NOT NULL,
+                        AgeMax INTEGER NOT NULL,
+                        RangeLow REAL,
+                        RangeHigh REAL,
+                        FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS TestPanels (
+                        PanelId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL,
+                        Description TEXT,
+                        Price REAL NOT NULL
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS PanelTestTypes (
+                        PanelId INTEGER NOT NULL,
+                        TypeId INTEGER NOT NULL,
+                        PRIMARY KEY(PanelId, TypeId),
+                        FOREIGN KEY(PanelId) REFERENCES TestPanels(PanelId) ON DELETE CASCADE,
+                        FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS Payments (
+                        PaymentId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        InvoiceId INTEGER NOT NULL,
+                        Amount REAL NOT NULL,
+                        PaymentMethod TEXT,
+                        PaymentDate DATETIME NOT NULL,
+                        FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId) ON DELETE CASCADE
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS QCResults (
+                        QCResultId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        TestTypeId INTEGER NOT NULL,
+                        ControlLevel TEXT NOT NULL,
+                        ExpectedMean REAL NOT NULL,
+                        StandardDeviation REAL NOT NULL,
+                        MeasuredValue REAL NOT NULL,
+                        RecordedAt DATETIME NOT NULL,
+                        TechnicianId INTEGER NOT NULL,
+                        Remarks TEXT,
+                        FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE,
+                        FOREIGN KEY(TechnicianId) REFERENCES Staff(StaffId) ON DELETE CASCADE
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_TestOrders_DoctorId ON TestOrders (DoctorId);");
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Specimens_OrderId ON Specimens (OrderId);");
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_ReferenceRanges_TestTypeId ON ReferenceRanges (TestTypeId);");
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Payments_InvoiceId ON Payments (InvoiceId);");
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QCResults_TestTypeId ON QCResults (TestTypeId);");
+
+                try
+                {
+                    db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN IsAmended INTEGER NOT NULL DEFAULT 0;");
+                    db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN AmendmentReason TEXT;");
+                    db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN AmendedAt DATETIME;");
+                }
+                catch (Exception)
+                {
+                    // Columns might already exist, ignore error
+                }
+
+                Log.Information("Phase 2/3/4 database tables verified/created.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to create Phase 2 tables.");
+            }
+
+            try
+            {
+                // Set SampleTypes for all TestTypes if they are null/empty
+                db.Database.ExecuteSqlCommand(@"
+                    UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'HEMATOLOGY';
+                    UPDATE TestTypes SET SampleType = 'Serum' WHERE (SampleType IS NULL OR SampleType = '') AND Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
+                    UPDATE TestTypes SET SampleType = 'Urine' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'CLINICAL PATHOLOGY';
+                    UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Name = 'Blood Grouping & Rh';
+                ");
+
+                // Check if Doctors table is empty
+                var doctorCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Doctors").FirstOrDefault();
+                if (doctorCount == 0)
+                {
+                    db.Database.ExecuteSqlCommand(@"
+                        INSERT INTO Doctors (Name, Specialization, ClinicName, ContactPhone, CommissionPercent) VALUES
+                        ('Dr. Robert Clark', 'Cardiologist', 'Metro Heart Care', '555-0199', 15.0),
+                        ('Dr. Alice Vance', 'General Physician', 'City Clinic', '555-0288', 10.0),
+                        ('Dr. Sarah Patel', 'Endocrinologist', 'Diabetes Care Center', '555-0377', 12.0);
+                    ");
+                    Log.Information("Seeded referring doctors.");
+                }
+
+                // Check if ReferenceRanges table is empty
+                var refRangeCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM ReferenceRanges").FirstOrDefault();
+                if (refRangeCount == 0)
+                {
+                    db.Database.ExecuteSqlCommand(@"
+                        INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Male', 12, 120, 13.0, 17.0),
+                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Female', 12, 120, 12.0, 15.0),
+                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Male', 0, 11, 11.0, 14.5),
+                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Female', 0, 11, 11.0, 14.5),
+                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Other', 0, 120, 12.0, 16.0);
+                    ");
+                    Log.Information("Seeded reference ranges.");
+                }
+
+                // Check if TestPanels table is empty
+                var panelCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM TestPanels").FirstOrDefault();
+                if (panelCount == 0)
+                {
+                    db.Database.ExecuteSqlCommand(@"
+                        INSERT INTO TestPanels (Name, Description, Price) VALUES
+                        ('Lipid Profile Panel', 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, VLDL, and non-HDL cholesterol.', 1200.00),
+                        ('Thyroid Profile Panel', 'Thyroid Function Test including T3, T4, and TSH screening.', 900.00);
+                        
+                        INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Cholesterol, Total')),
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triglycerides')),
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'HDL Cholesterol')),
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'LDL Cholesterol')),
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'VLDL Cholesterol')),
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Non-HDL Cholesterol'));
+
+                        INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triiodothyronine (T3)')),
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Thyroxine (T4)')),
+                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'));
+                    ");
+                    Log.Information("Seeded test panels.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to apply seed migrations.");
             }
         }
 

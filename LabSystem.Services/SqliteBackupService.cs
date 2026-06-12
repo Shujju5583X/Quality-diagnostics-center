@@ -98,11 +98,11 @@ namespace LabSystem.Services
                 {
                     wsPatients.Cell(pRow, 1).Value = p.PatientId;
                     wsPatients.Cell(pRow, 2).Value = p.FullName;
-                    wsPatients.Cell(pRow, 3).Value = p.DateOfBirth;
+                    wsPatients.Cell(pRow, 3).Value = p.DateOfBirth.HasValue ? p.DateOfBirth.Value.ToString("yyyy-MM-dd") : "";
                     wsPatients.Cell(pRow, 4).Value = p.Gender;
                     wsPatients.Cell(pRow, 5).Value = p.ContactPhone;
                     wsPatients.Cell(pRow, 6).Value = p.ContactEmail;
-                    wsPatients.Cell(pRow, 7).Value = p.CreatedAt;
+                    wsPatients.Cell(pRow, 7).Value = p.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
 
                     StyleDataRow(wsPatients, pRow, 7);
                     pRow++;
@@ -134,10 +134,10 @@ namespace LabSystem.Services
                     wsOrders.Cell(oRow, 1).Value = o.OrderId;
                     wsOrders.Cell(oRow, 2).Value = o.PatientId;
                     wsOrders.Cell(oRow, 3).Value = patientsDict.TryGetValue(o.PatientId, out var p) ? p.FullName : "Unknown Patient";
-                    wsOrders.Cell(oRow, 4).Value = o.OrderedAt;
+                    wsOrders.Cell(oRow, 4).Value = o.OrderedAt.ToString("yyyy-MM-dd HH:mm:ss");
                     wsOrders.Cell(oRow, 5).Value = o.ReferredBy;
                     wsOrders.Cell(oRow, 6).Value = o.Status;
-                    wsOrders.Cell(oRow, 7).Value = GetRequestedTestNames(o.Notes, testTypesDict);
+                    wsOrders.Cell(oRow, 7).Value = string.Join(", ", o.TestTypes.Select(tt => tt.Name));
                     wsOrders.Cell(oRow, 8).Value = o.Notes;
 
                     StyleDataRow(wsOrders, oRow, 8);
@@ -197,7 +197,7 @@ namespace LabSystem.Services
                     wsResults.Cell(resRow, 6).Value = normalRange;
                     wsResults.Cell(resRow, 7).Value = unit;
                     wsResults.Cell(resRow, 8).Value = r.IsAbnormal ? "ABNORMAL" : "Normal";
-                    wsResults.Cell(resRow, 9).Value = r.RecordedAt;
+                    wsResults.Cell(resRow, 9).Value = r.RecordedAt.ToString("yyyy-MM-dd HH:mm:ss");
                     wsResults.Cell(resRow, 10).Value = staffDict.TryGetValue(r.TechnicianId, out var tech) ? tech.FullName : "System";
 
                     StyleDataRow(wsResults, resRow, 10);
@@ -282,7 +282,7 @@ namespace LabSystem.Services
                     wsStaff.Cell(sRow, 2).Value = staff.FullName;
                     wsStaff.Cell(sRow, 3).Value = staff.Role;
                     wsStaff.Cell(sRow, 4).Value = staff.FailedLoginAttempts;
-                    wsStaff.Cell(sRow, 5).SetValue<string>(staff.LockoutEnd ?? "");
+                    wsStaff.Cell(sRow, 5).SetValue<string>(staff.LockoutEnd.HasValue ? staff.LockoutEnd.Value.ToString("yyyy-MM-dd HH:mm:ss") : "");
 
                     StyleDataRow(wsStaff, sRow, 5);
                     sRow++;
@@ -327,6 +327,12 @@ namespace LabSystem.Services
                 // Save completed Excel Workbook
                 workbook.SaveAs(filePath);
             }
+
+            // Force immediate memory reclaim after heavy Excel generation
+            // Critical on 4GB RAM systems where ClosedXML can spike to 200-400MB
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
 
         // ==========================================

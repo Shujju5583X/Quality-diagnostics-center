@@ -2,7 +2,7 @@
 
 A comprehensive, enterprise-grade **Medical Laboratory Management System** designed to streamline clinic workflows and clinical analytics, built with a modern **.NET C# (WPF)** architecture. 
 
-This desktop application streamlines day-to-day laboratory operations including patient registration, test ordering, clinical result entry, automatic range-checking with abnormality flagging, professional PDF report generation with clinic branding, secure PIN-based technician authentication, structured audit logs, and automated multi-format database backups.
+This desktop application streamlines day-to-day laboratory operations including patient registration, test panel selection, specimen barcode tracking, clinical result entry, dynamic biological reference range checks (age & gender-specific) with automatic abnormality flagging, referring doctor commission calculations, quality control tracking, professional PDF report and invoice generation, secure PIN-based technician authentication, structured audit logs, and automated multi-format database backups.
 
 ---
 
@@ -51,6 +51,27 @@ This desktop application streamlines day-to-day laboratory operations including 
 - **Traceable Actions**: Structured tracking of user logins, patient creations, order generations, result entries, and backup actions.
 - **Rolling File Logging**: Integrates **Serilog** with rolling file sinks to ensure diagnostic reliability and regulatory compliance.
 
+### 🏥 Referring Doctor & Commission Tracking
+- **Doctor Directory**: Manage referring doctor profiles, contact numbers, specializations, and commission percentages.
+- **Commission Calculations**: Automatically calculate referring doctor commission totals based on the payments received for their referred test orders.
+- **Referral Statistics**: View interactive diagnostic charts and tables filtering commissions and referrals by custom date ranges.
+
+### 🧪 Test Panels
+- **Grouped Panel Ordering**: Support ordering tests by clinical panels (e.g., Lipid Panel, CBC Panel, CMP Panel).
+- **Auto-expansion**: Selecting a panel automatically selects all corresponding test types, streamlining ordering workflows.
+
+### 🧬 Dynamic Biological Reference Ranges
+- **Demographic Filters**: Reference ranges are configured by age limits and gender types instead of a single static global range.
+- **Precise Flagging**: Dynamically evaluates the patient's age and gender at result validation time to flag results as `ABNORMAL` or `NORMAL` with maximum clinical accuracy.
+
+### 📦 Specimen Lifecycle Tracking & Barcodes
+- **Unique Barcodes**: Generate distinct barcodes and track progress across states: `Pending`, `Collected`, `Processed`, and `Rejected`.
+- **Audit Trails**: Log who collected the specimen, when, and reasons for rejection (e.g., Clotted, Hemolyzed) via a prompt-based modal dialog.
+
+### 🔬 Quality Control (QC) Tracking
+- **Instrument Calibration**: Save control runs (`QCResult`) against specific test types using normal or abnormal controls.
+- **Reliability Logging**: Logs user PIN, control values, and range checks to satisfy regulatory compliance.
+
 ---
 
 ## 🏗️ Architecture & Decoupling
@@ -70,7 +91,7 @@ graph TD
 ### Layer Breakdown
 
 1. **`LabSystem.Core` (Domain Layer)**
-   - **Models**: Defines domain models (`Patient`, `TestOrder`, `Result`, `TestType`, `Staff`, `Report`, `AuditLog`, and `Invoice`).
+   - **Models**: Defines domain models (`Patient`, `TestOrder`, `Result`, `TestType`, `Staff`, `Report`, `AuditLog`, `Invoice`, `Payment`, `Doctor`, `Specimen`, `ReferenceRange`, `TestPanel`, and `QCResult`).
    - **Interfaces**: Domain contracts establishing decoupling via Repository and Service abstractions (`IPatientRepository`, `ITestOrderRepository`, `IResultRepository`, `IAuthService`, `IBillingService`, `IBackupService`, etc.).
    - **Enums**: Shared enumeration categories.
 
@@ -90,7 +111,7 @@ graph TD
 
 4. **`LabSystem.UI` (WPF Presentation Layer)**
    - **Material Theme**: Styled using the **Material Design in XAML** toolkit, featuring clean typography, dynamic states, and harmonious colors.
-   - **MVVM DataBinding**: Clean separation of Views (XAML files like `DashboardView`, `InvoicePreviewWindow`) and ViewModels (C# files like `DashboardViewModel`).
+   - **Modular WPF ViewModels**: Clean separation of Views (XAML files like `DashboardView`, `InvoicePreviewWindow`) and ViewModels. The monolithic `DashboardViewModel` is refactored into modular partial classes (`DashboardViewModel.Patients.cs`, `DashboardViewModel.Orders.cs`, `DashboardViewModel.Results.cs`, `DashboardViewModel.Billing.cs`, `DashboardViewModel.AuditLogs.cs`, `DashboardViewModel.Catalog.cs`, `DashboardViewModel.Clinical.cs`, `DashboardViewModel.LabFeatures.cs`, etc.) to isolate concerns and scale implementation.
    - **Dependency Injection**: Orchestrated via **SimpleInjector** to register transient DbContexts, data services, repository providers, and ViewModels.
    - **Serilog Diagnostics**: Writes runtime logs locally, cycling daily.
 

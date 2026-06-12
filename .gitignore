@@ -84,3 +84,9 @@ ENV/
 # ==========================================
 [Ss]ample\ reports/*.pdf
 ![Ss]ample\ reports/Sample_Verification_Report.pdf
+
+# ==========================================
+# Local AI prompt/history files
+# ==========================================
+initial_prompt.txt
+

@@ -12,6 +12,20 @@ namespace LabSystem.Data.Repositories
     {
         public TestTypeRepository(LabDbContext context) : base(context) { }
 
+        public override async Task<TestType> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                         .Include(t => t.ReferenceRanges)
+                         .FirstOrDefaultAsync(t => t.TypeId == id, cancellationToken);
+        }
+
+        public override async Task<IEnumerable<TestType>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.AsNoTracking()
+                         .Include(t => t.ReferenceRanges)
+                         .ToListAsync(cancellationToken);
+        }
+
         public async Task<IEnumerable<TestType>> GetActiveAsync(CancellationToken cancellationToken = default)
         {
             return await _dbSet.AsNoTracking()

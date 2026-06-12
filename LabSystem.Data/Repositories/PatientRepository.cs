@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
@@ -17,6 +18,57 @@ namespace LabSystem.Data.Repositories
             if (string.IsNullOrWhiteSpace(query))
                 return await GetAllAsync(cancellationToken);
             return await _dbSet.Where(p => p.FullName.Contains(query)).ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Patient>> SearchPatientsAsync(string query, DateTime? startDate, DateTime? endDate, int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            var q = _dbSet.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                q = q.Where(p => p.FullName.Contains(query) || p.ContactPhone.Contains(query) || p.PatientId.ToString().Equals(query) || p.Uhid.Contains(query));
+            }
+
+            if (startDate.HasValue)
+            {
+                var sd = startDate.Value.Date;
+                q = q.Where(p => p.CreatedAt >= sd);
+            }
+
+            if (endDate.HasValue)
+            {
+                var ed = endDate.Value.Date.AddDays(1);
+                q = q.Where(p => p.CreatedAt < ed);
+            }
+
+            return await q.OrderByDescending(p => p.PatientId)
+                          .Skip((page - 1) * pageSize)
+                          .Take(pageSize)
+                          .ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> GetPatientsCountAsync(string query, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken = default)
+        {
+            var q = _dbSet.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                q = q.Where(p => p.FullName.Contains(query) || p.ContactPhone.Contains(query) || p.PatientId.ToString().Equals(query) || p.Uhid.Contains(query));
+            }
+
+            if (startDate.HasValue)
+            {
+                var sd = startDate.Value.Date;
+                q = q.Where(p => p.CreatedAt >= sd);
+            }
+
+            if (endDate.HasValue)
+            {
+                var ed = endDate.Value.Date.AddDays(1);
+                q = q.Where(p => p.CreatedAt < ed);
+            }
+
+            return await q.CountAsync(cancellationToken);
         }
     }
 }

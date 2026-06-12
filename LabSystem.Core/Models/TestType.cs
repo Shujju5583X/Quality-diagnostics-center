@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace LabSystem.Core.Models
 {
     public class TestType
@@ -16,5 +18,8 @@ namespace LabSystem.Core.Models
         public string Interpretation { get; set; }
         public int SortOrder { get; set; }
         public decimal Price { get; set; }
+        
+        public string SampleType { get; set; }
+        public virtual ICollection<ReferenceRange> ReferenceRanges { get; set; } = new HashSet<ReferenceRange>();
     }
 }

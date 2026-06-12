@@ -27,8 +27,17 @@ namespace LabSystem.UI.Views
                 // Generate temporary PDF with letterhead
                 _tempPdfPath = await _reportService.GenerateReportAsync(_order, includeLetterhead: true);
                 
-                // Display in WebBrowser
-                PdfWebViewer.Navigate(new Uri(_tempPdfPath).AbsoluteUri);
+                try
+                {
+                    // Display in WebBrowser (works on modern IE versions)
+                    PdfWebViewer.Navigate(new Uri(_tempPdfPath).AbsoluteUri);
+                }
+                catch
+                {
+                    // Fallback for Windows 7: embedded IE often can't render PDFs
+                    // Open in system default PDF viewer (Adobe Reader, Foxit, etc.)
+                    Process.Start(_tempPdfPath);
+                }
             }
             catch (Exception ex)
             {

@@ -12,7 +12,7 @@ using LabSystem.Services;
 
 namespace LabSystem.UI.ViewModels
 {
-    public class DashboardViewModel : ViewModelBase
+    public partial class DashboardViewModel : ViewModelBase
     {
         private readonly IPatientRepository _patientRepo;
         private readonly ITestOrderRepository _orderRepo;
@@ -25,6 +25,10 @@ namespace LabSystem.UI.ViewModels
         private readonly IPdfReportService _reportService;
         private readonly IBackupService _backupService;
         private readonly IBillingService _billingService;
+        private readonly IRepository<Doctor> _doctorRepo;
+        private readonly IRepository<TestPanel> _testPanelRepo;
+        private readonly IRepository<Specimen> _specimenRepo;
+        private readonly IQCResultRepository _qcRepo;
 
         private int _staffId;
         private string _currentStaffName;
@@ -38,6 +42,15 @@ namespace LabSystem.UI.ViewModels
         private string _newPatientPhone;
         private string _newPatientEmail;
         private string _newPatientGender = "Male";
+
+        // Patient search, filter, pagination fields
+        private string _patientSearchQuery;
+        private DateTime? _patientStartDate;
+        private DateTime? _patientEndDate;
+        private int _patientCurrentPage = 1;
+        private int _patientTotalPages = 1;
+        private int _patientTotalCount = 0;
+        public const int PageSize = 15;
 
         // Order tab fields
         private string _orderNotes;
@@ -120,6 +133,7 @@ namespace LabSystem.UI.ViewModels
             { 
                 _selectedOrder = value; 
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsSelectedOrderSpecimenRejected));
                 LoadResultsForSelectedOrder();
             }
         }
@@ -131,57 +145,6 @@ namespace LabSystem.UI.ViewModels
             set { _selectedInvoice = value; OnPropertyChanged(); }
         }
 
-        // New Patient Bindings
-        public string NewPatientName
-        {
-            get => _newPatientName;
-            set { _newPatientName = value; OnPropertyChanged(); }
-        }
-
-        public DateTime? NewPatientDOB
-        {
-            get => _newPatientDOB;
-            set { _newPatientDOB = value; OnPropertyChanged(); }
-        }
-
-        public string NewPatientPhone
-        {
-            get => _newPatientPhone;
-            set { _newPatientPhone = value; OnPropertyChanged(); }
-        }
-
-        public string NewPatientEmail
-        {
-            get => _newPatientEmail;
-            set { _newPatientEmail = value; OnPropertyChanged(); }
-        }
-
-        public string NewPatientGender
-        {
-            get => _newPatientGender;
-            set { _newPatientGender = value; OnPropertyChanged(); }
-        }
-
-        // Create Order Bindings
-        public string OrderNotes
-        {
-            get => _orderNotes;
-            set { _orderNotes = value; OnPropertyChanged(); }
-        }
-
-        public string OrderReferredBy
-        {
-            get => _orderReferredBy;
-            set { _orderReferredBy = value; OnPropertyChanged(); }
-        }
-
-        public string ResultErrorMessage
-        {
-            get => _resultErrorMessage;
-            set { _resultErrorMessage = value; OnPropertyChanged(); }
-        }
-
-        // Dashboard Stats Bindings
         public int TotalPatients
         {
             get => _totalPatients;
@@ -206,85 +169,6 @@ namespace LabSystem.UI.ViewModels
             set { _abnormalResultsFlagged = value; OnPropertyChanged(); }
         }
 
-        // Catalog Management Bindings
-        public TestType SelectedCatalogTest
-        {
-            get => _selectedCatalogTest;
-            set
-            {
-                _selectedCatalogTest = value;
-                OnPropertyChanged();
-                PopulateCatalogEditFields();
-            }
-        }
-
-        public string CatalogTestName
-        {
-            get => _catalogTestName;
-            set { _catalogTestName = value; OnPropertyChanged(); }
-        }
-
-        public string CatalogTestUnit
-        {
-            get => _catalogTestUnit;
-            set { _catalogTestUnit = value; OnPropertyChanged(); }
-        }
-
-        public double? CatalogTestLow
-        {
-            get => _catalogTestLow;
-            set { _catalogTestLow = value; OnPropertyChanged(); }
-        }
-
-        public double? CatalogTestHigh
-        {
-            get => _catalogTestHigh;
-            set { _catalogTestHigh = value; OnPropertyChanged(); }
-        }
-
-        public bool CatalogTestIsActive
-        {
-            get => _catalogTestIsActive;
-            set { _catalogTestIsActive = value; OnPropertyChanged(); }
-        }
-
-        public string CatalogTestCategory
-        {
-            get => _catalogTestCategory;
-            set { _catalogTestCategory = value; OnPropertyChanged(); }
-        }
-
-        public string CatalogTestGroupName
-        {
-            get => _catalogTestGroupName;
-            set { _catalogTestGroupName = value; OnPropertyChanged(); }
-        }
-
-        public string CatalogTestMethod
-        {
-            get => _catalogTestMethod;
-            set { _catalogTestMethod = value; OnPropertyChanged(); }
-        }
-
-        public string CatalogTestInterpretation
-        {
-            get => _catalogTestInterpretation;
-            set { _catalogTestInterpretation = value; OnPropertyChanged(); }
-        }
-
-        public int CatalogTestSortOrder
-        {
-            get => _catalogTestSortOrder;
-            set { _catalogTestSortOrder = value; OnPropertyChanged(); }
-        }
-
-        // Audit Logs Bindings
-        public string AuditLogSearchQuery
-        {
-            get => _auditLogSearchQuery;
-            set { _auditLogSearchQuery = value; OnPropertyChanged(); }
-        }
-
         // Commands
         public ICommand AddPatientCommand { get; }
         public ICommand CreateOrderCommand { get; }
@@ -296,8 +180,27 @@ namespace LabSystem.UI.ViewModels
         public ICommand SaveCatalogTestCommand { get; }
         public ICommand AddCatalogTestCommand { get; }
         public ICommand RefreshAuditLogsCommand { get; }
-        public ICommand MarkAsPaidCashCommand { get; }
-        public ICommand MarkAsPaidUpiCommand { get; }
+        public ICommand AddPaymentCashCommand { get; }
+        public ICommand AddPaymentUpiCommand { get; }
+        public ICommand UpdateFinancialsCommand { get; }
+        public ICommand ExportRevenueReportCommand { get; }
+
+        private RevenueReportStats _currentRevenueReport;
+        public RevenueReportStats CurrentRevenueReport
+        {
+            get => _currentRevenueReport;
+            set { _currentRevenueReport = value; OnPropertyChanged(); }
+        }
+        public ICommand PreviousPatientPageCommand { get; }
+        public ICommand NextPatientPageCommand { get; }
+        
+        // Commands for Phase 2
+        public ICommand RefreshReferralStatsCommand { get; }
+        public ICommand MarkSpecimenReceivedCommand { get; }
+        public ICommand MarkSpecimenProcessingCommand { get; }
+        public ICommand RejectSpecimenCommand { get; }
+        public ICommand SaveCatalogDoctorCommand { get; }
+        public ICommand AddCatalogDoctorCommand { get; }
 
         public DashboardViewModel(
             IPatientRepository patientRepo,
@@ -310,7 +213,11 @@ namespace LabSystem.UI.ViewModels
             IResultService resultService,
             IPdfReportService reportService,
             IBackupService backupService,
-            IBillingService billingService)
+            IBillingService billingService,
+            IRepository<Doctor> doctorRepo,
+            IRepository<TestPanel> testPanelRepo,
+            IRepository<Specimen> specimenRepo,
+            IQCResultRepository qcRepo)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
@@ -323,21 +230,54 @@ namespace LabSystem.UI.ViewModels
             _reportService = reportService;
             _backupService = backupService;
             _billingService = billingService;
+            _doctorRepo = doctorRepo;
+            _testPanelRepo = testPanelRepo;
+            _specimenRepo = specimenRepo;
+            _qcRepo = qcRepo;
 
-            AddPatientCommand = new RelayCommand(ExecuteAddPatient);
-            CreateOrderCommand = new RelayCommand(ExecuteCreateOrder);
-            SaveResultsCommand = new RelayCommand(ExecuteSaveResults);
+            AddPatientCommand = new RelayCommand(async o => await ExecuteAddPatientAsync(o));
+            CreateOrderCommand = new RelayCommand(async o => await ExecuteCreateOrderAsync(o));
+            SaveResultsCommand = new RelayCommand(async o => await ExecuteSaveResultsAsync(o));
             GenerateReportCommand = new RelayCommand(ExecuteGenerateReport);
-            GenerateBillCommand = new RelayCommand(ExecuteGenerateBill);
-            BackupCommand = new RelayCommand(ExecuteBackup);
-            RefreshCommand = new RelayCommand(o => LoadData());
-            SaveCatalogTestCommand = new RelayCommand(ExecuteSaveCatalogTest);
-            AddCatalogTestCommand = new RelayCommand(ExecuteAddCatalogTest);
+            GenerateBillCommand = new RelayCommand(async o => await ExecuteGenerateBillAsync(o));
+            BackupCommand = new RelayCommand(async o => await ExecuteBackupAsync(o));
+            RefreshCommand = new RelayCommand(async o => await LoadDataAsync());
+            SaveCatalogTestCommand = new RelayCommand(async o => await ExecuteSaveCatalogTestAsync(o));
+            AddCatalogTestCommand = new RelayCommand(async o => await ExecuteAddCatalogTestAsync(o));
             RefreshAuditLogsCommand = new RelayCommand(async o => await LoadAuditLogsAsync());
-            MarkAsPaidCashCommand = new RelayCommand(async o => await ExecuteMarkAsPaidAsync("Cash"));
-            MarkAsPaidUpiCommand = new RelayCommand(async o => await ExecuteMarkAsPaidAsync("UPI"));
+            AddPaymentCashCommand = new RelayCommand(async o => await ExecuteAddPaymentAsync("Cash"));
+            AddPaymentUpiCommand = new RelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
+            UpdateFinancialsCommand = new RelayCommand(async o => await ExecuteUpdateFinancialsAsync(o));
+            ExportRevenueReportCommand = new RelayCommand(async o => await ExecuteExportRevenueReportAsync(o));
 
-            LoadData();
+            RefreshReferralStatsCommand = new RelayCommand(async o => await ExecuteRefreshReferralStatsAsync(o));
+            MarkSpecimenReceivedCommand = new RelayCommand(async o => await ExecuteMarkSpecimenStatusAsync(o, "Received"));
+            MarkSpecimenProcessingCommand = new RelayCommand(async o => await ExecuteMarkSpecimenStatusAsync(o, "Processing"));
+            RejectSpecimenCommand = new RelayCommand(async o => await ExecuteRejectSpecimenAsync(o));
+            SaveCatalogDoctorCommand = new RelayCommand(async o => await ExecuteSaveCatalogDoctorAsync(o));
+            AddCatalogDoctorCommand = new RelayCommand(async o => await ExecuteAddCatalogDoctorAsync(o));
+
+            PreviousPatientPageCommand = new RelayCommand(async o => 
+            {
+                if (PatientCurrentPage > 1)
+                {
+                    PatientCurrentPage--;
+                    await LoadPatientsAsync();
+                }
+            });
+
+            NextPatientPageCommand = new RelayCommand(async o => 
+            {
+                if (PatientCurrentPage < PatientTotalPages)
+                {
+                    PatientCurrentPage++;
+                    await LoadPatientsAsync();
+                }
+            });
+
+            _ = LoadDataAsync();
+            // Load abnormal count once at startup
+            _ = RefreshAbnormalCountAsync();
         }
 
         private async void LoadStaffName()
@@ -347,28 +287,23 @@ namespace LabSystem.UI.ViewModels
                 var staff = await _staffRepo.GetByIdAsync(StaffId);
                 CurrentStaffName = staff?.FullName ?? "Unknown Staff";
                 IsAdmin = staff?.Role == "Admin";
-                LoadData();
+                _ = LoadDataAsync();
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to load staff details.");
                 CurrentStaffName = "Admin User";
                 IsAdmin = true;
-                LoadData();
+                _ = LoadDataAsync();
             }
         }
 
-        private async void LoadData()
+        private async Task LoadDataAsync()
         {
             try
             {
-                // Load Patients
-                Patients.Clear();
-                var patients = await _patientRepo.GetAllAsync();
-                foreach (var p in patients)
-                {
-                    Patients.Add(p);
-                }
+                // Load Patients (paginated & filtered)
+                await LoadPatientsAsync();
 
                 // Load Test Types for checkboxes
                 TestTypes.Clear();
@@ -390,15 +325,49 @@ namespace LabSystem.UI.ViewModels
                     }
                 }
 
+                // Load Doctors
+                Doctors.Clear();
+                CatalogDoctors.Clear();
+                var doctors = await _doctorRepo.GetAllAsync();
+                foreach (var d in doctors)
+                {
+                    Doctors.Add(d);
+                    CatalogDoctors.Add(d);
+                }
+
+                // Load Test Panels
+                TestPanels.Clear();
+                var panels = await _testPanelRepo.GetAllAsync();
+                foreach (var p in panels)
+                {
+                    TestPanels.Add(p);
+                }
+
+                // Load Specimens
+                Specimens.Clear();
+                var specimens = await _specimenRepo.GetAllAsync();
+                foreach (var s in specimens.OrderByDescending(x => x.OrderId))
+                {
+                    Specimens.Add(s);
+                }
+
+                // Load Referral Stats & Revenue Report
+                await RefreshReferralStatsAsync();
+                
+                try
+                {
+                    CurrentRevenueReport = await _billingService.GetRevenueReportAsync(ReferralStartDate, ReferralEndDate);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to load revenue report stats.");
+                }
+
                 // Load Orders
                 Orders.Clear();
                 var orders = await _orderRepo.GetAllAsync();
                 foreach (var o in orders)
                 {
-                    if (o.Patient == null)
-                    {
-                        o.Patient = await _patientRepo.GetByIdAsync(o.PatientId);
-                    }
                     Orders.Add(o);
                 }
 
@@ -417,14 +386,11 @@ namespace LabSystem.UI.ViewModels
                     Invoices.Add(inv);
                 }
 
-                // Load Dashboard Statistics
-                await CalculateDashboardStatsAsync();
+                // Load QC Results
+                await ExecuteRefreshQcAsync();
 
-                // Load Audit Logs if Admin
-                if (IsAdmin)
-                {
-                    await LoadAuditLogsAsync();
-                }
+                // Calculate Dashboard Statistics from already-loaded data
+                CalculateDashboardStatsFromLoadedData();
             }
             catch (Exception ex)
             {
@@ -433,19 +399,14 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private async Task CalculateDashboardStatsAsync()
+        private void CalculateDashboardStatsFromLoadedData()
         {
             try
             {
-                var patients = await _patientRepo.GetAllAsync();
-                TotalPatients = patients.Count();
-
-                var orders = await _orderRepo.GetAllAsync();
-                PendingOrders = orders.Count(o => o.Status == "Pending");
-                CompletedOrders = orders.Count(o => o.Status == "Complete");
-
-                var results = await _resultRepo.GetAllAsync();
-                AbnormalResultsFlagged = results.Count(r => r.IsAbnormal);
+                TotalPatients = PatientTotalCount;
+                PendingOrders = Orders.Count(o => o.Status == "Pending");
+                CompletedOrders = Orders.Count(o => o.Status == "Complete");
+                AbnormalResultsFlagged = _cachedAbnormalCount;
             }
             catch (Exception ex)
             {
@@ -453,682 +414,18 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private async Task LoadAuditLogsAsync()
+        private int _cachedAbnormalCount;
+
+        private async Task RefreshAbnormalCountAsync()
         {
             try
             {
-                var logs = await _auditLogRepo.GetAllAsync();
-                AuditLogs.Clear();
-                foreach (var log in logs.OrderByDescending(l => l.LogId))
-                {
-                    if (log.User == null && log.UserId.HasValue)
-                    {
-                        log.User = await _staffRepo.GetByIdAsync(log.UserId.Value);
-                    }
-                    AuditLogs.Add(log);
-                }
+                var results = await _resultRepo.GetAllAsync();
+                _cachedAbnormalCount = results.Count(r => r.IsAbnormal);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to load audit logs.");
-            }
-        }
-
-        private async void ExecuteAddPatient(object obj)
-        {
-            if (string.IsNullOrWhiteSpace(NewPatientName))
-            {
-                MessageBox.Show("Please enter the patient's full name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                var patient = new Patient
-                {
-                    FullName = NewPatientName,
-                    DateOfBirth = NewPatientDOB?.ToString("yyyy-MM-dd") ?? "",
-                    Gender = NewPatientGender ?? "Male",
-                    ContactPhone = NewPatientPhone ?? "",
-                    ContactEmail = NewPatientEmail ?? "",
-                    CreatedAt = DateTime.UtcNow.ToString("O")
-                };
-
-                await _patientRepo.AddAsync(patient);
-                Log.Information("Added patient: {PatientName}", NewPatientName);
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Created",
-                    EntityType = "Patient",
-                    EntityId = patient.PatientId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Registered patient '{NewPatientName}' (ID {patient.PatientId})."
-                });
-
-                // Reset fields
-                NewPatientName = string.Empty;
-                NewPatientDOB = null;
-                NewPatientPhone = string.Empty;
-                NewPatientEmail = string.Empty;
-                NewPatientGender = "Male";
-
-                LoadData();
-                MessageBox.Show("Patient added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to add patient.");
-                MessageBox.Show("Error adding patient to database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void ExecuteCreateOrder(object obj)
-        {
-            if (SelectedPatient == null)
-            {
-                MessageBox.Show("Please select a patient from the grid on the left.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var selectedTests = TestTypes.Where(t => t.IsSelected).ToList();
-            if (!selectedTests.Any())
-            {
-                MessageBox.Show("Please select at least one test to order.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                string testIds = string.Join(",", selectedTests.Select(t => t.TypeId));
-                
-                var order = new TestOrder
-                {
-                    PatientId = SelectedPatient.PatientId,
-                    Status = "Pending",
-                    Notes = testIds,
-                    ReferredBy = string.IsNullOrWhiteSpace(OrderReferredBy) ? "SELF" : OrderReferredBy
-                };
-
-                await _orderService.CreateOrderAsync(order);
-                Log.Information("Created test order ID {OrderId} for Patient ID {PatientId}", order.OrderId, SelectedPatient.PatientId);
-
-                // Generate Invoice automatically
-                await _billingService.GenerateInvoiceAsync(order.OrderId);
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Created",
-                    EntityType = "TestOrder",
-                    EntityId = order.OrderId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Created order {order.OrderId} for patient ID {SelectedPatient.PatientId}. Referred by: {order.ReferredBy}."
-                });
-
-                // Unselect test check boxes
-                foreach (var t in TestTypes)
-                {
-                    t.IsSelected = false;
-                }
-
-                OrderReferredBy = "SELF";
-
-                LoadData();
-                MessageBox.Show("Test order created successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to create order.");
-                MessageBox.Show("Error creating test order.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void LoadResultsForSelectedOrder()
-        {
-            SelectedOrderResults.Clear();
-            ResultErrorMessage = string.Empty;
-
-            if (SelectedOrder == null) return;
-
-            try
-            {
-                if (SelectedOrder.Status == "Pending")
-                {
-                    // Parse the requested TestType IDs from Notes
-                    if (!string.IsNullOrWhiteSpace(SelectedOrder.Notes))
-                    {
-                        var ids = SelectedOrder.Notes.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var idStr in ids)
-                        {
-                            if (int.TryParse(idStr, out int id))
-                            {
-                                var testType = await _testTypeRepo.GetByIdAsync(id);
-                                if (testType != null)
-                                {
-                                    var ri = new ResultInput
-                                    {
-                                        TypeId = testType.TypeId,
-                                        TestName = testType.Name,
-                                        Unit = testType.Unit,
-                                        Low = testType.ReferenceRangeLow,
-                                        High = testType.ReferenceRangeHigh,
-                                        IsAbnormal = false,
-                                        IsReadOnly = false
-                                    };
-                                    PopulateOptions(ri);
-                                    SelectedOrderResults.Add(ri);
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    // Order is complete, load the actual saved results
-                    var savedResults = await _resultRepo.GetResultsForOrderAsync(SelectedOrder.OrderId);
-                    foreach (var r in savedResults)
-                    {
-                        if (r.TestType == null)
-                        {
-                            r.TestType = await _testTypeRepo.GetByIdAsync(r.TypeId);
-                        }
-
-                        var ri = new ResultInput
-                        {
-                            TypeId = r.TypeId,
-                            TestName = r.TestType?.Name ?? "Unknown Test",
-                            Unit = r.TestType?.Unit ?? "",
-                            Low = r.TestType?.ReferenceRangeLow,
-                            High = r.TestType?.ReferenceRangeHigh,
-                            ValueText = r.Value.ToString(),
-                            IsAbnormal = r.IsAbnormal,
-                            IsReadOnly = true
-                        };
-                        PopulateOptions(ri);
-                        SelectedOrderResults.Add(ri);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load order results.");
-            }
-        }
-
-        private void PopulateOptions(ResultInput ri)
-        {
-            ri.Options.Clear();
-            if (ri.Unit == "Blood Group")
-            {
-                ri.Options.Add(new ResultOption { Display = "A Rh Positive", Value = "1" });
-                ri.Options.Add(new ResultOption { Display = "A Rh Negative", Value = "2" });
-                ri.Options.Add(new ResultOption { Display = "B Rh Positive", Value = "3" });
-                ri.Options.Add(new ResultOption { Display = "B Rh Negative", Value = "4" });
-                ri.Options.Add(new ResultOption { Display = "O Rh Positive", Value = "5" });
-                ri.Options.Add(new ResultOption { Display = "O Rh Negative", Value = "6" });
-                ri.Options.Add(new ResultOption { Display = "AB Rh Positive", Value = "7" });
-                ri.Options.Add(new ResultOption { Display = "AB Rh Negative", Value = "8" });
-            }
-            else if (ri.TestName.Contains("Malarial Parasite") || ri.TestName.Contains("PBS Malarial"))
-            {
-                ri.Options.Add(new ResultOption { Display = "Not Detected", Value = "0" });
-                ri.Options.Add(new ResultOption { Display = "Detected", Value = "1" });
-            }
-            else if (ri.TestName.Contains("Rapid Malaria"))
-            {
-                ri.Options.Add(new ResultOption { Display = "Negative", Value = "0" });
-                ri.Options.Add(new ResultOption { Display = "Positive", Value = "1" });
-            }
-            else if (ri.Unit == "Qualitative" || ri.TestName.Contains("Urine Sugar") || ri.TestName.Contains("Urine Protein"))
-            {
-                ri.Options.Add(new ResultOption { Display = "Absent", Value = "0" });
-                ri.Options.Add(new ResultOption { Display = "Present", Value = "1" });
-            }
-
-            if (ri.HasOptions && !string.IsNullOrEmpty(ri.ValueText))
-            {
-                ri.SelectedOption = ri.Options.FirstOrDefault(o => o.Value == ri.ValueText || Math.Abs((double.TryParse(o.Value, out var v1) ? v1 : -1) - (double.TryParse(ri.ValueText, out var v2) ? v2 : -2)) < 0.001);
-            }
-        }
-
-        private async void ExecuteSaveResults(object obj)
-        {
-            if (SelectedOrder == null) return;
-
-            if (SelectedOrder.Status != "Pending")
-            {
-                MessageBox.Show("Results have already been verified and saved for this order.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            // Validate all inputs are numeric
-            foreach (var r in SelectedOrderResults)
-            {
-                if (string.IsNullOrWhiteSpace(r.ValueText) || !double.TryParse(r.ValueText, out _))
-                {
-                    ResultErrorMessage = $"Please enter a valid numeric value for {r.TestName}.";
-                    return;
-                }
-            }
-
-            try
-            {
-                // Save each result
-                foreach (var r in SelectedOrderResults)
-                {
-                    double val = double.Parse(r.ValueText);
-                    var result = new Result
-                    {
-                        OrderId = SelectedOrder.OrderId,
-                        TypeId = r.TypeId,
-                        Value = val,
-                        TechnicianId = StaffId
-                    };
-
-                    await _resultService.AddResultAsync(result);
-                }
-
-                int selectedOrderId = SelectedOrder.OrderId;
-
-                // Update order status to Complete
-                await _orderService.UpdateOrderStatusAsync(selectedOrderId, "Complete");
-                Log.Information("Verified and completed order {OrderId}", selectedOrderId);
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "TestOrder",
-                    EntityId = selectedOrderId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Verified and saved results for order ID {selectedOrderId}."
-                });
-
-                // Reload
-                LoadData();
-                
-                // Select the order again to refresh results grid as read-only
-                SelectedOrder = Orders.FirstOrDefault(o => o.OrderId == selectedOrderId);
-                
-                MessageBox.Show("Results verified and saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                // Generate and open the PDF report immediately
-                try
-                {
-                    if (SelectedOrder != null)
-                    {
-                        var previewWindow = new Views.PdfPreviewWindow(SelectedOrder, _reportService);
-                        previewWindow.ShowDialog();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Failed to automatically generate PDF report after saving results.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to save results.");
-                MessageBox.Show("Error saving results to database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void ExecuteGenerateReport(object obj)
-        {
-            if (SelectedOrder == null)
-            {
-                MessageBox.Show("Please select an order from the list.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (SelectedOrder.Status != "Complete")
-            {
-                MessageBox.Show("Reports can only be generated for Complete orders.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                var previewWindow = new Views.PdfPreviewWindow(SelectedOrder, _reportService);
-                previewWindow.Owner = Application.Current.MainWindow;
-                previewWindow.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to generate report.");
-                MessageBox.Show($"Error generating PDF report: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void ExecuteGenerateBill(object obj)
-        {
-            if (SelectedOrder == null)
-            {
-                MessageBox.Show("Please select an order from the list.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                var invoice = await _billingService.GetInvoiceForOrderAsync(SelectedOrder.OrderId);
-                if (invoice == null)
-                {
-                    invoice = await _billingService.GenerateInvoiceAsync(SelectedOrder.OrderId);
-                    invoice = await _billingService.GetInvoiceForOrderAsync(SelectedOrder.OrderId);
-                }
-
-                LoadData(); // Always refresh to ensure it shows up
-
-                if (invoice != null)
-                {
-                    var previewWindow = new Views.InvoicePreviewWindow(invoice, _reportService);
-                    previewWindow.Owner = Application.Current.MainWindow; // Fix CenterOwner issue
-                    previewWindow.ShowDialog();
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to generate bill.");
-                MessageBox.Show($"Error generating bill: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void ExecuteBackup(object obj)
-        {
-            try
-            {
-                await _backupService.BackupNowAsync();
-                
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Backup",
-                    EntityType = "System",
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = "Created full SQLite database and ClosedXML Excel backup."
-                });
-
-                MessageBox.Show("Database (SQLite) and technician-friendly report (Excel) backed up successfully to the backups directory!", "Backup Completed", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Database backup failed.");
-                MessageBox.Show("Failed to complete database backup. Check logs for details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void PopulateCatalogEditFields()
-        {
-            if (SelectedCatalogTest == null)
-            {
-                CatalogTestName = string.Empty;
-                CatalogTestUnit = string.Empty;
-                CatalogTestLow = null;
-                CatalogTestHigh = null;
-                CatalogTestIsActive = true;
-                CatalogTestCategory = string.Empty;
-                CatalogTestGroupName = string.Empty;
-                CatalogTestMethod = string.Empty;
-                CatalogTestInterpretation = string.Empty;
-                CatalogTestSortOrder = 0;
-                return;
-            }
-
-            CatalogTestName = SelectedCatalogTest.Name;
-            CatalogTestUnit = SelectedCatalogTest.Unit;
-            CatalogTestLow = SelectedCatalogTest.ReferenceRangeLow;
-            CatalogTestHigh = SelectedCatalogTest.ReferenceRangeHigh;
-            CatalogTestIsActive = SelectedCatalogTest.IsActive;
-            CatalogTestCategory = SelectedCatalogTest.Category;
-            CatalogTestGroupName = SelectedCatalogTest.GroupName;
-            CatalogTestMethod = SelectedCatalogTest.Method;
-            CatalogTestInterpretation = SelectedCatalogTest.Interpretation;
-            CatalogTestSortOrder = SelectedCatalogTest.SortOrder;
-        }
-
-        private async void ExecuteSaveCatalogTest(object obj)
-        {
-            if (SelectedCatalogTest == null) return;
-            if (string.IsNullOrWhiteSpace(CatalogTestName))
-            {
-                MessageBox.Show("Please enter a test name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                // Fetch the tracked entity to avoid multiple entity instance conflict in EF
-                var entityToUpdate = await _testTypeRepo.GetByIdAsync(SelectedCatalogTest.TypeId);
-                if (entityToUpdate == null) return;
-
-                entityToUpdate.Name = CatalogTestName;
-                entityToUpdate.Unit = CatalogTestUnit;
-                entityToUpdate.ReferenceRangeLow = CatalogTestLow;
-                entityToUpdate.ReferenceRangeHigh = CatalogTestHigh;
-                entityToUpdate.IsActive = CatalogTestIsActive;
-                entityToUpdate.Category = CatalogTestCategory;
-                entityToUpdate.GroupName = CatalogTestGroupName;
-                entityToUpdate.Method = CatalogTestMethod;
-                entityToUpdate.Interpretation = CatalogTestInterpretation;
-                entityToUpdate.SortOrder = CatalogTestSortOrder;
-
-                await _testTypeRepo.UpdateAsync(entityToUpdate);
-
-                // Update the UI model
-                SelectedCatalogTest.Name = CatalogTestName;
-                SelectedCatalogTest.Unit = CatalogTestUnit;
-                SelectedCatalogTest.ReferenceRangeLow = CatalogTestLow;
-                SelectedCatalogTest.ReferenceRangeHigh = CatalogTestHigh;
-                SelectedCatalogTest.IsActive = CatalogTestIsActive;
-                SelectedCatalogTest.Category = CatalogTestCategory;
-                SelectedCatalogTest.GroupName = CatalogTestGroupName;
-                SelectedCatalogTest.Method = CatalogTestMethod;
-                SelectedCatalogTest.Interpretation = CatalogTestInterpretation;
-                SelectedCatalogTest.SortOrder = CatalogTestSortOrder;
-
-                Log.Information("Admin updated TestType {TypeId}: {TestName}", SelectedCatalogTest.TypeId, CatalogTestName);
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "TestType",
-                    EntityId = SelectedCatalogTest.TypeId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Updated test type '{CatalogTestName}' (ID {SelectedCatalogTest.TypeId})."
-                });
-
-                MessageBox.Show("Test type saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                LoadData();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to save test type.");
-                MessageBox.Show("Error saving test type.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void ExecuteAddCatalogTest(object obj)
-        {
-            if (string.IsNullOrWhiteSpace(CatalogTestName))
-            {
-                MessageBox.Show("Please enter a name for the new test type.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                var newTest = new TestType
-                {
-                    Name = CatalogTestName,
-                    Unit = CatalogTestUnit,
-                    ReferenceRangeLow = CatalogTestLow,
-                    ReferenceRangeHigh = CatalogTestHigh,
-                    IsActive = CatalogTestIsActive,
-                    Category = CatalogTestCategory,
-                    GroupName = CatalogTestGroupName,
-                    Method = CatalogTestMethod,
-                    Interpretation = CatalogTestInterpretation,
-                    SortOrder = CatalogTestSortOrder
-                };
-
-                await _testTypeRepo.AddAsync(newTest);
-                Log.Information("Admin added new TestType: {TestName}", CatalogTestName);
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Created",
-                    EntityType = "TestType",
-                    EntityId = newTest.TypeId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Created new test type '{CatalogTestName}' (ID {newTest.TypeId})."
-                });
-
-                MessageBox.Show("New test type added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                LoadData();
-                SelectedCatalogTest = newTest;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to add test type.");
-                MessageBox.Show("Error adding test type.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task ExecuteMarkAsPaidAsync(string paymentMethod)
-        {
-            if (SelectedInvoice == null)
-            {
-                MessageBox.Show("Please select an invoice to mark as paid.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (SelectedInvoice.IsPaid)
-            {
-                MessageBox.Show("This invoice is already paid.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            try
-            {
-                await _billingService.MarkAsPaidAsync(SelectedInvoice.InvoiceId, paymentMethod);
-                Log.Information("Marked invoice {InvoiceId} as paid via {PaymentMethod}", SelectedInvoice.InvoiceId, paymentMethod);
-
-                await _auditLogRepo.AddAsync(new AuditLog
-                {
-                    Action = "Updated",
-                    EntityType = "Invoice",
-                    EntityId = SelectedInvoice.InvoiceId,
-                    UserId = StaffId,
-                    Timestamp = DateTime.UtcNow,
-                    Details = $"Marked invoice {SelectedInvoice.InvoiceId} as paid via {paymentMethod}."
-                });
-
-                MessageBox.Show($"Invoice marked as paid via {paymentMethod} successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                LoadData(); // Reload invoices
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to mark invoice as paid.");
-                MessageBox.Show("Error updating invoice status.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-    }
-
-    // Helper classes for lists and bindings
-    public class TestTypeSelection : ViewModelBase
-    {
-        public int TypeId { get; set; }
-        public string Name { get; set; }
-        public string Unit { get; set; }
-        public double? Low { get; set; }
-        public double? High { get; set; }
-        public string GroupName { get; set; }
-        public string Category { get; set; }
-
-        private bool _isSelected;
-        public bool IsSelected
-        {
-            get => _isSelected;
-            set { _isSelected = value; OnPropertyChanged(); }
-        }
-    }
-
-    public class ResultOption
-    {
-        public string Display { get; set; }
-        public string Value { get; set; }
-    }
-
-    public class ResultInput : ViewModelBase
-    {
-        public int TypeId { get; set; }
-        public string TestName { get; set; }
-        public string Unit { get; set; }
-        public double? Low { get; set; }
-        public double? High { get; set; }
-
-        private string _valueText;
-        public string ValueText
-        {
-            get => _valueText;
-            set 
-            { 
-                _valueText = value; 
-                OnPropertyChanged(); 
-                OnPropertyChanged(nameof(DisplayValue));
-                if (HasOptions && (_selectedOption == null || _selectedOption.Value != value))
-                {
-                    SelectedOption = Options.FirstOrDefault(o => o.Value == value || Math.Abs((double.TryParse(o.Value, out var v1) ? v1 : -1) - (double.TryParse(value, out var v2) ? v2 : -2)) < 0.001);
-                }
-            }
-        }
-
-        private bool _isAbnormal;
-        public bool IsAbnormal
-        {
-            get => _isAbnormal;
-            set { _isAbnormal = value; OnPropertyChanged(); }
-        }
-
-        private bool _isReadOnly;
-        public bool IsReadOnly
-        {
-            get => _isReadOnly;
-            set { _isReadOnly = value; OnPropertyChanged(); }
-        }
-
-        public ObservableCollection<ResultOption> Options { get; } = new ObservableCollection<ResultOption>();
-        public bool HasOptions => Options.Count > 0;
-
-        private ResultOption _selectedOption;
-        public ResultOption SelectedOption
-        {
-            get => _selectedOption;
-            set
-            {
-                _selectedOption = value;
-                OnPropertyChanged();
-                if (_selectedOption != null && ValueText != _selectedOption.Value)
-                {
-                    ValueText = _selectedOption.Value;
-                }
-            }
-        }
-
-        public string DisplayValue
-        {
-            get
-            {
-                if (HasOptions)
-                {
-                    var opt = Options.FirstOrDefault(o => o.Value == ValueText || Math.Abs((double.TryParse(o.Value, out var v1) ? v1 : -1) - (double.TryParse(ValueText, out var v2) ? v2 : -2)) < 0.001);
-                    if (opt != null) return opt.Display;
-                }
-                return ValueText;
+                Log.Error(ex, "Failed to load abnormal count.");
             }
         }
     }

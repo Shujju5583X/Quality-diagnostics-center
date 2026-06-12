@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+  </ItemGroup>
   <PropertyGroup>
     <TargetFramework>net451</TargetFramework>
     <LangVersion>10.0</LangVersion>

@@ -14,6 +14,8 @@ namespace LabSystem.Tests
     {
         private Mock<ITestOrderRepository> _mockOrderRepo;
         private Mock<IRepository<AuditLog>> _mockAuditRepo;
+        private Mock<ITestTypeRepository> _mockTestTypeRepo;
+        private Mock<IRepository<Specimen>> _mockSpecimenRepo;
         private OrderService _service;
 
         [SetUp]
@@ -21,7 +23,13 @@ namespace LabSystem.Tests
         {
             _mockOrderRepo = new Mock<ITestOrderRepository>();
             _mockAuditRepo = new Mock<IRepository<AuditLog>>();
-            _service = new OrderService(_mockOrderRepo.Object, _mockAuditRepo.Object);
+            _mockTestTypeRepo = new Mock<ITestTypeRepository>();
+            _mockSpecimenRepo = new Mock<IRepository<Specimen>>();
+            _service = new OrderService(
+                _mockOrderRepo.Object, 
+                _mockAuditRepo.Object, 
+                _mockTestTypeRepo.Object, 
+                _mockSpecimenRepo.Object);
         }
 
         [Test]
@@ -40,6 +48,34 @@ namespace LabSystem.Tests
             Assert.AreEqual("Complete", order.Status);
             _mockOrderRepo.Verify(r => r.UpdateAsync(order, It.IsAny<CancellationToken>()), Times.Once);
             _mockAuditRepo.Verify(r => r.AddAsync(It.Is<AuditLog>(a => a.Action == "Updated" && a.EntityType == "TestOrder"), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task CreateOrder_ShouldGenerateSpecimens_ForUniqueSampleTypes()
+        {
+            // Arrange
+            var order = new TestOrder { OrderId = 123 };
+            var testTypeIds = new System.Collections.Generic.List<int> { 1, 2, 3 };
+
+            var testType1 = new TestType { TypeId = 1, SampleType = "Blood" };
+            var testType2 = new TestType { TypeId = 2, SampleType = "Urine" };
+            var testType3 = new TestType { TypeId = 3, SampleType = "Blood" }; // duplicate sample type
+
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType1);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(2, It.IsAny<CancellationToken>())).ReturnsAsync(testType2);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(3, It.IsAny<CancellationToken>())).ReturnsAsync(testType3);
+
+            _mockOrderRepo.Setup(r => r.AddOrderWithTestTypesAsync(order, testTypeIds, It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+            _mockSpecimenRepo.Setup(r => r.AddAsync(It.IsAny<Specimen>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+
+            // Act
+            await _service.CreateOrderAsync(order, testTypeIds);
+
+            // Assert
+            _mockSpecimenRepo.Verify(r => r.AddAsync(It.Is<Specimen>(s => s.SampleType == "Blood"), It.IsAny<CancellationToken>()), Times.Once);
+            _mockSpecimenRepo.Verify(r => r.AddAsync(It.Is<Specimen>(s => s.SampleType == "Urine"), It.IsAny<CancellationToken>()), Times.Once);
+            _mockSpecimenRepo.Verify(r => r.AddAsync(It.IsAny<Specimen>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
         [Test]

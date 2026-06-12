@@ -10,9 +10,14 @@ namespace LabSystem.Core.Models
         public int TypeId { get; set; }
         public virtual TestType TestType { get; set; }
         public double Value { get; set; }
-        public string RecordedAt { get; set; }
+        public DateTime RecordedAt { get; set; }
         public int TechnicianId { get; set; }
         public virtual Staff Technician { get; set; }
         public bool IsAbnormal { get; set; }
+        
+        // Phase 4: Amendment Tracking
+        public bool IsAmended { get; set; }
+        public string AmendmentReason { get; set; }
+        public DateTime? AmendedAt { get; set; }
     }
 }

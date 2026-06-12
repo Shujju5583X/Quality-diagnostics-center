@@ -24,7 +24,7 @@ namespace LabSystem.Tests
         {
             _mockResultRepo = new Mock<IResultRepository>();
             _mockTestTypeRepo = new Mock<IRepository<TestType>>();
-            _service = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object);
+            _service = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object, null, null);
             _logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
             _tempLogoBackupPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo_temp_backup.png");
 
@@ -65,7 +65,7 @@ namespace LabSystem.Tests
             var order = new TestOrder
             {
                 OrderId = 1,
-                OrderedAt = DateTime.Now.ToString("yyyy-MM-dd"),
+                OrderedAt = DateTime.Now,
                 Patient = new Patient { PatientId = 1, FullName = "John Doe" }
             };
 
@@ -121,7 +121,7 @@ namespace LabSystem.Tests
             var order = new TestOrder
             {
                 OrderId = 2,
-                OrderedAt = DateTime.Now.ToString("yyyy-MM-dd"),
+                OrderedAt = DateTime.Now,
                 Patient = new Patient { PatientId = 2, FullName = "Jane Smith" }
             };
 
@@ -151,13 +151,13 @@ namespace LabSystem.Tests
             var order = new TestOrder
             {
                 OrderId = 999,
-                OrderedAt = DateTime.UtcNow.ToString("O"),
+                OrderedAt = DateTime.UtcNow,
                 PatientId = 4,
                 Patient = new Patient 
                 { 
                     PatientId = 4, 
                     FullName = "Yash M. Patel",
-                    DateOfBirth = "2005-08-25"
+                    DateOfBirth = new DateTime(2005, 8, 25)
                 }
             };
 

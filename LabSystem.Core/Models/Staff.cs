@@ -1,3 +1,5 @@
+using System;
+
 namespace LabSystem.Core.Models
 {
     public class Staff
@@ -7,6 +9,6 @@ namespace LabSystem.Core.Models
         public string Role { get; set; }
         public string PinHash { get; set; }
         public int FailedLoginAttempts { get; set; }
-        public string LockoutEnd { get; set; }
+        public DateTime? LockoutEnd { get; set; }
     }
 }

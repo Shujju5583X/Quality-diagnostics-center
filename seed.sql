@@ -1,8 +1,8 @@
 -- Seed Patients
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender) VALUES ('John Doe', '1980-05-15', '555-1234', 'john@example.com', '2026-06-08T00:00:00Z', 'Male');
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender) VALUES ('Jane Smith', '1992-11-20', '555-5678', 'jane@example.com', '2026-06-08T00:00:00Z', 'Female');
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender) VALUES ('Alice Johnson', '1975-02-10', '555-8765', 'alice@example.com', '2026-06-08T00:00:00Z', 'Female');
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender) VALUES ('Yash M. Patel', '2005-08-25', '0123456789', 'yash@example.com', '2026-06-09T00:00:00Z', 'Male');
+INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender, Uhid) VALUES ('John Doe', '1980-05-15', '555-1234', 'john@example.com', '2026-06-08T00:00:00Z', 'Male', 'QDC-2026-00001');
+INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender, Uhid) VALUES ('Jane Smith', '1992-11-20', '555-5678', 'jane@example.com', '2026-06-08T00:00:00Z', 'Female', 'QDC-2026-00002');
+INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender, Uhid) VALUES ('Alice Johnson', '1975-02-10', '555-8765', 'alice@example.com', '2026-06-08T00:00:00Z', 'Female', 'QDC-2026-00003');
+INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender, Uhid) VALUES ('Yash M. Patel', '2005-08-25', '0123456789', 'yash@example.com', '2026-06-09T00:00:00Z', 'Male', 'QDC-2026-00004');
 
 -- Seed Staff (Password is '1234' hashed with BCrypt)
 INSERT INTO Staff (FullName, Role, PinHash, FailedLoginAttempts, LockoutEnd) VALUES ('Dr. Robert Brown', 'Admin', '$2a$11$/kj.NC923I71HcIDmIOASeJhA7Il5NLBh6Mb/nO8Thz/J2ooDHwIC', 0, NULL);
@@ -162,4 +162,160 @@ INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActi
 INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder) VALUES
 ('Patient Prothrombin Time', 'seconds', 12.0, 16.0, 1, 'HEMATOLOGY', 'PT-INR', 'Coagulation', 'Assess coagulation pathways.', 1),
 ('INR', 'INR', 2.0, 3.0, 1, 'HEMATOLOGY', 'PT-INR', 'Calculated', 'Standard therapy INR range: 2.0 - 3.0.', 2);
-UPDATE TestTypes SET Price = 500.00;
+
+-- Set realistic individual test prices
+-- CBC Group
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Hemoglobin (Hb)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Total RBC count';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Packed Cell Volume (PCV)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Mean Corpuscular Volume (MCV)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Mean Corpuscular Hb (MCH)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Mean Corpuscular Hb Concn. (MCHC)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'RDW';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Total WBC count';
+UPDATE TestTypes SET Price = 50.00 WHERE Name = 'Neutrophils';
+UPDATE TestTypes SET Price = 50.00 WHERE Name = 'Lymphocytes';
+UPDATE TestTypes SET Price = 50.00 WHERE Name = 'Eosinophils';
+UPDATE TestTypes SET Price = 50.00 WHERE Name = 'Monocytes';
+UPDATE TestTypes SET Price = 50.00 WHERE Name = 'Basophils';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'Platelet Count';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'ESR';
+
+-- CRP
+UPDATE TestTypes SET Price = 400.00 WHERE Name = 'C-Reactive Protein';
+
+-- Dengue
+UPDATE TestTypes SET Price = 500.00 WHERE Name = 'Dengue Fever Antibody, IgG';
+UPDATE TestTypes SET Price = 500.00 WHERE Name = 'Dengue Fever Antibody, IgM';
+
+-- Electrolytes
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Sodium';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Potassium';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Chloride';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'Bicarbonate';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'Calcium';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'Magnesium';
+
+-- Sugar
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Glucose, Fasting (Plasma)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Glucose, Post Prandial (Plasma)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Glucose, Random (Plasma)';
+
+-- HIV
+UPDATE TestTypes SET Price = 300.00 WHERE Name = 'HIV 1 Antibody Screening';
+UPDATE TestTypes SET Price = 300.00 WHERE Name = 'HIV 2 Antibody Screening';
+
+-- KFT
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Urea (KFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Creatinine (KFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Uric Acid (KFT)';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'Calcium, Total (KFT)';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'Phosphorus (KFT)';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'Alkaline Phosphatase (KFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Total Protein (KFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Albumin (KFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Sodium (KFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Potassium (KFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Chloride (KFT)';
+
+-- Lipid
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'Cholesterol, Total';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'Triglycerides';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'HDL Cholesterol';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'LDL Cholesterol';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'VLDL Cholesterol';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'Non-HDL Cholesterol';
+
+-- LFT
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'AST (SGOT)';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'ALT (SGPT)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'AST:ALT Ratio';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'GGTP';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'Alkaline Phosphatase (LFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Bilirubin Total';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Bilirubin Direct';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Bilirubin Indirect';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Total Protein (LFT)';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Albumin (LFT)';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'A : G Ratio';
+
+-- Thyroid
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'Triiodothyronine (T3)';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'Thyroxine (T4)';
+UPDATE TestTypes SET Price = 300.00 WHERE Name = 'TSH (Thyroid Stimulating Hormone)';
+
+-- Urine
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Urine Specific Gravity';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Urine pH';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Urine Pus Cells';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Urine Epithelial Cells';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Urine Sugar';
+UPDATE TestTypes SET Price = 100.00 WHERE Name = 'Urine Protein';
+
+-- Vitamins
+UPDATE TestTypes SET Price = 900.00 WHERE Name = 'Vitamin B12';
+UPDATE TestTypes SET Price = 1000.00 WHERE Name = 'Vitamin D3';
+
+-- Iron
+UPDATE TestTypes SET Price = 300.00 WHERE Name = 'Serum Iron';
+UPDATE TestTypes SET Price = 350.00 WHERE Name = 'Total Iron Binding Capacity (TIBC)';
+UPDATE TestTypes SET Price = 200.00 WHERE Name = 'Transferrin Saturation';
+
+-- Others
+UPDATE TestTypes SET Price = 400.00 WHERE Name = 'Rheumatoid Factor (RF)';
+UPDATE TestTypes SET Price = 300.00 WHERE Name = 'HBsAg Screening';
+UPDATE TestTypes SET Price = 400.00 WHERE Name = 'Anti-HCV Antibody';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'Rapid Malaria (HRP-2/pLDH)';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'PBS Malarial Parasite';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'S. Typhi O Agglutination';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'S. Typhi H Agglutination';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'S. Paratyphi A(H) Agglutination';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'S. Paratyphi B(H) Agglutination';
+UPDATE TestTypes SET Price = 250.00 WHERE Name = 'VDRL Screening';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'Blood Grouping & Rh';
+UPDATE TestTypes SET Price = 300.00 WHERE Name = 'Patient Prothrombin Time';
+UPDATE TestTypes SET Price = 150.00 WHERE Name = 'INR';
+
+-- Set SampleTypes for all TestTypes based on category and names
+UPDATE TestTypes SET SampleType = 'Blood' WHERE Category = 'HEMATOLOGY';
+UPDATE TestTypes SET SampleType = 'Serum' WHERE Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
+UPDATE TestTypes SET SampleType = 'Urine' WHERE Category = 'CLINICAL PATHOLOGY';
+UPDATE TestTypes SET SampleType = 'Blood' WHERE Name = 'Blood Grouping & Rh';
+
+-- Seed Doctors
+INSERT INTO Doctors (Name, Specialization, ClinicName, ContactPhone, CommissionPercent) VALUES
+('Dr. Robert Clark', 'Cardiologist', 'Metro Heart Care', '555-0199', 15.0),
+('Dr. Alice Vance', 'General Physician', 'City Clinic', '555-0288', 10.0),
+('Dr. Sarah Patel', 'Endocrinologist', 'Diabetes Care Center', '555-0377', 12.0);
+
+-- Seed ReferenceRanges
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Male', 12, 120, 13.0, 17.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Female', 12, 120, 12.0, 15.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Male', 0, 11, 11.0, 14.5),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Female', 0, 11, 11.0, 14.5),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Other', 0, 120, 12.0, 16.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Glucose, Fasting (Plasma)'), 'Male', 0, 120, 70.0, 100.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Glucose, Fasting (Plasma)'), 'Female', 0, 120, 70.0, 100.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Glucose, Fasting (Plasma)'), 'Other', 0, 120, 70.0, 100.0);
+
+-- Seed TestPanels
+INSERT INTO TestPanels (Name, Description, Price) VALUES
+('Lipid Profile Panel', 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, VLDL, and non-HDL cholesterol.', 1200.00),
+('Thyroid Profile Panel', 'Thyroid Function Test including T3, T4, and TSH screening.', 900.00);
+
+-- Seed PanelTestTypes
+INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
+((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Cholesterol, Total')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triglycerides')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'HDL Cholesterol')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'LDL Cholesterol')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'VLDL Cholesterol')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Non-HDL Cholesterol'));
+
+INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
+((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triiodothyronine (T3)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Thyroxine (T4)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'));

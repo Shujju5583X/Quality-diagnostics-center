@@ -15,6 +15,8 @@ namespace LabSystem.Tests
         private Mock<IResultRepository> _mockResultRepo;
         private Mock<IRepository<TestType>> _mockTestTypeRepo;
         private Mock<IRepository<AuditLog>> _mockAuditRepo;
+        private Mock<ITestOrderRepository> _mockOrderRepo;
+        private Mock<IQCResultRepository> _mockQcRepo;
         private ResultService _service;
 
         [SetUp]
@@ -23,7 +25,14 @@ namespace LabSystem.Tests
             _mockResultRepo = new Mock<IResultRepository>();
             _mockTestTypeRepo = new Mock<IRepository<TestType>>();
             _mockAuditRepo = new Mock<IRepository<AuditLog>>();
-            _service = new ResultService(_mockResultRepo.Object, _mockTestTypeRepo.Object, _mockAuditRepo.Object);
+            _mockOrderRepo = new Mock<ITestOrderRepository>();
+            _mockQcRepo = new Mock<IQCResultRepository>();
+            _service = new ResultService(
+                _mockResultRepo.Object, 
+                _mockTestTypeRepo.Object, 
+                _mockAuditRepo.Object, 
+                _mockOrderRepo.Object,
+                _mockQcRepo.Object);
         }
 
         [Test]
@@ -61,6 +70,71 @@ namespace LabSystem.Tests
             await _service.AddResultAsync(result);
 
             // Assert
+            Assert.IsFalse(result.IsAbnormal);
+        }
+
+        [Test]
+        public async Task AddResult_ShouldUseBiologicalRange_BasedOnAgeAndGender()
+        {
+            // Arrange
+            var patient = new Patient { Gender = "Female", DateOfBirth = DateTime.Today.AddYears(-25) }; // Female, 25 years old
+            var order = new TestOrder { OrderId = 10, Patient = patient };
+            
+            var testType = new TestType 
+            { 
+                TypeId = 1, 
+                ReferenceRangeLow = 10, 
+                ReferenceRangeHigh = 20, // default fallback
+                ReferenceRanges = new System.Collections.Generic.List<ReferenceRange>
+                {
+                    new ReferenceRange { Gender = "Male", AgeMin = 0, AgeMax = 100, RangeLow = 10, RangeHigh = 20 },
+                    new ReferenceRange { Gender = "Female", AgeMin = 18, AgeMax = 45, RangeLow = 5, RangeHigh = 12 } // female specific range
+                }
+            };
+
+            _mockOrderRepo.Setup(r => r.GetByIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+
+            var result = new Result { OrderId = 10, TypeId = 1, Value = 15 }; // 15 is abnormal for female (range 5-12), but normal for fallback (10-20)
+
+            // Act
+            await _service.AddResultAsync(result);
+
+            // Assert
+            Assert.IsTrue(result.IsAbnormal);
+        }
+
+        [Test]
+        public async Task AddResult_ShouldSaveSentinelValue_WhenSpecimenIsRejected()
+        {
+            // Arrange
+            var patient = new Patient { Gender = "Male", DateOfBirth = DateTime.Today.AddYears(-30) };
+            var order = new TestOrder 
+            { 
+                OrderId = 10, 
+                Patient = patient,
+                Specimens = new System.Collections.Generic.List<Specimen>
+                {
+                    new Specimen { SampleType = "Blood", Status = "Rejected" }
+                }
+            };
+            
+            var testType = new TestType { TypeId = 1, SampleType = "Blood", ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
+
+            _mockOrderRepo.Setup(r => r.GetByIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+            _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<AuditLog>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+
+            var result = new Result { OrderId = 10, TypeId = 1, Value = 15 };
+
+            // Act
+            await _service.AddResultAsync(result);
+
+            // Assert
+            Assert.AreEqual(-999.0, result.Value);
             Assert.IsFalse(result.IsAbnormal);
         }
     }

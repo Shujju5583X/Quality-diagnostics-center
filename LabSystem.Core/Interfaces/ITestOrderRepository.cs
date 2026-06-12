@@ -9,5 +9,6 @@ namespace LabSystem.Core.Interfaces
     {
         Task<IEnumerable<TestOrder>> GetOrdersForPatientAsync(int patientId, CancellationToken cancellationToken = default);
         Task<IEnumerable<TestOrder>> GetByStatusAsync(string status, CancellationToken cancellationToken = default);
+        Task AddOrderWithTestTypesAsync(TestOrder order, List<int> testTypeIds, CancellationToken cancellationToken = default);
     }
 }

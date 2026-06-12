@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:viewmodels="clr-namespace:LabSystem.UI.ViewModels"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
              mc:Ignorable="d" 
              d:DesignHeight="768" d:DesignWidth="1200">
     <UserControl.Resources>
@@ -115,7 +116,7 @@
                         </Grid>
                     </ListBoxItem>
                     
-                    <!-- Enter Results -->
+                    <!-- Results Entry -->
                     <ListBoxItem>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -123,7 +124,43 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="TestTube" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
-                            <TextBlock Grid.Column="1" Text="Enter Results" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                            <TextBlock Grid.Column="1" Text="Results Entry" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                        </Grid>
+                    </ListBoxItem>
+
+                    <!-- Specimen Tracking -->
+                    <ListBoxItem>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="BarcodeScan" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Grid.Column="1" Text="Specimen Tracking" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                        </Grid>
+                    </ListBoxItem>
+
+                    <!-- Quality Control (Phase 4) -->
+                    <ListBoxItem>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="ChartSankeyVariant" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Grid.Column="1" Text="Quality Control" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                        </Grid>
+                    </ListBoxItem>
+
+                    <!-- Patient History (Phase 4) -->
+                    <ListBoxItem>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="ChartLine" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Grid.Column="1" Text="Patient History" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
@@ -267,7 +304,8 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Recent Test Orders" Margin="4 0 0 12"/>
-                            <DataGrid Grid.Row="1" ItemsSource="{Binding Orders}" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="400" AlternatingRowBackground="#FAF9FC">
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Orders}" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="400" AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="Auto" />
                                     <DataGridTextColumn Header="Patient Name" Binding="{Binding Patient.FullName}" Width="*" />
@@ -295,7 +333,9 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
                             <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Registered Patients" />
@@ -307,13 +347,25 @@
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                      materialDesign:TextFieldAssist.HasClearButton="True"
                                      Margin="4 0 4 16"
-                                     TextChanged="PatientSearchBox_TextChanged">
+                                     Text="{Binding PatientSearchQuery, UpdateSourceTrigger=PropertyChanged}">
                                 <TextBox.InputBindings>
                                     <!-- Prevent accidental submissions on enter -->
                                 </TextBox.InputBindings>
                             </TextBox>
+
+                            <!-- Date Range Filters -->
+                            <WrapPanel Grid.Row="2" Margin="4 0 4 12" VerticalAlignment="Center">
+                                <DatePicker materialDesign:HintAssist.Hint="From Reg. Date" 
+                                            SelectedDate="{Binding PatientStartDate}"
+                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
+                                            Width="135" Margin="0 0 12 0" />
+                                <DatePicker materialDesign:HintAssist.Hint="To Reg. Date" 
+                                            SelectedDate="{Binding PatientEndDate}"
+                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
+                                            Width="135" />
+                            </WrapPanel>
                             
-                            <DataGrid Grid.Row="2" 
+                            <DataGrid Grid.Row="3" 
                                       x:Name="PatientsGrid" 
                                       ItemsSource="{Binding Patients}" 
                                       SelectedItem="{Binding SelectedPatient}" 
@@ -321,16 +373,34 @@
                                       IsReadOnly="True" 
                                       SelectionMode="Single"
                                       Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC">
+                                      AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True"
+                                      VirtualizingStackPanel.IsVirtualizing="True"
+                                      VirtualizingStackPanel.VirtualizationMode="Recycling">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="ID" Binding="{Binding PatientId}" Width="Auto" />
+                                    <DataGridTextColumn Header="UHID" Binding="{Binding Uhid}" Width="Auto" />
                                     <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
                                     <DataGridTextColumn Header="Gender" Binding="{Binding Gender, TargetNullValue='Male'}" Width="Auto" />
-                                    <DataGridTextColumn Header="Date of Birth" Binding="{Binding DateOfBirth}" Width="Auto" />
+                                    <DataGridTextColumn Header="Date of Birth" Binding="{Binding DateOfBirth, StringFormat=yyyy-MM-dd}" Width="Auto" />
                                     <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
                                     <DataGridTextColumn Header="Email" Binding="{Binding ContactEmail}" Width="Auto" />
                                 </DataGrid.Columns>
                             </DataGrid>
+
+                            <!-- Pagination Controls -->
+                            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="4 8 4 4">
+                                <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                        Command="{Binding PreviousPatientPageCommand}"
+                                        Content="&lt; Prev" />
+                                <TextBlock Text="{Binding PatientPageInfo}" 
+                                           VerticalAlignment="Center" 
+                                           Margin="16 0" 
+                                           FontWeight="SemiBold" />
+                                <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                        Command="{Binding NextPatientPageCommand}"
+                                        Content="Next &gt;" />
+                            </StackPanel>
                         </Grid>
                     </materialDesign:Card>
 
@@ -401,6 +471,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
                             <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="1. Select Patient" />
@@ -412,7 +483,7 @@
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                      materialDesign:TextFieldAssist.HasClearButton="True"
                                      Margin="4 0 4 16"
-                                     TextChanged="OrderPatientSearchBox_TextChanged"/>
+                                     Text="{Binding PatientSearchQuery, UpdateSourceTrigger=PropertyChanged}"/>
                             
                             <DataGrid Grid.Row="2" 
                                       x:Name="OrderPatientsGrid"
@@ -422,12 +493,30 @@
                                       IsReadOnly="True" 
                                       SelectionMode="Single"
                                       Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC">
+                                      AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True"
+                                      VirtualizingStackPanel.IsVirtualizing="True"
+                                      VirtualizingStackPanel.VirtualizationMode="Recycling">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="ID" Binding="{Binding PatientId}" Width="Auto" />
+                                    <DataGridTextColumn Header="UHID" Binding="{Binding Uhid}" Width="Auto" />
                                     <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
                                 </DataGrid.Columns>
                             </DataGrid>
+
+                            <!-- Pagination Controls -->
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="4 8 4 4">
+                                <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                        Command="{Binding PreviousPatientPageCommand}"
+                                        Content="&lt; Prev" />
+                                <TextBlock Text="{Binding PatientPageInfo}" 
+                                           VerticalAlignment="Center" 
+                                           Margin="16 0" 
+                                           FontWeight="SemiBold" />
+                                <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                        Command="{Binding NextPatientPageCommand}"
+                                        Content="Next &gt;" />
+                            </StackPanel>
                         </Grid>
                     </materialDesign:Card>
 
@@ -440,7 +529,8 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 16" Text="2. Select Tests" />
                             
-                            <ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource GroupedTestTypes}}" BorderThickness="0" Background="Transparent" Margin="4 0 4 4">
+                            <ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource GroupedTestTypes}}" BorderThickness="0" Background="Transparent" Margin="4 0 4 4"
+                                     VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
                                 <ListBox.GroupStyle>
                                     <GroupStyle>
                                         <GroupStyle.HeaderTemplate>
@@ -498,7 +588,7 @@
                                 <materialDesign:PackIcon Kind="ClipboardText" Width="48" Height="48" Foreground="#673AB7" HorizontalAlignment="Center" Margin="0 0 0 16"/>
                                 <TextBlock Text="SELECTED PATIENT" FontSize="11" FontWeight="Bold" Foreground="Gray" HorizontalAlignment="Center" Margin="0 0 0 6"/>
                                 
-                                <Border Background="#F1EBF9" CornerRadius="6" Padding="12 16" Margin="0 0 0 24">
+                                <Border Background="#F1EBF9" CornerRadius="6" Padding="12 16" Margin="0 0 0 16">
                                     <TextBlock Text="{Binding SelectedPatient.FullName, TargetNullValue='No patient selected'}" 
                                                FontWeight="Bold" 
                                                FontSize="15" 
@@ -507,9 +597,23 @@
                                                TextAlignment="Center" 
                                                TextWrapping="Wrap"/>
                                 </Border>
+
+                                <ComboBox materialDesign:HintAssist.Hint="Select Test Panel / Package"
+                                          ItemsSource="{Binding TestPanels}"
+                                          SelectedItem="{Binding SelectedTestPanel}"
+                                          DisplayMemberPath="Name"
+                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                          Margin="0 0 0 16" />
+
+                                <ComboBox materialDesign:HintAssist.Hint="Select Referring Doctor"
+                                          ItemsSource="{Binding Doctors}"
+                                          SelectedItem="{Binding SelectedDoctor}"
+                                          DisplayMemberPath="Name"
+                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                          Margin="0 0 0 16" />
                             </StackPanel>
                             
-                            <TextBox Grid.Row="2" materialDesign:HintAssist.Hint="Referred By (e.g. Dr. Clark)" 
+                            <TextBox Grid.Row="2" materialDesign:HintAssist.Hint="Other Referral Text (if not selected)" 
                                      Text="{Binding OrderReferredBy, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                      Margin="0 0 0 24" />
@@ -561,7 +665,10 @@
                                       IsReadOnly="True" 
                                       SelectionMode="Single"
                                       Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC">
+                                      AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True"
+                                      VirtualizingStackPanel.IsVirtualizing="True"
+                                      VirtualizingStackPanel.VirtualizationMode="Recycling">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="Auto" />
                                     <DataGridTextColumn Header="Patient" Binding="{Binding Patient.FullName}" Width="*" />
@@ -779,84 +886,121 @@
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
+
+                            <!-- Amendment Section (only for Complete) -->
+                            <materialDesign:Card Grid.Row="4" Margin="0 16 0 0" Padding="16" Background="#FFF3E0">
+                                <materialDesign:Card.Style>
+                                    <Style TargetType="materialDesign:Card">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Complete">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:Card.Style>
+                                <StackPanel>
+                                    <TextBlock Text="Amend Result (Enter the Result ID from the database)" FontWeight="Bold" Foreground="#E65100" Margin="0 0 0 8"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox materialDesign:HintAssist.Hint="Result ID" Text="{Binding AmendResultId, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0 0 16 0"/>
+                                        <TextBox materialDesign:HintAssist.Hint="New Value" Text="{Binding AmendNewValue, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="0 0 16 0"/>
+                                        <TextBox materialDesign:HintAssist.Hint="Reason for Amendment" Text="{Binding AmendmentReason, UpdateSourceTrigger=PropertyChanged}" Width="300" Margin="0 0 16 0"/>
+                                        <Button Command="{Binding AmendResultCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Content="SUBMIT AMENDMENT" Foreground="#E65100" BorderBrush="#E65100"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </materialDesign:Card>
                         </Grid>
                     </materialDesign:Card>
                 </Grid>
             </TabItem>
-            <!-- Tab 4: Billing -->
+
+            <!-- Tab: Specimen Tracking -->
             <TabItem>
                 <Grid Margin="24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*" />
-                        <ColumnDefinition Width="3*" />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                    <!-- Left: Invoices List -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline5TextBlock}" FontWeight="Bold" Foreground="#311B92" Margin="0 0 0 16" Text="Specimen Lifecycle &amp; Barcode Tracking" />
+
+                    <materialDesign:Card Grid.Row="1" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            
-                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Invoices" />
-                            
-                            <!-- Search -->
-                            <TextBox Grid.Row="1"
-                                     x:Name="InvoicesSearchBox"
-                                     materialDesign:HintAssist.Hint="Search invoices by patient, ID..."
-                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                     materialDesign:TextFieldAssist.HasClearButton="True"
-                                     Margin="4 0 4 16"
-                                     TextChanged="InvoicesSearchBox_TextChanged"/>
-                            
-                            <DataGrid Grid.Row="2" 
-                                      x:Name="InvoicesGrid" 
-                                      ItemsSource="{Binding Invoices}" 
-                                      SelectedItem="{Binding SelectedInvoice}" 
+
+                            <DataGrid Grid.Row="0" 
+                                      ItemsSource="{Binding Specimens}" 
+                                      SelectedItem="{Binding SelectedSpecimen}" 
                                       AutoGenerateColumns="False" 
                                       IsReadOnly="True" 
                                       SelectionMode="Single"
-                                      Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC">
+                                      Margin="0 0 0 16"
+                                      AlternatingRowBackground="#FAF9FC"
+                                      VerticalScrollBarVisibility="Auto">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Invoice ID" Binding="{Binding InvoiceId}" Width="Auto" />
-                                    <DataGridTextColumn Header="Patient" Binding="{Binding Order.Patient.FullName}" Width="*" />
-                                    <DataGridTextColumn Header="Amount" Binding="{Binding TotalAmount}" Width="Auto" />
+                                    <DataGridTextColumn Header="Specimen ID" Binding="{Binding SpecimenId}" Width="Auto" />
+                                    <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="Auto" />
+                                    <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="*" />
+                                    <DataGridTextColumn Header="Sample Type" Binding="{Binding SampleType}" Width="*" />
+                                    <DataGridTextColumn Header="Collection Time" Binding="{Binding CollectionTime, StringFormat=\{0:dd-MMM-yyyy hh:mm tt\}}" Width="*" />
+                                    <DataGridTextColumn Header="Collected By" Binding="{Binding CollectedBy}" Width="*" />
                                     
-                                    <!-- Custom Badge Style for Invoice Status -->
                                     <DataGridTemplateColumn Header="Status" Width="Auto">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Border CornerRadius="12" Padding="8 4" HorizontalAlignment="Center" UseLayoutRounding="True" Margin="0 2">
+                                                <Border CornerRadius="10" Padding="8 2" HorizontalAlignment="Center" Margin="0 2">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsPaid}" Value="False">
-                                                                    <Setter Property="Background" Value="#FFEBEE"/>
-                                                                    <Setter Property="BorderBrush" Value="#FFCDD2"/>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Collected">
+                                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                                    <Setter Property="BorderBrush" Value="#BBDEFB"/>
                                                                     <Setter Property="BorderThickness" Value="1"/>
                                                                 </DataTrigger>
-                                                                <DataTrigger Binding="{Binding IsPaid}" Value="True">
+                                                                <DataTrigger Binding="{Binding Status}" Value="Received">
+                                                                    <Setter Property="Background" Value="#E8F5E9"/>
+                                                                    <Setter Property="BorderBrush" Value="#C8E6C9"/>
+                                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Processing">
+                                                                    <Setter Property="Background" Value="#FFF8E1"/>
+                                                                    <Setter Property="BorderBrush" Value="#FFE082"/>
+                                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Completed">
                                                                     <Setter Property="Background" Value="#E0F2F1"/>
                                                                     <Setter Property="BorderBrush" Value="#B2DFDB"/>
+                                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Rejected">
+                                                                    <Setter Property="Background" Value="#FFEBEE"/>
+                                                                    <Setter Property="BorderBrush" Value="#FFCDD2"/>
                                                                     <Setter Property="BorderThickness" Value="1"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <TextBlock FontWeight="SemiBold" FontSize="11">
+                                                    <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="SemiBold">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsPaid}" Value="False">
-                                                                        <Setter Property="Foreground" Value="#C62828"/>
-                                                                        <Setter Property="Text" Value="Pending"/>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Collected">
+                                                                        <Setter Property="Foreground" Value="#1565C0"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding IsPaid}" Value="True">
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Received">
+                                                                        <Setter Property="Foreground" Value="#2E7D32"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Processing">
+                                                                        <Setter Property="Foreground" Value="#F57F17"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Completed">
                                                                         <Setter Property="Foreground" Value="#00796B"/>
-                                                                        <Setter Property="Text" Value="Paid"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Rejected">
+                                                                        <Setter Property="Foreground" Value="#C62828"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -866,216 +1010,760 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
+                                    
+                                    <DataGridTextColumn Header="Rejection Reason" Binding="{Binding RejectionReason}" Width="*" />
                                 </DataGrid.Columns>
                             </DataGrid>
-                        </Grid>
-                    </materialDesign:Card>
 
-                    <!-- Right: Invoice Details Card -->
-                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <!-- Summary Banner -->
-                            <Border Grid.Row="0" Background="#F1EBF9" CornerRadius="8" Padding="16" Margin="0 0 0 16">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="36" Height="36" Foreground="#673AB7" VerticalAlignment="Center"/>
-                                    <StackPanel Grid.Column="1" Margin="16 0 0 0" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding SelectedInvoice.Order.Patient.FullName, TargetNullValue='No Invoice Selected'}" FontSize="16" FontWeight="Bold" Foreground="#311B92"/>
-                                        <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
-                                            <TextBlock Text="Invoice ID: " Foreground="#5C6BC0" FontSize="12"/>
-                                            <TextBlock Text="{Binding SelectedInvoice.InvoiceId, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
-                                            <TextBlock Text="Total: " Foreground="#5C6BC0" FontSize="12"/>
-                                            <TextBlock Text="{Binding SelectedInvoice.TotalAmount, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
-                                            <TextBlock Text="Status: " Foreground="#5C6BC0" FontSize="12"/>
-                                            <TextBlock Text="{Binding SelectedInvoice.IsPaid, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="False">
-                                                                <Setter Property="Text" Value="Pending"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="True">
-                                                                <Setter Property="Text" Value="Paid"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
-                            <StackPanel Grid.Row="1" Margin="0 16">
-                                <TextBlock Text="PAYMENT OPTIONS" FontSize="12" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 16"/>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button Command="{Binding MarkAsPaidCashCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140" Margin="0 0 16 0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="CASH" VerticalAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Command="{Binding MarkAsPaidUpiCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="QrcodeScan" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="UPI" VerticalAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <TextBlock Text="Transition Status:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0 0 12 0" Foreground="#555555" />
+                                <Button Command="{Binding MarkSpecimenReceivedCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Content="MARK RECEIVED" Margin="0 0 12 0" Width="140" Background="#2E7D32" BorderBrush="#2E7D32"/>
+                                <Button Command="{Binding MarkSpecimenProcessingCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Content="START PROCESSING" Margin="0 0 12 0" Width="160" Background="#F57F17" BorderBrush="#F57F17"/>
+                                <Button Command="{Binding RejectSpecimenCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Content="REJECT SPECIMEN" Width="140" Background="#C62828" BorderBrush="#C62828"/>
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
                 </Grid>
             </TabItem>
 
-            <!-- Tab 5: Reference Catalog -->
+            <!-- Tab 4: Quality Control -->
             <TabItem>
                 <Grid Margin="24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="4*" />
-                        <ColumnDefinition Width="3*" />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline5TextBlock}" FontWeight="Bold" Foreground="#311B92" Margin="0 0 0 16" Text="Quality Control Module" />
 
-                    <!-- Catalog List Card -->
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <Grid>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="350"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Add QC Result -->
+                        <materialDesign:Card Grid.Column="0" Margin="0 0 16 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="Add QC Result" />
+                                    
+                                    <ComboBox materialDesign:HintAssist.Hint="Select Test Type" 
+                                              ItemsSource="{Binding CatalogTestTypes}" 
+                                              SelectedItem="{Binding SelectedQcTestType}" 
+                                              DisplayMemberPath="Name" 
+                                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
+                                              Margin="0 0 0 16" />
+                                              
+                                    <ComboBox materialDesign:HintAssist.Hint="Control Level"
+                                              SelectedValue="{Binding QcControlLevel}"
+                                              SelectedValuePath="Content"
+                                              Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                              Margin="0 0 0 16">
+                                        <ComboBoxItem Content="Level 1" IsSelected="True" />
+                                        <ComboBoxItem Content="Level 2" />
+                                        <ComboBoxItem Content="Level 3" />
+                                    </ComboBox>
+
+                                    <TextBox materialDesign:HintAssist.Hint="Expected Mean" 
+                                             Text="{Binding QcExpectedMean, UpdateSourceTrigger=PropertyChanged}" 
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                             Margin="0 0 0 16" />
+
+                                    <TextBox materialDesign:HintAssist.Hint="Standard Deviation (1SD)" 
+                                             Text="{Binding QcStandardDeviation, UpdateSourceTrigger=PropertyChanged}" 
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                             Margin="0 0 0 16" />
+
+                                    <TextBox materialDesign:HintAssist.Hint="Measured Value" 
+                                             Text="{Binding QcMeasuredValue, UpdateSourceTrigger=PropertyChanged}" 
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                             Margin="0 0 0 16" />
+
+                                    <TextBox materialDesign:HintAssist.Hint="Remarks" 
+                                             Text="{Binding QcRemarks, UpdateSourceTrigger=PropertyChanged}" 
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                             Margin="0 0 0 24" />
+
+                                    <Button Command="{Binding SaveQcCommand}" Style="{StaticResource MaterialDesignRaisedButton}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="SAVE QC RESULT" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </materialDesign:Card>
+
+                        <!-- QC Results Grid -->
+                        <materialDesign:Card Grid.Column="1" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Recent QC Runs" />
+                                    <Button Command="{Binding RefreshQcCommand}" Style="{StaticResource MaterialDesignFlatButton}" Content="REFRESH" Margin="12 0 0 12"/>
+                                </StackPanel>
+
+                                <DataGrid Grid.Row="1" 
+                                          ItemsSource="{Binding QCResults}" 
+                                          AutoGenerateColumns="False" 
+                                          IsReadOnly="True" 
+                                          SelectionMode="Single"
+                                          AlternatingRowBackground="#FAF9FC">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Test Type" Binding="{Binding TestType.Name}" Width="*" />
+                                        <DataGridTextColumn Header="Level" Binding="{Binding ControlLevel}" Width="Auto" />
+                                        <DataGridTextColumn Header="Mean" Binding="{Binding ExpectedMean}" Width="Auto" />
+                                        <DataGridTextColumn Header="Measured" Binding="{Binding MeasuredValue}" Width="Auto" />
+                                        
+                                        <!-- Status Badge -->
+                                        <DataGridTemplateColumn Header="Status" Width="Auto">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border CornerRadius="8" Padding="6 2" HorizontalAlignment="Center" Margin="0 2">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsOutOfRange}" Value="False">
+                                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                                        <Setter Property="BorderBrush" Value="#C8E6C9"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IsOutOfRange}" Value="True">
+                                                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                                                        <Setter Property="BorderBrush" Value="#FFCDD2"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock FontSize="11" FontWeight="SemiBold">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsOutOfRange}" Value="False">
+                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
+                                                                            <Setter Property="Text" Value="Passed"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsOutOfRange}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#C62828"/>
+                                                                            <Setter Property="Text" Value="Failed (>2SD)"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="Date" Binding="{Binding RecordedAt, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="120" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </materialDesign:Card>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 5: Patient History -->
+            <TabItem>
+                <Grid Margin="24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline5TextBlock}" FontWeight="Bold" Foreground="#311B92" Margin="0 0 0 16" Text="Patient Diagnostic History" />
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="350"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: Selection -->
+                        <materialDesign:Card Grid.Column="0" Margin="0 0 16 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="Select Filters" />
+                                
+                                <ComboBox materialDesign:HintAssist.Hint="Select Patient" 
+                                          ItemsSource="{Binding Patients}" 
+                                          SelectedItem="{Binding SelectedHistoryPatient}" 
+                                          DisplayMemberPath="FullName" 
+                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
+                                          Margin="0 0 0 16" />
+
+                                <ComboBox materialDesign:HintAssist.Hint="Select Test Type" 
+                                          ItemsSource="{Binding CatalogTestTypes}" 
+                                          SelectedItem="{Binding SelectedHistoryTestType}" 
+                                          DisplayMemberPath="Name" 
+                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
+                                          Margin="0 0 0 16" />
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <!-- Right: LiveCharts Plot -->
+                        <materialDesign:Card Grid.Column="1" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                
+                                <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="Historical Trend" />
+                                
+                                <lvc:CartesianChart Grid.Row="1" Series="{Binding PatientHistorySeries}" LegendLocation="Right" Background="#FFFFFF">
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Title="Date" Labels="{Binding PatientHistoryLabels}" />
+                                    </lvc:CartesianChart.AxisX>
+                                    <lvc:CartesianChart.AxisY>
+                                        <lvc:Axis Title="Measured Value" />
+                                    </lvc:CartesianChart.AxisY>
+                                </lvc:CartesianChart>
+                            </Grid>
+                        </materialDesign:Card>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 6: Billing -->
+            <TabItem>
+                <TabControl BorderThickness="0" Background="Transparent">
+                    <TabItem Header="Invoices &amp; Payments" FontSize="14" FontWeight="SemiBold">
+                        <Grid Margin="12 24 12 12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="3*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left: Invoices List -->
+                            <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Invoices" />
+                                    
+                                    <!-- Search -->
+                                    <TextBox Grid.Row="1"
+                                             x:Name="InvoicesSearchBox"
+                                             materialDesign:HintAssist.Hint="Search invoices by patient, ID..."
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                             materialDesign:TextFieldAssist.HasClearButton="True"
+                                             Margin="4 0 4 16"
+                                             TextChanged="InvoicesSearchBox_TextChanged"/>
+                                    
+                                    <DataGrid Grid.Row="2" 
+                                              x:Name="InvoicesGrid" 
+                                              ItemsSource="{Binding Invoices}" 
+                                              SelectedItem="{Binding SelectedInvoice}" 
+                                              AutoGenerateColumns="False" 
+                                              IsReadOnly="True" 
+                                              SelectionMode="Single"
+                                              Margin="4 0 4 4"
+                                              AlternatingRowBackground="#FAF9FC"
+                                              EnableRowVirtualization="True"
+                                              VirtualizingStackPanel.IsVirtualizing="True"
+                                              VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Invoice ID" Binding="{Binding InvoiceId}" Width="Auto" />
+                                            <DataGridTextColumn Header="Patient" Binding="{Binding Order.Patient.FullName}" Width="*" />
+                                            <DataGridTextColumn Header="Amount" Binding="{Binding TotalAmount}" Width="Auto" />
+                                            
+                                            <!-- Custom Badge Style for Invoice Status -->
+                                            <DataGridTemplateColumn Header="Status" Width="Auto">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Border CornerRadius="12" Padding="8 4" HorizontalAlignment="Center" UseLayoutRounding="True" Margin="0 2">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsPaid}" Value="False">
+                                                                            <Setter Property="Background" Value="#FFEBEE"/>
+                                                                            <Setter Property="BorderBrush" Value="#FFCDD2"/>
+                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsPaid}" Value="True">
+                                                                            <Setter Property="Background" Value="#E0F2F1"/>
+                                                                            <Setter Property="BorderBrush" Value="#B2DFDB"/>
+                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <TextBlock FontWeight="SemiBold" FontSize="11">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsPaid}" Value="False">
+                                                                                <Setter Property="Foreground" Value="#C62828"/>
+                                                                                <Setter Property="Text" Value="Pending"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding IsPaid}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#00796B"/>
+                                                                                <Setter Property="Text" Value="Paid"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Right: Invoice Details Card -->
+                            <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Summary Banner -->
+                                    <Border Grid.Row="0" Background="#F1EBF9" CornerRadius="8" Padding="16" Margin="0 0 0 16">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="36" Height="36" Foreground="#673AB7" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Margin="16 0 0 0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding SelectedInvoice.Order.Patient.FullName, TargetNullValue='No Invoice Selected'}" FontSize="16" FontWeight="Bold" Foreground="#311B92"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
+                                                    <TextBlock Text="Invoice ID: " Foreground="#5C6BC0" FontSize="12"/>
+                                                    <TextBlock Text="{Binding SelectedInvoice.InvoiceId, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
+                                                    <TextBlock Text="Total: " Foreground="#5C6BC0" FontSize="12"/>
+                                                    <TextBlock Text="{Binding SelectedInvoice.TotalAmount, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
+                                                    <TextBlock Text="Status: " Foreground="#5C6BC0" FontSize="12"/>
+                                                    <TextBlock Text="{Binding SelectedInvoice.IsPaid, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="False">
+                                                                        <Setter Property="Text" Value="Pending"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="True">
+                                                                        <Setter Property="Text" Value="Paid"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <StackPanel Grid.Row="1" Margin="0 16">
+                                        <TextBlock Text="FINANCIAL ACTIONS" FontSize="12" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 16"/>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 12">
+                                            <Button Command="{Binding UpdateFinancialsCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="40" Width="296">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="TicketPercent" Width="20" Height="20" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="UPDATE DISCOUNT &amp; TAX" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Command="{Binding AddPaymentCashCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140" Margin="0 0 16 0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="ADD CASH" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding AddPaymentUpiCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="QrcodeScan" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="ADD UPI" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Referral Analytics" FontSize="14" FontWeight="SemiBold">
+                        <Grid Margin="12 24 12 12">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            
-                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Reference Range Catalog" />
-                            
-                            <TextBox Grid.Row="1" 
-                                     x:Name="CatalogSearchBox"
-                                     materialDesign:HintAssist.Hint="Search catalog by name, category, group..."
-                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                     materialDesign:TextFieldAssist.HasClearButton="True"
-                                     Margin="4 0 4 16"
-                                     TextChanged="CatalogSearchBox_TextChanged"/>
 
-                            <DataGrid Grid.Row="2" 
-                                      x:Name="CatalogGrid"
-                                      ItemsSource="{Binding CatalogTestTypes}" 
-                                      SelectedItem="{Binding SelectedCatalogTest}" 
-                                      AutoGenerateColumns="False" 
-                                      IsReadOnly="True" 
-                                      SelectionMode="Single"
-                                      Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding TypeId}" Width="Auto" />
-                                    <DataGridTextColumn Header="Test Name" Binding="{Binding Name}" Width="*" />
-                                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="Auto" />
-                                    <DataGridTextColumn Header="Group Name" Binding="{Binding GroupName}" Width="Auto" />
-                                    <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="Auto" />
-                                    <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="Auto" />
-                                </DataGrid.Columns>
-                            </DataGrid>
+                            <!-- Filters -->
+                            <materialDesign:Card Grid.Row="0" Padding="16" Margin="0 0 0 16" UniformCornerRadius="6">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <DatePicker materialDesign:HintAssist.Hint="Start Date" 
+                                                SelectedDate="{Binding ReferralStartDate}" 
+                                                Width="150" Margin="0 0 16 0" />
+                                    <DatePicker materialDesign:HintAssist.Hint="End Date" 
+                                                SelectedDate="{Binding ReferralEndDate}" 
+                                                Width="150" Margin="0 0 16 0" />
+                                    <Button Command="{Binding RefreshReferralStatsCommand}" 
+                                            Style="{StaticResource MaterialDesignRaisedButton}" 
+                                            Content="LOAD STATISTICS" Width="160" />
+                                </StackPanel>
+                            </materialDesign:Card>
+
+                            <!-- Grid -->
+                            <materialDesign:Card Grid.Row="1" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                                <DataGrid ItemsSource="{Binding ReferralStats}" AutoGenerateColumns="False" IsReadOnly="True" AlternatingRowBackground="#FAF9FC">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Doctor Name" Binding="{Binding DoctorName}" Width="*" />
+                                        <DataGridTextColumn Header="Specialization" Binding="{Binding Specialization}" Width="*" />
+                                        <DataGridTextColumn Header="Clinic Name" Binding="{Binding ClinicName}" Width="*" />
+                                        <DataGridTextColumn Header="Commission (%)" Binding="{Binding CommissionPercent, StringFormat=\{0:N1\}}" Width="Auto" />
+                                        <DataGridTextColumn Header="Total Orders" Binding="{Binding TotalOrders}" Width="Auto" />
+                                        <DataGridTextColumn Header="Total Revenue (Rs.)" Binding="{Binding TotalRevenue, StringFormat=\{0:F2\}}" Width="Auto" />
+                                        <DataGridTextColumn Header="Commission Payable (Rs.)" Binding="{Binding CommissionPayable, StringFormat=\{0:F2\}}" Width="Auto" FontWeight="Bold" Foreground="#2E7D32" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </materialDesign:Card>
                         </Grid>
-                    </materialDesign:Card>
+                    </TabItem>
 
-                    <!-- Edit Form Card -->
-                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Manage Test Type" />
+                    <TabItem Header="Revenue Analytics" FontSize="14" FontWeight="SemiBold">
+                        <Grid Margin="12 24 12 12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                                <TextBox materialDesign:HintAssist.Hint="Test Name" 
-                                         Text="{Binding CatalogTestName, UpdateSourceTrigger=PropertyChanged}" 
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                         Margin="0 0 0 16" />
+                            <!-- Filters & Actions -->
+                            <materialDesign:Card Grid.Row="0" Padding="16" Margin="0 0 0 16" UniformCornerRadius="6">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <DatePicker materialDesign:HintAssist.Hint="Start Date" 
+                                                SelectedDate="{Binding ReferralStartDate}" 
+                                                Width="150" Margin="0 0 16 0" />
+                                    <DatePicker materialDesign:HintAssist.Hint="End Date" 
+                                                SelectedDate="{Binding ReferralEndDate}" 
+                                                Width="150" Margin="0 0 16 0" />
+                                    <Button Command="{Binding RefreshReferralStatsCommand}" 
+                                            Style="{StaticResource MaterialDesignRaisedButton}" 
+                                            Content="LOAD REVENUE" Width="160" Margin="0 0 16 0" />
+                                    <Button Command="{Binding ExportRevenueReportCommand}" 
+                                            Style="{StaticResource MaterialDesignRaisedAccentButton}" 
+                                            Content="EXPORT TO EXCEL" Width="160" />
+                                </StackPanel>
+                            </materialDesign:Card>
 
-                                <Grid Margin="0 0 0 16">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Category (e.g. SEROLOGY)" 
-                                             Text="{Binding CatalogTestCategory, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="0 0 8 0" />
-                                    <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Group (e.g. Widal Test)" 
-                                             Text="{Binding CatalogTestGroupName, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="8 0 0 0" />
-                                </Grid>
+                            <!-- Summary Cards -->
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                                <Grid Margin="0 0 0 16">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Unit (e.g. g/dL)" 
-                                             Text="{Binding CatalogTestUnit, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="0 0 8 0" />
-                                    <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Sort Order" 
-                                             Text="{Binding CatalogTestSortOrder, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="8 0 0 0" />
-                                </Grid>
+                                <!-- Total Revenue -->
+                                <materialDesign:Card Grid.Column="0" Grid.Row="0" Margin="0 0 12 16" Padding="20" UniformCornerRadius="8" Background="#E3F2FD">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Billed Revenue" Foreground="#1565C0" FontWeight="SemiBold" FontSize="14" />
+                                        <TextBlock Text="{Binding CurrentRevenueReport.TotalRevenue, StringFormat='₹ {0:N2}'}" Foreground="#0D47A1" FontWeight="Bold" FontSize="28" Margin="0 8 0 0" />
+                                    </StackPanel>
+                                </materialDesign:Card>
 
-                                <Grid Margin="0 0 0 16">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Ref Range Low (Numeric)" 
-                                             Text="{Binding CatalogTestLow, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="0 0 8 0" />
-                                    <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Ref Range High (Numeric)" 
-                                             Text="{Binding CatalogTestHigh, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                             Margin="8 0 0 0" />
-                                </Grid>
+                                <!-- Total Collected -->
+                                <materialDesign:Card Grid.Column="1" Grid.Row="0" Margin="12 0 12 16" Padding="20" UniformCornerRadius="8" Background="#E8F5E9">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Collected" Foreground="#2E7D32" FontWeight="SemiBold" FontSize="14" />
+                                        <TextBlock Text="{Binding CurrentRevenueReport.TotalCollected, StringFormat='₹ {0:N2}'}" Foreground="#1B5E20" FontWeight="Bold" FontSize="28" Margin="0 8 0 0" />
+                                    </StackPanel>
+                                </materialDesign:Card>
 
-                                <TextBox materialDesign:HintAssist.Hint="Method (e.g. ELISA)" 
-                                         Text="{Binding CatalogTestMethod, UpdateSourceTrigger=PropertyChanged}" 
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                         Margin="0 0 0 16" />
+                                <!-- Outstanding Amount -->
+                                <materialDesign:Card Grid.Column="2" Grid.Row="0" Margin="12 0 0 16" Padding="20" UniformCornerRadius="8" Background="#FFEBEE">
+                                    <StackPanel>
+                                        <TextBlock Text="Outstanding Balance" Foreground="#C62828" FontWeight="SemiBold" FontSize="14" />
+                                        <TextBlock Text="{Binding CurrentRevenueReport.OutstandingAmount, StringFormat='₹ {0:N2}'}" Foreground="#B71C1C" FontWeight="Bold" FontSize="28" Margin="0 8 0 0" />
+                                    </StackPanel>
+                                </materialDesign:Card>
 
-                                <TextBox materialDesign:HintAssist.Hint="Interpretation Notes" 
-                                         Text="{Binding CatalogTestInterpretation, UpdateSourceTrigger=PropertyChanged}" 
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                                         AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="80"
-                                         Margin="0 0 0 16" />
+                                <!-- Cash vs UPI breakdown -->
+                                <materialDesign:Card Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" Padding="20" UniformCornerRadius="8">
+                                    <StackPanel>
+                                        <TextBlock Text="Collection Breakdown" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Margin="0 0 12 0">
+                                                <TextBlock Text="Cash Collections" Foreground="Gray" FontSize="14" />
+                                                <TextBlock Text="{Binding CurrentRevenueReport.CashCollected, StringFormat='₹ {0:N2}'}" FontWeight="Bold" FontSize="20" Margin="0 4 0 0" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="12 0 0 0">
+                                                <TextBlock Text="UPI Collections" Foreground="Gray" FontSize="14" />
+                                                <TextBlock Text="{Binding CurrentRevenueReport.UpiCollected, StringFormat='₹ {0:N2}'}" FontWeight="Bold" FontSize="20" Margin="0 4 0 0" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </materialDesign:Card>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </TabItem>
 
-                                <CheckBox Content="Is Active Test" IsChecked="{Binding CatalogTestIsActive}" Margin="0 0 0 24" />
+            <!-- Tab 5: Reference Catalog -->
+            <TabItem>
+                <TabControl BorderThickness="0" Background="Transparent">
+                    <TabItem Header="Test Catalog" FontSize="14" FontWeight="SemiBold">
+                        <Grid Margin="12 24 12 12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*" />
+                                <ColumnDefinition Width="3*" />
+                            </Grid.ColumnDefinitions>
 
+                            <!-- Catalog List Card -->
+                            <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                                 <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" Command="{Binding SaveCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 6 0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                            <TextBlock Text="SAVE CHANGES" VerticalAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Grid.Column="1" Command="{Binding AddCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Margin="6 0 0 0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Plus" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                            <TextBlock Text="ADD NEW" VerticalAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Reference Range Catalog" />
+                                    
+                                    <TextBox Grid.Row="1" 
+                                             x:Name="CatalogSearchBox"
+                                             materialDesign:HintAssist.Hint="Search catalog by name, category, group..."
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                             materialDesign:TextFieldAssist.HasClearButton="True"
+                                             Margin="4 0 4 16"
+                                             TextChanged="CatalogSearchBox_TextChanged"/>
+
+                                    <DataGrid Grid.Row="2" 
+                                              x:Name="CatalogGrid"
+                                              ItemsSource="{Binding CatalogTestTypes}" 
+                                              SelectedItem="{Binding SelectedCatalogTest}" 
+                                              AutoGenerateColumns="False" 
+                                              IsReadOnly="True" 
+                                              SelectionMode="Single"
+                                              Margin="4 0 4 4"
+                                              AlternatingRowBackground="#FAF9FC"
+                                              EnableRowVirtualization="True"
+                                              VirtualizingStackPanel.IsVirtualizing="True"
+                                              VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ID" Binding="{Binding TypeId}" Width="Auto" />
+                                            <DataGridTextColumn Header="Test Name" Binding="{Binding Name}" Width="*" />
+                                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="Auto" />
+                                            <DataGridTextColumn Header="Group Name" Binding="{Binding GroupName}" Width="Auto" />
+                                            <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="Auto" />
+                                            <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="Auto" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
                                 </Grid>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </materialDesign:Card>
-                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Edit Form Card -->
+                            <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Manage Test Type" />
+
+                                        <TextBox materialDesign:HintAssist.Hint="Test Name" 
+                                                 Text="{Binding CatalogTestName, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                 Margin="0 0 0 16" />
+
+                                        <Grid Margin="0 0 0 16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Category (e.g. SEROLOGY)" 
+                                                     Text="{Binding CatalogTestCategory, UpdateSourceTrigger=PropertyChanged}" 
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                     Margin="0 0 8 0" />
+                                            <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Group (e.g. Widal Test)" 
+                                                     Text="{Binding CatalogTestGroupName, UpdateSourceTrigger=PropertyChanged}" 
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                     Margin="8 0 0 0" />
+                                        </Grid>
+
+                                        <Grid Margin="0 0 0 16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Unit (e.g. g/dL)" 
+                                                     Text="{Binding CatalogTestUnit, UpdateSourceTrigger=PropertyChanged}" 
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                     Margin="0 0 8 0" />
+                                            <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Sort Order" 
+                                                     Text="{Binding CatalogTestSortOrder, UpdateSourceTrigger=PropertyChanged}" 
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                     Margin="8 0 0 0" />
+                                        </Grid>
+
+                                        <Grid Margin="0 0 0 16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Ref Range Low (Numeric)" 
+                                                     Text="{Binding CatalogTestLow, UpdateSourceTrigger=PropertyChanged}" 
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                     Margin="0 0 8 0" />
+                                            <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Ref Range High (Numeric)" 
+                                                     Text="{Binding CatalogTestHigh, UpdateSourceTrigger=PropertyChanged}" 
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                     Margin="8 0 0 0" />
+                                        </Grid>
+
+                                        <TextBox materialDesign:HintAssist.Hint="Method (e.g. ELISA)" 
+                                                 Text="{Binding CatalogTestMethod, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                 Margin="0 0 0 16" />
+
+                                        <TextBox materialDesign:HintAssist.Hint="Interpretation Notes" 
+                                                 Text="{Binding CatalogTestInterpretation, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                 AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="80"
+                                                 Margin="0 0 0 16" />
+
+                                        <CheckBox Content="Is Active Test" IsChecked="{Binding CatalogTestIsActive}" Margin="0 0 0 24" />
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Grid.Column="0" Command="{Binding SaveCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 6 0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="SAVE CHANGES" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Grid.Column="1" Command="{Binding AddCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Margin="6 0 0 0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Plus" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="ADD NEW" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </materialDesign:Card>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Referring Doctors" FontSize="14" FontWeight="SemiBold">
+                        <Grid Margin="12 24 12 12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*" />
+                                <ColumnDefinition Width="3*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Doctors Grid -->
+                            <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Referring Doctors List" />
+                                    
+                                    <DataGrid Grid.Row="1" 
+                                              ItemsSource="{Binding CatalogDoctors}" 
+                                              SelectedItem="{Binding CatalogSelectedDoctor}" 
+                                              AutoGenerateColumns="False" 
+                                              IsReadOnly="True" 
+                                              SelectionMode="Single"
+                                              AlternatingRowBackground="#FAF9FC"
+                                              EnableRowVirtualization="True"
+                                              VirtualizingStackPanel.IsVirtualizing="True"
+                                              VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ID" Binding="{Binding DoctorId}" Width="Auto" />
+                                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
+                                            <DataGridTextColumn Header="Specialization" Binding="{Binding Specialization}" Width="*" />
+                                            <DataGridTextColumn Header="Clinic Name" Binding="{Binding ClinicName}" Width="*" />
+                                            <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
+                                            <DataGridTextColumn Header="Commission (%)" Binding="{Binding CommissionPercent, StringFormat=\{0:N1\}}" Width="Auto" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- CRUD Form -->
+                            <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Manage Doctor Profile" />
+                                        
+                                        <TextBox materialDesign:HintAssist.Hint="Doctor Name" 
+                                                 Text="{Binding DocName, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                 Margin="0 0 0 16" />
+                                        
+                                        <TextBox materialDesign:HintAssist.Hint="Specialization" 
+                                                 Text="{Binding DocSpecialization, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                 Margin="0 0 0 16" />
+                                        
+                                        <TextBox materialDesign:HintAssist.Hint="Clinic Name" 
+                                                 Text="{Binding DocClinicName, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                 Margin="0 0 0 16" />
+                                        
+                                        <TextBox materialDesign:HintAssist.Hint="Contact Phone" 
+                                                 Text="{Binding DocContactPhone, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                 Margin="0 0 0 16" />
+                                        
+                                        <TextBox materialDesign:HintAssist.Hint="Commission Percent (%)" 
+                                                 Text="{Binding DocCommissionPercent, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                                                 Margin="0 0 0 24" />
+                                                 
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Grid.Column="0" Command="{Binding SaveCatalogDoctorCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 6 0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="SAVE CHANGES" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Grid.Column="1" Command="{Binding AddCatalogDoctorCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Margin="6 0 0 0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="Plus" Margin="0 0 8 0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="ADD NEW" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </materialDesign:Card>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
             </TabItem>
 
             <!-- Tab 5: Audit Logs -->
@@ -1116,7 +1804,10 @@
                                       AutoGenerateColumns="False" 
                                       IsReadOnly="True"
                                       Margin="4 0 4 4"
-                                      AlternatingRowBackground="#FAF9FC">
+                                      AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True"
+                                      VirtualizingStackPanel.IsVirtualizing="True"
+                                      VirtualizingStackPanel.VirtualizationMode="Recycling">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Log ID" Binding="{Binding LogId}" Width="Auto" />
                                     <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="Auto" />

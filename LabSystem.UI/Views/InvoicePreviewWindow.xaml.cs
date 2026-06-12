@@ -31,7 +31,16 @@ namespace LabSystem.UI.Views
                 _currentPdfPath = await _reportService.GenerateInvoicePdfAsync(_invoice);
                 if (!string.IsNullOrEmpty(_currentPdfPath) && File.Exists(_currentPdfPath))
                 {
-                    PdfWebViewer.Navigate(new Uri(_currentPdfPath));
+                    try
+                    {
+                        PdfWebViewer.Navigate(new Uri(_currentPdfPath));
+                    }
+                    catch
+                    {
+                        // Fallback for Windows 7: embedded IE often can't render PDFs
+                        // Open in system default PDF viewer (Adobe Reader, Foxit, etc.)
+                        System.Diagnostics.Process.Start(_currentPdfPath);
+                    }
                 }
             }
             catch (Exception ex)

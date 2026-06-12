@@ -8,6 +8,6 @@ namespace LabSystem.Core.Models
         public int OrderId { get; set; }
         public virtual TestOrder Order { get; set; }
         public string FilePath { get; set; }
-        public string GeneratedAt { get; set; }
+        public DateTime GeneratedAt { get; set; }
     }
 }

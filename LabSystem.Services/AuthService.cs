@@ -37,11 +37,11 @@ namespace LabSystem.Services
                 var staff = await _staffRepo.GetByIdAsync(staffId, cancellationToken);
                 if (staff == null) return false;
 
-                if (!string.IsNullOrEmpty(staff.LockoutEnd) && DateTime.TryParse(staff.LockoutEnd, null, System.Globalization.DateTimeStyles.RoundtripKind, out var lockoutEnd))
+                if (staff.LockoutEnd.HasValue)
                 {
-                    if (lockoutEnd > DateTime.UtcNow)
+                    if (staff.LockoutEnd.Value > DateTime.UtcNow)
                     {
-                        throw new LockoutException(lockoutEnd);
+                        throw new LockoutException(staff.LockoutEnd.Value);
                     }
                 }
 
@@ -57,7 +57,7 @@ namespace LabSystem.Services
                     staff.FailedLoginAttempts++;
                     if (staff.FailedLoginAttempts >= MaxFailedAttempts)
                     {
-                        staff.LockoutEnd = DateTime.UtcNow.Add(LockoutDuration).ToString("O");
+                        staff.LockoutEnd = DateTime.UtcNow.Add(LockoutDuration);
                     }
                 }
 
