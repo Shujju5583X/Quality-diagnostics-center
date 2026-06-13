@@ -3,8 +3,8 @@ using System.Data.Entity;
 using System.Data.Entity.Infrastructure.Annotations;
 using System.Data.Entity.ModelConfiguration.Conventions;
 using LabSystem.Core.Models;
+using System.Linq;
 using System.Data.SQLite;
-
 namespace LabSystem.Data
 {
     public class LabDbContext : DbContext
@@ -31,6 +31,42 @@ namespace LabSystem.Data
         public DbSet<Specimen> Specimens { get; set; }
         public DbSet<ReferenceRange> ReferenceRanges { get; set; }
         public DbSet<TestPanel> TestPanels { get; set; }
+
+        public IQueryable<UnifiedQueueItem> GetUnifiedQueue()
+        {
+            var orders = TestOrders
+                .Include(o => o.Patient)
+                .Include(o => o.TestTypes)
+                .ToList();
+
+            var orderIds = orders.Select(o => o.OrderId).ToList();
+
+            var invoices = Invoices
+                .Where(i => orderIds.Contains(i.OrderId))
+                .ToList();
+
+            var results = Results
+                .Where(r => orderIds.Contains(r.OrderId))
+                .ToList();
+
+            return orders.Select(o =>
+            {
+                var invoice = invoices.FirstOrDefault(i => i.OrderId == o.OrderId);
+                var expectedResultsCount = o.TestTypes.Count;
+                var actualResultsCount = results.Count(r => r.OrderId == o.OrderId);
+
+                return new UnifiedQueueItem
+                {
+                    OrderId = o.OrderId,
+                    PatientName = o.Patient?.FullName,
+                    OrderedAt = o.OrderedAt,
+                    OrderStatus = o.Status,
+                    HasAllResults = expectedResultsCount > 0 && actualResultsCount >= expectedResultsCount,
+                    IsPaid = invoice != null && invoice.IsPaid,
+                    InvoiceId = invoice?.InvoiceId
+                };
+            }).AsQueryable();
+        }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -129,7 +165,25 @@ namespace LabSystem.Data
                 .Property(o => o.PatientId)
                 .HasColumnAnnotation(
                     IndexAnnotation.AnnotationName,
-                    new IndexAnnotation(new IndexAttribute("IX_TestOrders_PatientId")));
+                    new IndexAnnotation(new IndexAttribute("IX_TestOrders_PatientId_OrderedAt_Status", 1) { IsUnique = false }));
+
+            modelBuilder.Entity<TestOrder>()
+                .Property(o => o.OrderedAt)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_TestOrders_PatientId_OrderedAt_Status", 2) { IsUnique = false }));
+
+            modelBuilder.Entity<TestOrder>()
+                .Property(o => o.Status)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_TestOrders_PatientId_OrderedAt_Status", 3) { IsUnique = false }));
+
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.OrderId)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_Invoices_OrderId")));
 
             modelBuilder.Entity<Specimen>()
                 .Property(s => s.OrderId)

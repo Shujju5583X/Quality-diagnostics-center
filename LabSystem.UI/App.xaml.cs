@@ -88,10 +88,12 @@ namespace LabSystem.UI
                 GetLetterheadPath()), Lifestyle.Transient);
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
             Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
+            Container.Register<IWorkflowService, WorkflowService>(Lifestyle.Transient);
 
             // Register ViewModels (single-operator: no LoginViewModel)
             Container.Register<ViewModels.MainViewModel>();
             Container.Register<ViewModels.DashboardViewModel>();
+            Container.Register<ViewModels.UnifiedQueueViewModel>();
 
             // Hold a backup service reference for auto-backup on exit
             _backupServiceForExit = Container.GetInstance<IBackupService>();

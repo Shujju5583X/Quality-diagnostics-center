@@ -53,6 +53,11 @@ namespace LabSystem.UI.ViewModels
 
         // Results tab fields
         private string _resultErrorMessage;
+        public string ResultErrorMessage
+        {
+            get => _resultErrorMessage;
+            set { _resultErrorMessage = value; OnPropertyChanged(); }
+        }
 
         // Dashboard stats fields
         private int _totalPatients;
@@ -99,17 +104,10 @@ namespace LabSystem.UI.ViewModels
             {
                 _selectedOrder = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(IsSelectedOrderSpecimenRejected));
-                LoadResultsForSelectedOrder();
             }
         }
 
-        private Invoice _selectedInvoice;
-        public Invoice SelectedInvoice
-        {
-            get => _selectedInvoice;
-            set { _selectedInvoice = value; OnPropertyChanged(); }
-        }
+        public UnifiedQueueViewModel UnifiedQueueVM { get; }
 
         public int TotalPatients
         {
@@ -138,15 +136,10 @@ namespace LabSystem.UI.ViewModels
         // Commands
         public ICommand AddPatientCommand { get; }
         public ICommand CreateOrderCommand { get; }
-        public ICommand SaveResultsCommand { get; }
-        public ICommand GenerateReportCommand { get; }
-        public ICommand GenerateBillCommand { get; }
         public ICommand BackupCommand { get; }
         public ICommand RefreshCommand { get; }
         public ICommand SaveCatalogTestCommand { get; }
         public ICommand AddCatalogTestCommand { get; }
-        public ICommand AddPaymentCashCommand { get; }
-        public ICommand AddPaymentUpiCommand { get; }
         public ICommand PreviousPatientPageCommand { get; }
         public ICommand NextPatientPageCommand { get; }
 
@@ -160,7 +153,8 @@ namespace LabSystem.UI.ViewModels
             IPdfReportService reportService,
             IBackupService backupService,
             IBillingService billingService,
-            IRepository<TestPanel> testPanelRepo)
+            IRepository<TestPanel> testPanelRepo,
+            UnifiedQueueViewModel unifiedQueueVM)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
@@ -172,18 +166,15 @@ namespace LabSystem.UI.ViewModels
             _backupService = backupService;
             _billingService = billingService;
             _testPanelRepo = testPanelRepo;
+            
+            UnifiedQueueVM = unifiedQueueVM;
 
             AddPatientCommand = new RelayCommand(async o => await ExecuteAddPatientAsync(o));
             CreateOrderCommand = new RelayCommand(async o => await ExecuteCreateOrderAsync(o));
-            SaveResultsCommand = new RelayCommand(async o => await ExecuteSaveResultsAsync(o));
-            GenerateReportCommand = new RelayCommand(ExecuteGenerateReport);
-            GenerateBillCommand = new RelayCommand(async o => await ExecuteGenerateBillAsync(o));
-            BackupCommand = new RelayCommand(async o => await ExecuteBackupAsync(o));
+            BackupCommand = new RelayCommand(async o => await _backupService.BackupNowAsync());
             RefreshCommand = new RelayCommand(async o => await LoadDataAsync());
             SaveCatalogTestCommand = new RelayCommand(async o => await ExecuteSaveCatalogTestAsync(o));
             AddCatalogTestCommand = new RelayCommand(async o => await ExecuteAddCatalogTestAsync(o));
-            AddPaymentCashCommand = new RelayCommand(async o => await ExecuteAddPaymentAsync("Cash"));
-            AddPaymentUpiCommand = new RelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
 
             PreviousPatientPageCommand = new RelayCommand(async o =>
             {
@@ -257,13 +248,7 @@ namespace LabSystem.UI.ViewModels
                     CatalogTestTypes.Add(t);
                 }
 
-                // Load Invoices
-                Invoices.Clear();
-                var invoices = await _billingService.GetAllInvoicesAsync();
-                foreach (var inv in invoices)
-                {
-                    Invoices.Add(inv);
-                }
+                await UnifiedQueueVM.LoadQueueAsync();
 
                 // Load ReferredBy autocomplete history
                 await LoadReferredByHistoryAsync();
