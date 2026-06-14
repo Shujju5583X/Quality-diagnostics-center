@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using LabSystem.Core.Models;
 using LabSystem.Core.Enums;
+using LabSystem.Core.Services;
 using Serilog;
 
 namespace LabSystem.UI.ViewModels
@@ -193,6 +195,45 @@ namespace LabSystem.UI.ViewModels
             if (ri.HasOptions && !string.IsNullOrEmpty(ri.ValueText))
             {
                 ri.SelectedOption = ri.Options.FirstOrDefault(o => o.Value == ri.ValueText || Math.Abs((double.TryParse(o.Value, out var v1) ? v1 : -1) - (double.TryParse(ri.ValueText, out var v2) ? v2 : -2)) < 0.001);
+            }
+        }
+
+        public ICommand AmendResultCommand { get; private set; }
+
+        public void InitializeAmendResultCommand()
+        {
+            AmendResultCommand = new AsyncRelayCommand(async o => await ExecuteAmendResultAsync(o));
+        }
+
+        private async Task ExecuteAmendResultAsync(object parameter)
+        {
+            if (parameter is not ResultInput ri) return;
+
+            var reasonDialog = new Views.AmendmentReasonDialog();
+            if (reasonDialog.ShowDialog() != true) return;
+
+            string reason = reasonDialog.Reason;
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                MessageBox.Show("Amendment reason is required.", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                double? newValue = double.TryParse(ri.ValueText, out var v) ? v : (double?)null;
+                await _resultService.AmendResultAsync(ri.TypeId, newValue, ri.ValueText, reason, App.AuthenticatedStaffId);
+
+                ri.IsAmendmentMode = false;
+                ri.IsAbnormal = ReferenceRangeEvaluator.IsAbnormal(newValue,
+                    await _testTypeRepo.GetByIdAsync(ri.TypeId), SelectedOrder?.Patient);
+
+                MessageBox.Show("Result amended successfully.", "Amended", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to amend result.");
+                MessageBox.Show($"Amendment failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

@@ -235,6 +235,39 @@ namespace LabSystem.Data
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_ReferenceRanges_TestTypeId ON ReferenceRanges (TestTypeId);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Payments_InvoiceId ON Payments (InvoiceId);");
 
+                // QC tables
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS QcRuns (
+                        QcRunId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        TestTypeId INTEGER NOT NULL,
+                        ControlName TEXT NOT NULL,
+                        RunDate DATETIME NOT NULL,
+                        MeasuredValue REAL NOT NULL,
+                        LotNumber TEXT,
+                        TargetValue REAL,
+                        SD REAL,
+                        CreatedAt DATETIME,
+                        FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId)
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS QcLots (
+                        QcLotId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        TestTypeId INTEGER NOT NULL,
+                        LotNumber TEXT NOT NULL,
+                        TargetValue REAL NOT NULL,
+                        SD REAL NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1,
+                        CreatedAt DATETIME,
+                        FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId)
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcRuns_TestTypeId ON QcRuns (TestTypeId);");
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcRuns_RunDate ON QcRuns (RunDate);");
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcLots_TestTypeId ON QcLots (TestTypeId);");
+
                 try
                 {
                     db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN IsAmended INTEGER NOT NULL DEFAULT 0;");

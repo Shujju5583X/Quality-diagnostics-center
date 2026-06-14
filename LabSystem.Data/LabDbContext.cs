@@ -31,6 +31,8 @@ namespace LabSystem.Data
         public DbSet<Specimen> Specimens { get; set; }
         public DbSet<ReferenceRange> ReferenceRanges { get; set; }
         public DbSet<TestPanel> TestPanels { get; set; }
+        public DbSet<QcRun> QcRuns { get; set; }
+        public DbSet<QcLot> QcLots { get; set; }
 
         public IQueryable<UnifiedQueueItem> GetUnifiedQueue()
         {
@@ -65,6 +67,8 @@ namespace LabSystem.Data
             modelBuilder.Entity<Specimen>().ToTable("Specimens");
             modelBuilder.Entity<ReferenceRange>().ToTable("ReferenceRanges");
             modelBuilder.Entity<TestPanel>().ToTable("TestPanels");
+            modelBuilder.Entity<QcRun>().ToTable("QcRuns");
+            modelBuilder.Entity<QcLot>().ToTable("QcLots");
 
             // SQLite explicit configurations
             modelBuilder.Entity<TestOrder>().HasKey(o => o.OrderId);
@@ -74,6 +78,8 @@ namespace LabSystem.Data
             modelBuilder.Entity<Specimen>().HasKey(s => s.SpecimenId);
             modelBuilder.Entity<ReferenceRange>().HasKey(r => r.ReferenceRangeId);
             modelBuilder.Entity<TestPanel>().HasKey(p => p.PanelId);
+            modelBuilder.Entity<QcRun>().HasKey(q => q.QcRunId);
+            modelBuilder.Entity<QcLot>().HasKey(q => q.QcLotId);
 
             // Configure foreign key relations
             modelBuilder.Entity<TestOrder>()
@@ -140,6 +146,16 @@ namespace LabSystem.Data
                     m.MapLeftKey("PanelId");
                     m.MapRightKey("TypeId");
                 });
+
+            modelBuilder.Entity<QcRun>()
+                .HasRequired(q => q.TestType)
+                .WithMany()
+                .HasForeignKey(q => q.TestTypeId);
+
+            modelBuilder.Entity<QcLot>()
+                .HasRequired(q => q.TestType)
+                .WithMany()
+                .HasForeignKey(q => q.TestTypeId);
 
             // Index configurations
             modelBuilder.Entity<TestOrder>()

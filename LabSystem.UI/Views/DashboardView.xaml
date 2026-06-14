@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:viewmodels="clr-namespace:LabSystem.UI.ViewModels"
+             xmlns:views="clr-namespace:LabSystem.UI.Views"
              xmlns:converters="clr-namespace:LabSystem.UI.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="768" d:DesignWidth="1366">
@@ -294,6 +295,8 @@
                                 <Button Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding PreviousPatientPageCommand}" Content="&lt; Prev" />
                                 <TextBlock Text="{Binding PatientPageInfo}" VerticalAlignment="Center" Margin="16 0" FontWeight="SemiBold" />
                                 <Button Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding NextPatientPageCommand}" Content="Next &gt;" />
+                                <Button Command="{Binding LoadPatientHistoryCommand}" Content="VIEW HISTORY" Margin="16 0 0 0"
+                                        Style="{StaticResource MaterialDesignRaisedButton}" Height="32" FontSize="11"/>
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
@@ -556,13 +559,13 @@
                                 <TextBlock Text="ACTION CENTER" FontWeight="Bold" FontSize="13" Foreground="White"/>
                             </Border>
 
-                            <!-- Placeholder for selected item info -->
                             <StackPanel Grid.Row="1" Margin="16">
                                 <TextBlock Text="{Binding SelectedItem.PatientName, StringFormat='Selected Patient: {0}', TargetNullValue='Select an order'}" FontSize="18" FontWeight="Bold"/>
                                 <TextBlock Text="{Binding SelectedItem.WorkflowState, StringFormat='Current State: {0}'}" FontSize="14" Foreground="#666" Margin="0 4 0 16"/>
 
-                                <!-- Quick Finalize Action Area -->
-                                <Border Background="#F5F5F5" CornerRadius="8" Padding="16">
+                                <!-- Quick Finalize Action Area (for pending orders) -->
+                                <Border Background="#F5F5F5" CornerRadius="8" Padding="16" 
+                                        Visibility="{Binding IsPendingOrder, Converter={StaticResource BoolToVis}}">
                                     <StackPanel>
                                         <TextBlock Text="Quick Finalize Action" FontWeight="Bold" FontSize="16" Margin="0 0 0 12"/>
                                         <TextBlock Text="This action will sequentially save all pending results, mark the invoice as fully paid (Cash), and trigger PDF document generation in a single database transaction." TextWrapping="Wrap" Foreground="#555" Margin="0 0 0 16"/>
@@ -573,6 +576,55 @@
                                                 <TextBlock Text="QUICK FINALIZE WORKFLOW" VerticalAlignment="Center" FontWeight="Bold"/>
                                             </StackPanel>
                                         </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Results with Amend Button (for completed orders) -->
+                                <Border Background="#F5F5F5" CornerRadius="8" Padding="16"
+                                        Visibility="{Binding IsCompletedOrder, Converter={StaticResource BoolToVis}}">
+                                    <StackPanel>
+                                        <TextBlock Text="Saved Results (Amendment Mode)" FontWeight="Bold" FontSize="16" Margin="0 0 0 12"/>
+                                        <TextBlock Text="Click AMEND on any result to modify it with a reason." TextWrapping="Wrap" Foreground="#555" Margin="0 0 0 12"/>
+                                        
+                                        <DataGrid ItemsSource="{Binding SelectedOrderResults}" AutoGenerateColumns="False" 
+                                                  IsReadOnly="True" MaxHeight="350" AlternatingRowBackground="#FAF9FC">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Test" Binding="{Binding TestName}" Width="*"/>
+                                                <DataGridTextColumn Header="Value" Binding="{Binding ValueText}" Width="80"/>
+                                                <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="60"/>
+                                                <DataGridTemplateColumn Header="Status" Width="80">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock>
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Text" Value="Normal"/>
+                                                                        <Setter Property="Foreground" Value="#00796B"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsAbnormal}" Value="True">
+                                                                                <Setter Property="Text" Value="ABNORMAL"/>
+                                                                                <Setter Property="Foreground" Value="#C62828"/>
+                                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                                <DataGridTemplateColumn Header="Action" Width="80">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Button Content="AMEND" FontSize="10" Height="24" Margin="2"
+                                                                    Command="{Binding DataContext.AmendResultCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Style="{StaticResource MaterialDesignFlatButton}" Foreground="#FF6F00"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -840,7 +892,12 @@
                 </Grid>
             </TabItem>
 
-            <!-- ─── TAB 6: SETTINGS / BACKUP ─── -->
+            <!-- ─── TAB 6: QC (QUALITY CONTROL) ─── -->
+            <TabItem>
+                <views:QcView DataContext="{Binding QcVM}"/>
+            </TabItem>
+
+            <!-- ─── TAB 7: SETTINGS / BACKUP ─── -->
             <TabItem>
                 <Grid Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="600">
                     <StackPanel>

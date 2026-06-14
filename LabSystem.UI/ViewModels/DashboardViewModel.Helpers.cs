@@ -69,6 +69,13 @@ namespace LabSystem.UI.ViewModels
             set { _isReadOnly = value; OnPropertyChanged(); }
         }
 
+        private bool _isAmendmentMode;
+        public bool IsAmendmentMode
+        {
+            get => _isAmendmentMode;
+            set { _isAmendmentMode = value; OnPropertyChanged(); }
+        }
+
         public ObservableCollection<ResultOption> Options { get; } = new ObservableCollection<ResultOption>();
         public bool HasOptions => Options.Count > 0;
 

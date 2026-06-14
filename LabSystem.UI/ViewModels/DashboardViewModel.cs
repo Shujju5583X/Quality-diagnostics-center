@@ -103,6 +103,22 @@ namespace LabSystem.UI.ViewModels
         // Billing Items
         public ObservableCollection<Invoice> Invoices { get; } = new ObservableCollection<Invoice>();
 
+        // Patient History
+        public ObservableCollection<PatientHistoryEntry> PatientHistory { get; } = new ObservableCollection<PatientHistoryEntry>();
+        private string _patientHistoryName;
+        public string PatientHistoryName
+        {
+            get => _patientHistoryName;
+            set { _patientHistoryName = value; OnPropertyChanged(); }
+        }
+        private int _patientHistoryCount;
+        public int PatientHistoryCount
+        {
+            get => _patientHistoryCount;
+            set { _patientHistoryCount = value; OnPropertyChanged(); }
+        }
+        public ICommand LoadPatientHistoryCommand { get; private set; }
+
         public Patient SelectedPatient
         {
             get => _selectedPatient;
@@ -138,6 +154,7 @@ namespace LabSystem.UI.ViewModels
         }
 
         public UnifiedQueueViewModel UnifiedQueueVM { get; }
+        public QcViewModel QcVM { get; }
 
         public int TotalPatients
         {
@@ -221,7 +238,8 @@ namespace LabSystem.UI.ViewModels
             LabTabViewModel labTabVM,
             BillingTabViewModel billingTabVM,
             IBackupService backupService,
-            UnifiedQueueViewModel unifiedQueueVM)
+            UnifiedQueueViewModel unifiedQueueVM,
+            QcViewModel qcVM)
         {
             _patientRepo = patientsTabVM.PatientRepo;
             _orderRepo = ordersTabVM.OrderRepo;
@@ -237,6 +255,7 @@ namespace LabSystem.UI.ViewModels
 
             _backupService = backupService;
             UnifiedQueueVM = unifiedQueueVM;
+            QcVM = qcVM;
 
             AddPatientCommand = new AsyncRelayCommand(async o => await ExecuteAddPatientAsync(o));
             CreateOrderCommand = new AsyncRelayCommand(async o => await ExecuteCreateOrderAsync(o));
@@ -266,6 +285,9 @@ namespace LabSystem.UI.ViewModels
                     await LoadPatientsAsync();
                 }
             });
+
+            InitializeAmendResultCommand();
+            LoadPatientHistoryCommand = new AsyncRelayCommand(async o => await ExecuteLoadPatientHistoryAsync());
 
             _ = InitializeAsync();
         }
@@ -432,6 +454,57 @@ namespace LabSystem.UI.ViewModels
             {
                 Log.Error(ex, "Failed to generate revenue report.");
                 MessageBox.Show($"Failed to generate revenue report: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteLoadPatientHistoryAsync()
+        {
+            if (SelectedPatient == null)
+            {
+                MessageBox.Show("Please select a patient first.", "No Patient Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                PatientHistory.Clear();
+                PatientHistoryName = SelectedPatient.FullName;
+
+                var orders = await _patientRepo.GetPatientOrdersAsync(SelectedPatient.PatientId);
+                foreach (var order in orders)
+                {
+                    var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId);
+                    foreach (var result in results)
+                    {
+                        if (result.TestType == null)
+                        {
+                            result.TestType = await _testTypeRepo.GetByIdAsync(result.TypeId);
+                        }
+
+                        PatientHistory.Add(new PatientHistoryEntry
+                        {
+                            OrderDate = order.OrderedAt,
+                            TestName = result.TestType?.Name ?? "Unknown",
+                            Value = result.Value,
+                            ValueText = result.ValueText,
+                            Unit = result.TestType?.Unit ?? "",
+                            IsAbnormal = result.IsAbnormal,
+                            ReferenceLow = result.TestType?.ReferenceRangeLow,
+                            ReferenceHigh = result.TestType?.ReferenceRangeHigh
+                        });
+                    }
+                }
+
+                PatientHistoryCount = PatientHistory.Count;
+
+                var historyWindow = new Views.PatientHistoryWindow();
+                historyWindow.DataContext = this;
+                historyWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load patient history.");
+                MessageBox.Show($"Failed to load patient history: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

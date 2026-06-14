@@ -81,5 +81,16 @@ namespace LabSystem.Data.Repositories
                 .FirstOrDefaultAsync(cancellationToken);
             return match;
         }
+
+        public async Task<IEnumerable<TestOrder>> GetPatientOrdersAsync(int patientId, CancellationToken cancellationToken = default)
+        {
+            return await _context.TestOrders
+                .AsNoTracking()
+                .Include(o => o.TestTypes)
+                .Include(o => o.Specimens)
+                .Where(o => o.PatientId == patientId)
+                .OrderByDescending(o => o.OrderedAt)
+                .ToListAsync(cancellationToken);
+        }
     }
 }
