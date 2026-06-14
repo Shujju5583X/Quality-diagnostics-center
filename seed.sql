@@ -296,43 +296,43 @@ INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, Range
 
 -- Additional ReferenceRanges for common tests
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'Haematocrit (Hct)'), 'Male', 12, 120, 40.0, 54.0),
-((SELECT TypeId FROM TestTypes WHERE Name = 'Haematocrit (Hct)'), 'Female', 12, 120, 36.0, 46.0),
-((SELECT TypeId FROM TestTypes WHERE Name = 'Haematocrit (Hct)'), 'Other', 0, 120, 36.0, 54.0);
+((SELECT TypeId FROM TestTypes WHERE Name = 'Packed Cell Volume (PCV)'), 'Male', 12, 120, 40.0, 54.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Packed Cell Volume (PCV)'), 'Female', 12, 120, 36.0, 46.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Packed Cell Volume (PCV)'), 'Other', 0, 120, 36.0, 54.0);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'RBC Count'), 'Male', 12, 120, 4.5, 5.5),
-((SELECT TypeId FROM TestTypes WHERE Name = 'RBC Count'), 'Female', 12, 120, 3.8, 4.8),
-((SELECT TypeId FROM TestTypes WHERE Name = 'RBC Count'), 'Other', 0, 120, 3.8, 5.5);
+((SELECT TypeId FROM TestTypes WHERE Name = 'Total RBC count'), 'Male', 12, 120, 4.5, 5.5),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Total RBC count'), 'Female', 12, 120, 3.8, 4.8),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Total RBC count'), 'Other', 0, 120, 3.8, 5.5);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'WBC Count'), 'All', 0, 120, 4000.0, 11000.0);
+((SELECT TypeId FROM TestTypes WHERE Name = 'Total WBC count'), 'All', 0, 120, 4000.0, 11000.0);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
 ((SELECT TypeId FROM TestTypes WHERE Name = 'Platelet Count'), 'All', 0, 120, 150000.0, 400000.0);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (Serum)'), 'Male', 12, 120, 0.7, 1.3),
-((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (Serum)'), 'Female', 12, 120, 0.6, 1.1),
-((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (Serum)'), 'Other', 0, 120, 0.6, 1.3);
+((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (KFT)'), 'Male', 12, 120, 0.7, 1.3),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (KFT)'), 'Female', 12, 120, 0.6, 1.1),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (KFT)'), 'Other', 0, 120, 0.6, 1.3);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'Blood Urea'), 'Male', 12, 120, 15.0, 40.0),
-((SELECT TypeId FROM TestTypes WHERE Name = 'Blood Urea'), 'Female', 12, 120, 12.0, 35.0),
-((SELECT TypeId FROM TestTypes WHERE Name = 'Blood Urea'), 'Other', 0, 120, 12.0, 40.0);
+((SELECT TypeId FROM TestTypes WHERE Name = 'Urea (KFT)'), 'Male', 12, 120, 15.0, 40.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Urea (KFT)'), 'Female', 12, 120, 12.0, 35.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Urea (KFT)'), 'Other', 0, 120, 12.0, 40.0);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin, Total'), 'All', 0, 120, 0.1, 1.2);
+((SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin Total'), 'All', 0, 120, 0.1, 1.2);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'SGOT (AST)'), 'Male', 12, 120, 5.0, 40.0),
-((SELECT TypeId FROM TestTypes WHERE Name = 'SGOT (AST)'), 'Female', 12, 120, 5.0, 35.0),
-((SELECT TypeId FROM TestTypes WHERE Name = 'SGOT (AST)'), 'Other', 0, 120, 5.0, 40.0);
+((SELECT TypeId FROM TestTypes WHERE Name = 'AST (SGOT)'), 'Male', 12, 120, 5.0, 40.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'AST (SGOT)'), 'Female', 12, 120, 5.0, 35.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'AST (SGOT)'), 'Other', 0, 120, 5.0, 40.0);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'SGPT (ALT)'), 'Male', 12, 120, 5.0, 40.0),
-((SELECT TypeId FROM TestTypes WHERE Name = 'SGPT (ALT)'), 'Female', 12, 120, 5.0, 35.0),
-((SELECT TypeId FROM TestTypes WHERE Name = 'SGPT (ALT)'), 'Other', 0, 120, 5.0, 40.0);
+((SELECT TypeId FROM TestTypes WHERE Name = 'ALT (SGPT)'), 'Male', 12, 120, 5.0, 40.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'ALT (SGPT)'), 'Female', 12, 120, 5.0, 35.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'ALT (SGPT)'), 'Other', 0, 120, 5.0, 40.0);
 
 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
 ((SELECT TypeId FROM TestTypes WHERE Name = 'Cholesterol, Total'), 'Male', 20, 120, 0.0, 200.0),
@@ -348,8 +348,7 @@ INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, Range
 ((SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'), 'All', 20, 120, 0.4, 4.0),
 ((SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'), 'All', 0, 19, 0.7, 11.0);
 
-INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-((SELECT TypeId FROM TestTypes WHERE Name = 'HbA1c'), 'All', 0, 120, 0.0, 5.7);
+-- HbA1c TestType not in seed catalog; skipping orphaned ReferenceRange
 
 -- Seed TestPanels
 INSERT INTO TestPanels (Name, Description, Price) VALUES

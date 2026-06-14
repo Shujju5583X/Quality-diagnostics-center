@@ -82,8 +82,26 @@ namespace LabSystem.Data
         {
             if (!File.Exists(dbPath)) return;
 
-            // Check if database can be opened without a password (i.e. is unencrypted)
-            bool isUnencrypted = false;
+            // Step 1: Try opening WITH password — already encrypted, nothing to do
+            try
+            {
+                using (var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;Password={password};"))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT 1;";
+                        cmd.ExecuteScalar();
+                    }
+                }
+                return; // Already encrypted, all good
+            }
+            catch
+            {
+                // Not encrypted with our password (or corrupted) — continue
+            }
+
+            // Step 2: Try opening WITHOUT password — unencrypted, needs encryption
             try
             {
                 using (var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
@@ -95,15 +113,8 @@ namespace LabSystem.Data
                         cmd.ExecuteScalar();
                     }
                 }
-                isUnencrypted = true;
-            }
-            catch
-            {
-                isUnencrypted = false;
-            }
 
-            if (isUnencrypted)
-            {
+                // It's a valid unencrypted database — now encrypt it
                 try
                 {
                     using (var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
@@ -115,7 +126,21 @@ namespace LabSystem.Data
                 }
                 catch (Exception ex)
                 {
-                    Serilog.Log.Error(ex, "Failed to encrypt existing SQLite database.");
+                    Serilog.Log.Warning(ex, "Could not encrypt database this time; will retry next launch.");
+                }
+            }
+            catch
+            {
+                // File exists but can't be opened at all — it's corrupted.
+                // Delete it so DatabaseInitializer will recreate it fresh.
+                try
+                {
+                    File.Delete(dbPath);
+                    Serilog.Log.Warning("Deleted corrupted lab.db — will be recreated on next launch.");
+                }
+                catch (Exception ex)
+                {
+                    Serilog.Log.Error(ex, "Failed to delete corrupted lab.db.");
                 }
             }
         }
