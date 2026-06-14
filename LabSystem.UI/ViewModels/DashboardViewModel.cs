@@ -155,6 +155,8 @@ namespace LabSystem.UI.ViewModels
 
         public UnifiedQueueViewModel UnifiedQueueVM { get; }
         public QcViewModel QcVM { get; }
+        public AppointmentsViewModel AppointmentsVM { get; }
+        public StaffManagementViewModel StaffManagementVM { get; }
 
         public int TotalPatients
         {
@@ -239,7 +241,9 @@ namespace LabSystem.UI.ViewModels
             BillingTabViewModel billingTabVM,
             IBackupService backupService,
             UnifiedQueueViewModel unifiedQueueVM,
-            QcViewModel qcVM)
+            QcViewModel qcVM,
+            AppointmentsViewModel appointmentsVM,
+            StaffManagementViewModel staffManagementVM)
         {
             _patientRepo = patientsTabVM.PatientRepo;
             _orderRepo = ordersTabVM.OrderRepo;
@@ -256,6 +260,8 @@ namespace LabSystem.UI.ViewModels
             _backupService = backupService;
             UnifiedQueueVM = unifiedQueueVM;
             QcVM = qcVM;
+            AppointmentsVM = appointmentsVM;
+            StaffManagementVM = staffManagementVM;
 
             AddPatientCommand = new AsyncRelayCommand(async o => await ExecuteAddPatientAsync(o));
             CreateOrderCommand = new AsyncRelayCommand(async o => await ExecuteCreateOrderAsync(o));

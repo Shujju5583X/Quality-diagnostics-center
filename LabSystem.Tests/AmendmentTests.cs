@@ -40,6 +40,7 @@ namespace LabSystem.Tests
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN AmendedAt DATETIME;"); } catch { }
 
             // Add PinHash column if not present (added in Phase 1)
+            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN Role TEXT;"); } catch { }
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN PinHash TEXT;"); } catch { }
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN FailedLoginAttempts INTEGER NOT NULL DEFAULT 0;"); } catch { }
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN LockoutEnd DATETIME;"); } catch { }

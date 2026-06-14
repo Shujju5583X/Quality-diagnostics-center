@@ -33,6 +33,8 @@ namespace LabSystem.Data
         public DbSet<TestPanel> TestPanels { get; set; }
         public DbSet<QcRun> QcRuns { get; set; }
         public DbSet<QcLot> QcLots { get; set; }
+        public DbSet<SmsLog> SmsLogs { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
 
         public IQueryable<UnifiedQueueItem> GetUnifiedQueue()
         {
@@ -156,6 +158,26 @@ namespace LabSystem.Data
                 .HasRequired(q => q.TestType)
                 .WithMany()
                 .HasForeignKey(q => q.TestTypeId);
+
+            modelBuilder.Entity<SmsLog>().ToTable("SmsLogs");
+            modelBuilder.Entity<SmsLog>().HasKey(s => s.SmsLogId);
+            modelBuilder.Entity<SmsLog>()
+                .HasOptional(s => s.Patient)
+                .WithMany()
+                .HasForeignKey(s => s.PatientId);
+
+            modelBuilder.Entity<Appointment>().ToTable("Appointments");
+            modelBuilder.Entity<Appointment>().HasKey(a => a.AppointmentId);
+            modelBuilder.Entity<Appointment>()
+                .HasRequired(a => a.Patient)
+                .WithMany()
+                .HasForeignKey(a => a.PatientId);
+
+            modelBuilder.Entity<Appointment>()
+                .Property(a => a.AppointmentDate)
+                .HasColumnAnnotation(
+                    IndexAnnotation.AnnotationName,
+                    new IndexAnnotation(new IndexAttribute("IX_Appointments_AppointmentDate")));
 
             // Index configurations
             modelBuilder.Entity<TestOrder>()

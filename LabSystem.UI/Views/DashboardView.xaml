@@ -122,6 +122,14 @@
                         </Grid>
                     </ListBoxItem>
 
+                    <!-- Tab 4: Appointments -->
+                    <ListBoxItem>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="Calendar" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Grid.Column="1" Text="Appointments" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                        </Grid>
+                    </ListBoxItem>
+
                     <ListBoxItem>
                         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
@@ -133,6 +141,13 @@
                         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="Database" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Test Catalog" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                        </Grid>
+                    </ListBoxItem>
+
+                    <ListBoxItem>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="TestTube" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Grid.Column="1" Text="QC" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
@@ -632,7 +647,11 @@
                     </materialDesign:Card>
                 </Grid>
             </TabItem>
-            <!-- ─── TAB 4: BILLING ─── -->
+            <!-- ─── TAB 4: APPOINTMENTS ─── -->
+            <TabItem>
+                <views:AppointmentsView DataContext="{Binding AppointmentsVM}"/>
+            </TabItem>
+            <!-- ─── TAB 5: BILLING ─── -->
             <TabItem>
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
@@ -769,7 +788,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- ─── TAB 5: TEST CATALOG ─── -->
+            <!-- ─── TAB 6: TEST CATALOG ─── -->
             <TabItem>
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
@@ -892,12 +911,12 @@
                 </Grid>
             </TabItem>
 
-            <!-- ─── TAB 6: QC (QUALITY CONTROL) ─── -->
+            <!-- ─── TAB 7: QC (QUALITY CONTROL) ─── -->
             <TabItem>
                 <views:QcView DataContext="{Binding QcVM}"/>
             </TabItem>
 
-            <!-- ─── TAB 7: SETTINGS / BACKUP ─── -->
+            <!-- ─── TAB 8: SETTINGS / BACKUP ─── -->
             <TabItem>
                 <Grid Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="600">
                     <StackPanel>
@@ -937,6 +956,67 @@
                                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Pending Orders:" Foreground="Gray" Margin="0 0 16 0" FontWeight="SemiBold"/>
                                     <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PendingOrders}"/>
                                 </Grid>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <materialDesign:Card Padding="24" UniformCornerRadius="8" Margin="0 16 0 0" materialDesign:ShadowAssist.ShadowDepth="Depth2" DataContext="{Binding StaffManagementVM}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Staff Management" Margin="0 0 0 12"/>
+                                <DataGrid ItemsSource="{Binding StaffMembers}" AutoGenerateColumns="False" IsReadOnly="True" 
+                                          SelectionMode="Single" SelectedItem="{Binding SelectedStaff}" MaxHeight="200"
+                                          materialDesign:DataGridAssist.CellPadding="4 2" BorderThickness="0" RowHeaderWidth="0" Margin="0 0 0 12">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="120"/>
+                                        <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="80"/>
+                                        <DataGridTextColumn Header="Created" Binding="{Binding CreatedAt, StringFormat={}{0:dd-MMM-yyyy}}" Width="90"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock Text="{Binding StatusMessage}" Foreground="Gray" FontStyle="Italic" Margin="0 0 0 8" TextWrapping="Wrap"/>
+
+                                <Border Background="#F5F5F5" Padding="12" CornerRadius="4" Margin="0 0 0 8">
+                                    <StackPanel>
+                                        <TextBlock Text="Add New Staff" FontWeight="SemiBold" Margin="0 0 0 8"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{Binding NewStaffName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Full Name" Margin="0 0 8 0"/>
+                                            <ComboBox Grid.Column="1" SelectedValue="{Binding NewStaffRole}" Margin="0 0 8 0">
+                                                <ComboBoxItem Content="Admin"/>
+                                                <ComboBoxItem Content="Technician" IsSelected="True"/>
+                                                <ComboBoxItem Content="Receptionist"/>
+                                            </ComboBox>
+                                            <TextBox Grid.Column="2" x:Name="StaffPinBox" materialDesign:HintAssist.Hint="PIN (4+ digits)" Margin="0 0 8 0"/>
+                                            <Button Grid.Column="3" Command="{Binding AddStaffCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="36">
+                                                <TextBlock Text="ADD" FontWeight="Bold"/>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="#F5F5F5" Padding="12" CornerRadius="4" Visibility="{Binding IsStaffSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SelectedStaff.FullName, StringFormat=Selected: {0}}" FontWeight="SemiBold" Margin="0 0 0 8"/>
+                                        <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{Binding PendingResetPin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="New PIN (4+ digits)" Margin="0 0 8 0"/>
+                                            <Button Grid.Column="1" Command="{Binding ResetPinCommand}" Style="{StaticResource MaterialDesignFlatButton}" Height="36" Margin="0 0 8 0">
+                                                <TextBlock Text="RESET PIN" FontWeight="Bold"/>
+                                            </Button>
+                                            <Button Grid.Column="2" Command="{Binding ToggleLockoutCommand}" CommandParameter="{Binding SelectedStaff}" Style="{StaticResource MaterialDesignFlatButton}" Height="36">
+                                                <TextBlock Text="{Binding SelectedStaff.LockoutEnd, StringFormat=Lock/Unlock}" FontWeight="Bold"/>
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </materialDesign:Card>
 

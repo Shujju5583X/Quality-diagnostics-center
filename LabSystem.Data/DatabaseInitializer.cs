@@ -268,6 +268,40 @@ namespace LabSystem.Data
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcRuns_RunDate ON QcRuns (RunDate);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcLots_TestTypeId ON QcLots (TestTypeId);");
 
+                // SmsLog table
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS SmsLogs (
+                        SmsLogId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        PatientId INTEGER,
+                        PhoneNumber TEXT NOT NULL,
+                        Message TEXT NOT NULL,
+                        Status TEXT NOT NULL DEFAULT 'Pending',
+                        GatewayResponse TEXT,
+                        SentAt DATETIME NOT NULL,
+                        FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_SmsLogs_PatientId ON SmsLogs (PatientId);");
+
+                // Appointments table
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS Appointments (
+                        AppointmentId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        PatientId INTEGER NOT NULL,
+                        AppointmentDate DATETIME NOT NULL,
+                        DurationMinutes INTEGER NOT NULL DEFAULT 15,
+                        Purpose TEXT,
+                        Status TEXT NOT NULL DEFAULT 'Scheduled',
+                        Notes TEXT,
+                        CreatedAt DATETIME,
+                        UpdatedAt DATETIME,
+                        FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
+                    );
+                ");
+
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Appointments_AppointmentDate ON Appointments (AppointmentDate);");
+
                 try
                 {
                     db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN IsAmended INTEGER NOT NULL DEFAULT 0;");

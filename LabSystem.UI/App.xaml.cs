@@ -78,6 +78,7 @@ namespace LabSystem.UI
             Container.Register<IPaymentRepository, PaymentRepository>(Lifestyle.Transient);
             Container.Register<IReportRepository, ReportRepository>(Lifestyle.Transient);
             Container.Register<IQcRepository, QcRepository>(Lifestyle.Transient);
+            Container.Register<IAppointmentRepository, AppointmentRepository>(Lifestyle.Transient);
             
             // Fallback for any other IRepository<T>
             Container.RegisterConditional(typeof(IRepository<>), typeof(Repository<>), Lifestyle.Transient, c => !c.Handled);
@@ -93,7 +94,10 @@ namespace LabSystem.UI
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
             Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
             Container.Register<IWorkflowService, WorkflowService>(Lifestyle.Transient);
+            Container.Register<IStaffService, StaffService>(Lifestyle.Transient);
             Container.Register<QcService>(Lifestyle.Transient);
+            Container.Register<IAppointmentService, AppointmentService>(Lifestyle.Transient);
+            Container.Register<ISmsService>(() => new SmsService("", "", Container.GetInstance<IRepository<SmsLog>>()), Lifestyle.Singleton);
 
             // Register ViewModels
             Container.Register<ViewModels.MainViewModel>();
@@ -105,6 +109,8 @@ namespace LabSystem.UI
             Container.Register<ViewModels.LabTabViewModel>();
             Container.Register<ViewModels.BillingTabViewModel>();
             Container.Register<ViewModels.QcViewModel>();
+            Container.Register<ViewModels.AppointmentsViewModel>();
+            Container.Register<ViewModels.StaffManagementViewModel>();
 
             // Hold a backup service reference for auto-backup on exit
             _backupServiceForExit = Container.GetInstance<IBackupService>();
