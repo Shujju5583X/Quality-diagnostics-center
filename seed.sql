@@ -294,10 +294,71 @@ INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, Range
 ((SELECT TypeId FROM TestTypes WHERE Name = 'Glucose, Fasting (Plasma)'), 'Female', 0, 120, 70.0, 100.0),
 ((SELECT TypeId FROM TestTypes WHERE Name = 'Glucose, Fasting (Plasma)'), 'Other', 0, 120, 70.0, 100.0);
 
+-- Additional ReferenceRanges for common tests
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Haematocrit (Hct)'), 'Male', 12, 120, 40.0, 54.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Haematocrit (Hct)'), 'Female', 12, 120, 36.0, 46.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Haematocrit (Hct)'), 'Other', 0, 120, 36.0, 54.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'RBC Count'), 'Male', 12, 120, 4.5, 5.5),
+((SELECT TypeId FROM TestTypes WHERE Name = 'RBC Count'), 'Female', 12, 120, 3.8, 4.8),
+((SELECT TypeId FROM TestTypes WHERE Name = 'RBC Count'), 'Other', 0, 120, 3.8, 5.5);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'WBC Count'), 'All', 0, 120, 4000.0, 11000.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Platelet Count'), 'All', 0, 120, 150000.0, 400000.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (Serum)'), 'Male', 12, 120, 0.7, 1.3),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (Serum)'), 'Female', 12, 120, 0.6, 1.1),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (Serum)'), 'Other', 0, 120, 0.6, 1.3);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Blood Urea'), 'Male', 12, 120, 15.0, 40.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Blood Urea'), 'Female', 12, 120, 12.0, 35.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Blood Urea'), 'Other', 0, 120, 12.0, 40.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin, Total'), 'All', 0, 120, 0.1, 1.2);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'SGOT (AST)'), 'Male', 12, 120, 5.0, 40.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'SGOT (AST)'), 'Female', 12, 120, 5.0, 35.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'SGOT (AST)'), 'Other', 0, 120, 5.0, 40.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'SGPT (ALT)'), 'Male', 12, 120, 5.0, 40.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'SGPT (ALT)'), 'Female', 12, 120, 5.0, 35.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'SGPT (ALT)'), 'Other', 0, 120, 5.0, 40.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Cholesterol, Total'), 'Male', 20, 120, 0.0, 200.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Cholesterol, Total'), 'Female', 20, 120, 0.0, 200.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Cholesterol, Total'), 'Other', 0, 120, 0.0, 200.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'Triglycerides'), 'Male', 20, 120, 0.0, 150.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Triglycerides'), 'Female', 20, 120, 0.0, 150.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'Triglycerides'), 'Other', 0, 120, 0.0, 150.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'), 'All', 20, 120, 0.4, 4.0),
+((SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'), 'All', 0, 19, 0.7, 11.0);
+
+INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
+((SELECT TypeId FROM TestTypes WHERE Name = 'HbA1c'), 'All', 0, 120, 0.0, 5.7);
+
 -- Seed TestPanels
 INSERT INTO TestPanels (Name, Description, Price) VALUES
 ('Lipid Profile Panel', 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, VLDL, and non-HDL cholesterol.', 1200.00),
-('Thyroid Profile Panel', 'Thyroid Function Test including T3, T4, and TSH screening.', 900.00);
+('Thyroid Profile Panel', 'Thyroid Function Test including T3, T4, and TSH screening.', 900.00),
+('CBC Panel', 'Complete Blood Count including Haemoglobin, Haematocrit, RBC, WBC, Platelet, and differential counts.', 800.00),
+('KFT Panel', 'Kidney Function Test including Blood Urea, Creatinine, Uric Acid, and BUN.', 600.00),
+('LFT Panel', 'Liver Function Test including SGOT, SGPT, ALP, Bilirubin, Protein, Albumin, and Globulin.', 700.00),
+('Electrolyte Panel', 'Serum Electrolytes including Sodium, Potassium, Chloride, and Bicarbonate.', 400.00);
 
 -- Seed PanelTestTypes
 INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
@@ -312,6 +373,44 @@ INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
 ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triiodothyronine (T3)')),
 ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Thyroxine (T4)')),
 ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'));
+
+INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Packed Cell Volume (PCV)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Total RBC count')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Total WBC count')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Platelet Count')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Mean Corpuscular Volume (MCV)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Mean Corpuscular Hb (MCH)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Mean Corpuscular Hb Concn. (MCHC)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'RDW')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Neutrophils')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Lymphocytes')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Eosinophils')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Monocytes')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Basophils'));
+
+INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
+((SELECT PanelId FROM TestPanels WHERE Name = 'KFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Urea (KFT)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'KFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (KFT)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'KFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Uric Acid (KFT)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'KFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Calcium, Total (KFT)'));
+
+INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
+((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'AST (SGOT)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'ALT (SGPT)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Alkaline Phosphatase (LFT)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin Total')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin Direct')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin Indirect')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Total Protein (LFT)')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Albumin (LFT)'));
+
+INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
+((SELECT PanelId FROM TestPanels WHERE Name = 'Electrolyte Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Sodium')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Electrolyte Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Potassium')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Electrolyte Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Chloride')),
+((SELECT PanelId FROM TestPanels WHERE Name = 'Electrolyte Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Bicarbonate'));
 
 -- Set InputTypes for non-numeric TestTypes
 UPDATE TestTypes SET InputType = 1 WHERE Name IN ('Urine Sugar', 'Urine Protein');

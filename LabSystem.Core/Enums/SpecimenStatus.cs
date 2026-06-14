@@ -4,7 +4,9 @@ namespace LabSystem.Core.Enums
     {
         Pending,
         Collected,
-        Processed,
+        Received,
+        Processing,
+        Completed,
         Rejected
     }
 }

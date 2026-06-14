@@ -10,6 +10,7 @@ namespace LabSystem.Core.Models
         public int TypeId { get; set; }
         public virtual TestType TestType { get; set; }
         public double? Value { get; set; }
+        public string ValueText { get; set; }
         public DateTime RecordedAt { get; set; }
         public int TechnicianId { get; set; }
         public virtual Staff Technician { get; set; }

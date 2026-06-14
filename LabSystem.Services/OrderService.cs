@@ -14,18 +14,21 @@ namespace LabSystem.Services
         private readonly ITestOrderRepository _orderRepo;
         private readonly ITestTypeRepository _testTypeRepo;
         private readonly IRepository<Specimen> _specimenRepo;
+        private readonly IStaffRepository _staffRepo;
 
         public OrderService(
             ITestOrderRepository orderRepo, 
             ITestTypeRepository testTypeRepo,
-            IRepository<Specimen> specimenRepo)
+            IRepository<Specimen> specimenRepo,
+            IStaffRepository staffRepo)
         {
             _orderRepo = orderRepo;
             _testTypeRepo = testTypeRepo;
             _specimenRepo = specimenRepo;
+            _staffRepo = staffRepo;
         }
 
-        public async Task CreateOrderAsync(TestOrder order, List<int> testTypeIds, CancellationToken cancellationToken = default)
+        public async Task CreateOrderAsync(TestOrder order, List<int> testTypeIds, int operatorStaffId = 1, CancellationToken cancellationToken = default)
         {
             order.OrderedAt = DateTime.UtcNow;
             order.CreatedAt = DateTime.UtcNow;
@@ -42,6 +45,15 @@ namespace LabSystem.Services
                 }
             }
 
+            // Resolve operator name for CollectedBy
+            string collectedBy = "System";
+            try
+            {
+                var staff = await _staffRepo.GetByIdAsync(operatorStaffId, cancellationToken);
+                if (staff != null) collectedBy = staff.FullName;
+            }
+            catch { /* fallback to "System" */ }
+
             int index = 1;
             int currentYear = DateTime.UtcNow.Year;
             foreach (var sampleType in sampleTypes)
@@ -53,7 +65,7 @@ namespace LabSystem.Services
                     Barcode = barcode,
                     SampleType = sampleType,
                     CollectionTime = DateTime.UtcNow,
-                    CollectedBy = "System",
+                    CollectedBy = collectedBy,
                     StatusEnum = SpecimenStatus.Collected
                 };
                 await _specimenRepo.AddAsync(specimen, cancellationToken);

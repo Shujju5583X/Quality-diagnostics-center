@@ -189,7 +189,7 @@ namespace LabSystem.Services
                 referredBy = order.ReferredBy;
             }
             var refText = referredBy.StartsWith("Dr.", StringComparison.OrdinalIgnoreCase) ? referredBy : "Dr. " + referredBy;
-            refText += " ,";
+            refText += ",";
 
             var pr3 = patientTable.AddRow();
             pr3.Height = "0.5cm";
@@ -387,7 +387,9 @@ namespace LabSystem.Services
                             colonPara.Format.Font.Bold = true;
                         }
 
-                        string displayVal = FormatResultValue(r.Value, r.TestType);
+                        string displayVal = !string.IsNullOrEmpty(r.ValueText) 
+                            ? r.ValueText 
+                            : FormatResultValue(r.Value, r.TestType);
                         string unitStr = r.TestType.Unit ?? "";
                         string valTextStr = string.IsNullOrEmpty(unitStr) ? displayVal : $"{displayVal} {unitStr}";
 

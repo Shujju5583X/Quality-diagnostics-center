@@ -53,7 +53,7 @@ namespace LabSystem.UI.ViewModels
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                await _orderService.CreateOrderAsync(order, testIds);
+                await _orderService.CreateOrderAsync(order, testIds, App.AuthenticatedStaffId);
                 Log.Information("Created test order ID {OrderId} for Patient ID {PatientId}", order.OrderId, SelectedPatient.PatientId);
 
                 // Generate Invoice automatically

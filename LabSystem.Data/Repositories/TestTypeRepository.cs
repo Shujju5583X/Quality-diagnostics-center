@@ -29,6 +29,7 @@ namespace LabSystem.Data.Repositories
         public async Task<IEnumerable<TestType>> GetActiveAsync(CancellationToken cancellationToken = default)
         {
             return await _dbSet.AsNoTracking()
+                         .Include(t => t.ReferenceRanges)
                          .Where(t => t.IsActive)
                          .ToListAsync(cancellationToken);
         }
@@ -39,6 +40,7 @@ namespace LabSystem.Data.Repositories
                 return await GetAllAsync(cancellationToken);
 
             return await _dbSet.AsNoTracking()
+                         .Include(t => t.ReferenceRanges)
                          .Where(t => t.Category == category)
                          .ToListAsync(cancellationToken);
         }
@@ -49,6 +51,7 @@ namespace LabSystem.Data.Repositories
                 return await GetAllAsync(cancellationToken);
 
             return await _dbSet.AsNoTracking()
+                         .Include(t => t.ReferenceRanges)
                          .Where(t => t.GroupName == groupName)
                          .OrderBy(t => t.SortOrder)
                          .ThenBy(t => t.Name)

@@ -132,7 +132,7 @@ namespace LabSystem.Tests
         {
             // Act & Assert
             Assert.ThrowsAsync<ArgumentException>(async () => 
-                await _service.AmendResultAsync(1, 15.0, "", 1));
+                await _service.AmendResultAsync(1, 15.0, "15", "", 1));
         }
 
         [Test]
@@ -147,7 +147,7 @@ namespace LabSystem.Tests
             _mockResultRepo.Setup(r => r.UpdateAsync(result, It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             // Act
-            await _service.AmendResultAsync(1, 17.5, "Correction", 1);
+            await _service.AmendResultAsync(1, 17.5, "17.5", "Correction", 1);
 
             // Assert
             Assert.AreEqual(17.5, result.Value);
@@ -171,7 +171,7 @@ namespace LabSystem.Tests
             _mockResultRepo.Setup(r => r.UpdateAsync(result, It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
 
             // Act
-            await _service.AmendResultAsync(1, 25.0, "Input correction", 1);
+            await _service.AmendResultAsync(1, 25.0, "25", "Input correction", 1);
 
             // Assert
             Assert.IsTrue(result.IsAbnormal);

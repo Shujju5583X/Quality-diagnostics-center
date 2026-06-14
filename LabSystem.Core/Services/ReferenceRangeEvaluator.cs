@@ -8,7 +8,7 @@ namespace LabSystem.Core.Services
     {
         public static int CalculateAge(DateTime? dob, DateTime relativeTo)
         {
-            if (!dob.HasValue) return 30; // default age
+            if (!dob.HasValue) return 30;
             var birthDate = dob.Value;
             int age = relativeTo.Year - birthDate.Year;
             if (relativeTo.Month < birthDate.Month || (relativeTo.Month == birthDate.Month && relativeTo.Day < birthDate.Day))
@@ -20,17 +20,28 @@ namespace LabSystem.Core.Services
 
         public static ReferenceRange FindMatchingRange(TestType tt, Patient patient)
         {
-            if (tt == null || tt.ReferenceRanges == null || tt.ReferenceRanges.Count == 0 || patient == null || patient.DateOfBirth == null)
-            {
+            if (tt == null || tt.ReferenceRanges == null || tt.ReferenceRanges.Count == 0 || patient == null)
                 return null;
-            }
 
-            int age = CalculateAge(patient.DateOfBirth, DateTime.UtcNow);
+            int? age = patient.DateOfBirth.HasValue
+                ? CalculateAge(patient.DateOfBirth, DateTime.UtcNow)
+                : (int?)null;
+
             string gender = patient.Gender ?? "All";
 
+            // Try age-specific match first
+            if (age.HasValue)
+            {
+                var match = tt.ReferenceRanges.FirstOrDefault(r =>
+                    (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
+                    && age.Value >= r.AgeMin && age.Value <= r.AgeMax);
+                if (match != null) return match;
+            }
+
+            // Fallback: widest range for this gender (AgeMin=0, AgeMax >= 120)
             return tt.ReferenceRanges.FirstOrDefault(r =>
                 (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
-                && age >= r.AgeMin && age <= r.AgeMax);
+                && r.AgeMin == 0 && r.AgeMax >= 120);
         }
 
         public static bool IsAbnormal(double? value, TestType tt, Patient patient)

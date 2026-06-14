@@ -15,6 +15,7 @@ namespace LabSystem.Tests
         private Mock<ITestOrderRepository> _mockOrderRepo;
         private Mock<ITestTypeRepository> _mockTestTypeRepo;
         private Mock<IRepository<Specimen>> _mockSpecimenRepo;
+        private Mock<IStaffRepository> _mockStaffRepo;
         private OrderService _service;
 
         [SetUp]
@@ -23,10 +24,12 @@ namespace LabSystem.Tests
             _mockOrderRepo = new Mock<ITestOrderRepository>();
             _mockTestTypeRepo = new Mock<ITestTypeRepository>();
             _mockSpecimenRepo = new Mock<IRepository<Specimen>>();
+            _mockStaffRepo = new Mock<IStaffRepository>();
             _service = new OrderService(
                 _mockOrderRepo.Object, 
                 _mockTestTypeRepo.Object, 
-                _mockSpecimenRepo.Object);
+                _mockSpecimenRepo.Object,
+                _mockStaffRepo.Object);
         }
 
         [Test]

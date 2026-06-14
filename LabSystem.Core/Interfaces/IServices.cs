@@ -18,13 +18,13 @@ namespace LabSystem.Core.Interfaces
 
     public interface IOrderService
     {
-        Task CreateOrderAsync(TestOrder order, List<int> testTypeIds, CancellationToken cancellationToken = default);
+        Task CreateOrderAsync(TestOrder order, List<int> testTypeIds, int operatorStaffId = 1, CancellationToken cancellationToken = default);
         Task UpdateOrderStatusAsync(int orderId, string status, CancellationToken cancellationToken = default);
     }
 
     public interface IResultService
     {
         Task AddResultAsync(Result result, CancellationToken cancellationToken = default);
-        Task AmendResultAsync(int resultId, double newValue, string reason, int technicianId, CancellationToken cancellationToken = default);
+        Task AmendResultAsync(int resultId, double? newValue, string valueText, string reason, int technicianId, CancellationToken cancellationToken = default);
     }
 }

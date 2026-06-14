@@ -81,6 +81,7 @@ namespace LabSystem.UI.ViewModels
                     OrderId = SelectedItem.OrderId,
                     TypeId = r.TypeId,
                     Value = double.TryParse(r.ValueText, out var v) ? v : (double?)null,
+                    ValueText = r.ValueText,
                     RecordedAt = DateTime.UtcNow
                 }).ToList();
 

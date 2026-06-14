@@ -67,7 +67,7 @@ namespace LabSystem.Services
             }
         }
 
-        public async Task AmendResultAsync(int resultId, double newValue, string reason, int technicianId, CancellationToken cancellationToken = default)
+        public async Task AmendResultAsync(int resultId, double? newValue, string valueText, string reason, int technicianId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(reason))
                 throw new ArgumentException("An amendment reason is required to modify a finalized result.");
@@ -80,6 +80,7 @@ namespace LabSystem.Services
 
             double? oldValue = result.Value;
             result.Value = newValue;
+            result.ValueText = valueText;
             result.IsAmended = true;
             result.AmendmentReason = reason;
             result.AmendedAt = DateTime.UtcNow;

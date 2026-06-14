@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS Results (
     OrderId INTEGER NOT NULL,
     TypeId INTEGER NOT NULL,
     Value REAL,
+    ValueText TEXT,
     RecordedAt DATETIME NOT NULL,
     TechnicianId INTEGER NOT NULL,
     IsAbnormal INTEGER NOT NULL,

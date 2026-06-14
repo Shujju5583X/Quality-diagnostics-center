@@ -192,7 +192,7 @@ namespace LabSystem.Services
                     wsResults.Cell(resRow, 2).Value = r.OrderId;
                     wsResults.Cell(resRow, 3).Value = patientName;
                     wsResults.Cell(resRow, 4).Value = testName;
-                    wsResults.Cell(resRow, 5).Value = (object)r.Value ?? "Rejected";
+                    wsResults.Cell(resRow, 5).Value = !string.IsNullOrEmpty(r.ValueText) ? r.ValueText : ((object)r.Value ?? "Rejected");
                     wsResults.Cell(resRow, 6).Value = normalRange;
                     wsResults.Cell(resRow, 7).Value = unit;
                     wsResults.Cell(resRow, 8).Value = r.IsAbnormal ? "ABNORMAL" : "Normal";
