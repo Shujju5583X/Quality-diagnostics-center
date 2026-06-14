@@ -97,17 +97,16 @@ namespace LabSystem.Services
             return await _invoiceRepo.GetAllWithDetailsAsync();
         }
 
-        public async Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discount, decimal tax)
+        public async Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discountPercent, decimal taxPercent)
         {
             var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
             if (invoice != null)
             {
-                invoice.DiscountAmount = discount;
-                invoice.TaxAmount = tax;
-                decimal grandTotal = invoice.TotalAmount - invoice.DiscountAmount + invoice.TaxAmount;
+                invoice.DiscountPercent = discountPercent;
+                invoice.TaxPercent = taxPercent;
                 var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
                 decimal paidAmount = payments.Sum(p => p.Amount);
-                invoice.IsPaid = paidAmount >= grandTotal;
+                invoice.IsPaid = paidAmount >= invoice.GrandTotal;
                 if (invoice.IsPaid && !invoice.PaidAt.HasValue) invoice.PaidAt = DateTime.UtcNow;
                 await _invoiceRepo.UpdateAsync(invoice);
             }
@@ -127,12 +126,11 @@ namespace LabSystem.Services
                 };
                 await _paymentRepo.AddAsync(payment);
                 
-                // Recalculate IsPaid
+                // Recalculate IsPaid using computed GrandTotal
                 var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
-                decimal grandTotal = invoice.TotalAmount - invoice.DiscountAmount + invoice.TaxAmount;
                 decimal paidAmount = payments.Sum(p => p.Amount);
                 
-                invoice.IsPaid = paidAmount >= grandTotal;
+                invoice.IsPaid = paidAmount >= invoice.GrandTotal;
                 if (invoice.IsPaid && !invoice.PaidAt.HasValue)
                 {
                     invoice.PaidAt = DateTime.UtcNow;
@@ -141,6 +139,24 @@ namespace LabSystem.Services
                 
                 await _invoiceRepo.UpdateAsync(invoice);
             }
+        }
+
+        public async Task<RevenueReportStats> GetRevenueReportAsync(DateTime start, DateTime end)
+        {
+            var invoices = await _invoiceRepo.GetAllWithDetailsAsync();
+            var filtered = invoices.Where(i => i.CreatedAt >= start && i.CreatedAt < end.AddDays(1));
+
+            var stats = new RevenueReportStats
+            {
+                TotalRevenue = filtered.Sum(i => i.GrandTotal),
+                TotalCollected = filtered.Where(i => i.IsPaid).Sum(i => i.GrandTotal),
+                OutstandingAmount = filtered.Where(i => !i.IsPaid).Sum(i => i.GrandTotal),
+                CashCollected = filtered.Where(i => i.IsPaid && i.PaymentMethod == "Cash")
+                    .Sum(i => i.GrandTotal),
+                UpiCollected = filtered.Where(i => i.IsPaid && i.PaymentMethod == "UPI")
+                    .Sum(i => i.GrandTotal)
+            };
+            return stats;
         }
     }
 }

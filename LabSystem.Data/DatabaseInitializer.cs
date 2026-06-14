@@ -132,6 +132,8 @@ namespace LabSystem.Data
                 new { Table = "TestTypes",   Column = "InputType",            Type = "INTEGER DEFAULT 0" },
                 new { Table = "Invoices",    Column = "DiscountAmount",        Type = "REAL DEFAULT 0" },
                 new { Table = "Invoices",    Column = "TaxAmount",             Type = "REAL DEFAULT 0" },
+                new { Table = "Invoices",    Column = "DiscountPercent",       Type = "REAL DEFAULT 0" },
+                new { Table = "Invoices",    Column = "TaxPercent",            Type = "REAL DEFAULT 0" },
                 // Audit timestamp columns for simplified single-person workflow
                 new { Table = "TestOrders",  Column = "CreatedAt",            Type = "DATETIME" },
                 new { Table = "TestOrders",  Column = "UpdatedAt",            Type = "DATETIME" },

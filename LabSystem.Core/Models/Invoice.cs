@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LabSystem.Core.Models
 {
@@ -10,8 +11,20 @@ namespace LabSystem.Core.Models
         public virtual TestOrder Order { get; set; }
 
         public decimal TotalAmount { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public decimal TaxAmount { get; set; }
+
+        // Percent-based discount and tax (stored in DB)
+        public decimal DiscountPercent { get; set; } = 0;
+        public decimal TaxPercent { get; set; } = 0;
+
+        // Computed properties (not mapped to DB)
+        [NotMapped]
+        public decimal DiscountAmount => TotalAmount * DiscountPercent / 100m;
+
+        [NotMapped]
+        public decimal TaxAmount => (TotalAmount - DiscountAmount) * TaxPercent / 100m;
+
+        [NotMapped]
+        public decimal GrandTotal => TotalAmount - DiscountAmount + TaxAmount;
 
         public bool IsPaid { get; set; }
         public DateTime? PaidAt { get; set; }

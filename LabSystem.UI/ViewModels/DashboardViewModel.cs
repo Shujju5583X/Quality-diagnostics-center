@@ -67,6 +67,16 @@ namespace LabSystem.UI.ViewModels
         private int _completedOrders;
         private int _abnormalResultsFlagged;
 
+        // Billing fields - Discount/Tax percent
+        private decimal _discountPercent;
+        private decimal _taxPercent;
+        private decimal _paymentAmount;
+
+        // Revenue report fields
+        private RevenueReportStats _revenueStats;
+        private DateTime _reportStartDate = DateTime.Today.AddDays(-30);
+        private DateTime _reportEndDate = DateTime.Today;
+
         // Catalog Management fields
         private TestType _selectedCatalogTest;
         private string _catalogTestName;
@@ -113,7 +123,18 @@ namespace LabSystem.UI.ViewModels
         public Invoice SelectedInvoice
         {
             get => _selectedInvoice;
-            set { _selectedInvoice = value; OnPropertyChanged(); }
+            set
+            {
+                _selectedInvoice = value;
+                OnPropertyChanged();
+                // Update PaymentAmount to grand total when invoice changes
+                if (_selectedInvoice != null)
+                {
+                    PaymentAmount = _selectedInvoice.GrandTotal;
+                    DiscountPercent = _selectedInvoice.DiscountPercent;
+                    TaxPercent = _selectedInvoice.TaxPercent;
+                }
+            }
         }
 
         public UnifiedQueueViewModel UnifiedQueueVM { get; }
@@ -142,6 +163,44 @@ namespace LabSystem.UI.ViewModels
             set { _abnormalResultsFlagged = value; OnPropertyChanged(); }
         }
 
+        // Billing properties - Discount/Tax percent
+        public decimal DiscountPercent
+        {
+            get => _discountPercent;
+            set { _discountPercent = value; OnPropertyChanged(); }
+        }
+
+        public decimal TaxPercent
+        {
+            get => _taxPercent;
+            set { _taxPercent = value; OnPropertyChanged(); }
+        }
+
+        public decimal PaymentAmount
+        {
+            get => _paymentAmount;
+            set { _paymentAmount = value; OnPropertyChanged(); }
+        }
+
+        // Revenue report properties
+        public RevenueReportStats RevenueStats
+        {
+            get => _revenueStats;
+            set { _revenueStats = value; OnPropertyChanged(); }
+        }
+
+        public DateTime ReportStartDate
+        {
+            get => _reportStartDate;
+            set { _reportStartDate = value; OnPropertyChanged(); }
+        }
+
+        public DateTime ReportEndDate
+        {
+            get => _reportEndDate;
+            set { _reportEndDate = value; OnPropertyChanged(); }
+        }
+
         // Commands
         public ICommand AddPatientCommand { get; }
         public ICommand CreateOrderCommand { get; }
@@ -153,6 +212,8 @@ namespace LabSystem.UI.ViewModels
         public ICommand NextPatientPageCommand { get; }
         public ICommand AddPaymentCashCommand { get; }
         public ICommand AddPaymentUpiCommand { get; }
+        public ICommand ApplyDiscountTaxCommand { get; }
+        public ICommand GenerateRevenueReportCommand { get; }
 
         public DashboardViewModel(
             PatientsTabViewModel patientsTabVM,
@@ -185,6 +246,8 @@ namespace LabSystem.UI.ViewModels
             AddCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteAddCatalogTestAsync(o));
             AddPaymentCashCommand = new AsyncRelayCommand(async o => await ExecuteAddPaymentAsync("Cash"));
             AddPaymentUpiCommand = new AsyncRelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
+            ApplyDiscountTaxCommand = new AsyncRelayCommand(async o => await ExecuteApplyDiscountTaxAsync());
+            GenerateRevenueReportCommand = new AsyncRelayCommand(async o => await ExecuteGenerateRevenueReportAsync());
 
             PreviousPatientPageCommand = new AsyncRelayCommand(async o =>
             {
@@ -313,14 +376,62 @@ namespace LabSystem.UI.ViewModels
                     MessageBox.Show("Please select an unpaid invoice.", "No Invoice Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
-                await _billingService.AddPaymentAsync(SelectedInvoice.InvoiceId, SelectedInvoice.TotalAmount, paymentMethod);
-                MessageBox.Show($"Payment of ₹{SelectedInvoice.TotalAmount:N2} recorded via {paymentMethod}.", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                if (PaymentAmount <= 0)
+                {
+                    MessageBox.Show("Please enter a valid payment amount.", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (PaymentAmount > SelectedInvoice.GrandTotal)
+                {
+                    MessageBox.Show($"Amount exceeds grand total of ₹{SelectedInvoice.GrandTotal:N2}.", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                await _billingService.AddPaymentAsync(SelectedInvoice.InvoiceId, PaymentAmount, paymentMethod);
+                MessageBox.Show($"Payment of ₹{PaymentAmount:N2} recorded via {paymentMethod}.", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                PaymentAmount = 0;
                 await LoadInvoicesAsync();
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to process payment.");
                 MessageBox.Show($"Payment failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteApplyDiscountTaxAsync()
+        {
+            try
+            {
+                if (SelectedInvoice == null || SelectedInvoice.IsPaid)
+                {
+                    MessageBox.Show("Please select an unpaid invoice.", "No Invoice Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                await _billingService.UpdateInvoiceFinancialsAsync(SelectedInvoice.InvoiceId, DiscountPercent, TaxPercent);
+                MessageBox.Show("Discount/tax applied.", "Updated", MessageBoxButton.OK, MessageBoxImage.Information);
+                await LoadInvoicesAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to apply discount/tax.");
+                MessageBox.Show($"Failed to apply discount/tax: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteGenerateRevenueReportAsync()
+        {
+            try
+            {
+                RevenueStats = await _billingService.GetRevenueReportAsync(ReportStartDate, ReportEndDate);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to generate revenue report.");
+                MessageBox.Show($"Failed to generate revenue report: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

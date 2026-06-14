@@ -666,12 +666,37 @@
                                             <TextBlock Text="Total: ₹" Foreground="#5C6BC0" FontSize="12"/>
                                             <TextBlock Text="{Binding SelectedInvoice.TotalAmount, StringFormat='{}{0:N2}', TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12"/>
                                         </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
+                                            <TextBlock Text="Grand Total: ₹" Foreground="#00796B" FontSize="12" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.GrandTotal, StringFormat='{}{0:N2}', TargetNullValue='-'}" FontWeight="Bold" Foreground="#004D40" FontSize="12"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Grid>
                             </Border>
 
+                            <!-- Discount/Tax Section -->
+                            <Border Background="#F5F5F5" CornerRadius="8" Padding="12" Margin="0 0 0 16">
+                                <StackPanel>
+                                    <TextBlock Text="DISCOUNT &amp; TAX" FontSize="11" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 8"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Discount %:" VerticalAlignment="Center" Width="80" FontSize="12"/>
+                                        <TextBox Text="{Binding DiscountPercent, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0 0 16 0"
+                                                 Style="{StaticResource MaterialDesignTextBox}" materialDesign:HintAssist.Hint="%"/>
+                                        <TextBlock Text="Tax %:" VerticalAlignment="Center" Width="55" FontSize="12"/>
+                                        <TextBox Text="{Binding TaxPercent, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0 0 16 0"
+                                                 Style="{StaticResource MaterialDesignTextBox}" materialDesign:HintAssist.Hint="%"/>
+                                        <Button Command="{Binding ApplyDiscountTaxCommand}" Content="APPLY" Style="{StaticResource MaterialDesignOutlinedButton}" Height="32"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
                             <StackPanel Grid.Row="1">
-                                <TextBlock Text="PAYMENT ACTIONS" FontSize="12" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 16"/>
+                                <TextBlock Text="PAYMENT ACTIONS" FontSize="12" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 8"/>
+                                <StackPanel Orientation="Horizontal" Margin="0 0 0 12">
+                                    <TextBlock Text="Amount: ₹" VerticalAlignment="Center" FontWeight="Bold" FontSize="12"/>
+                                    <TextBox Text="{Binding PaymentAmount, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="8 0 0 0"
+                                             Style="{StaticResource MaterialDesignTextBox}" materialDesign:HintAssist.Hint="Enter amount"/>
+                                </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                     <Button Command="{Binding AddPaymentCashCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140" Margin="0 0 16 0">
                                         <StackPanel Orientation="Horizontal">
@@ -854,6 +879,59 @@
                                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TotalPatients}" Margin="0 0 0 8"/>
                                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Pending Orders:" Foreground="Gray" Margin="0 0 16 0" FontWeight="SemiBold"/>
                                     <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PendingOrders}"/>
+                                </Grid>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <materialDesign:Card Padding="24" UniformCornerRadius="8" Margin="0 16 0 0" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="REVENUE REPORT" Margin="0 0 0 12"/>
+                                <StackPanel Orientation="Horizontal" Margin="0 0 0 8">
+                                    <TextBlock Text="From:" VerticalAlignment="Center" Width="50"/>
+                                    <DatePicker SelectedDate="{Binding ReportStartDate}" Width="150" Margin="0 0 16 0"/>
+                                    <TextBlock Text="To:" VerticalAlignment="Center" Width="30"/>
+                                    <DatePicker SelectedDate="{Binding ReportEndDate}" Width="150" Margin="0 0 16 0"/>
+                                    <Button Command="{Binding GenerateRevenueReportCommand}" Content="GENERATE"
+                                            Style="{StaticResource MaterialDesignRaisedButton}" Height="36"/>
+                                </StackPanel>
+                                <Grid DataContext="{Binding RevenueStats}" Margin="0 8 0 0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="#EDE7F6" CornerRadius="6" Padding="12" Margin="0 0 8 0">
+                                        <StackPanel>
+                                            <TextBlock Text="TOTAL REVENUE" FontSize="10" FontWeight="Bold" Foreground="#5E35B1"/>
+                                            <TextBlock Text="{Binding TotalRevenue, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#311B92"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="1" Background="#E0F2F1" CornerRadius="6" Padding="12" Margin="0 0 8 0">
+                                        <StackPanel>
+                                            <TextBlock Text="COLLECTED" FontSize="10" FontWeight="Bold" Foreground="#00796B"/>
+                                            <TextBlock Text="{Binding TotalCollected, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#004D40"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="2" Background="#FFF3E0" CornerRadius="6" Padding="12" Margin="0 0 8 0">
+                                        <StackPanel>
+                                            <TextBlock Text="OUTSTANDING" FontSize="10" FontWeight="Bold" Foreground="#EF6C00"/>
+                                            <TextBlock Text="{Binding OutstandingAmount, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#E65100"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="3" Background="#E3F2FD" CornerRadius="6" Padding="12" Margin="0 0 8 0">
+                                        <StackPanel>
+                                            <TextBlock Text="CASH" FontSize="10" FontWeight="Bold" Foreground="#1565C0"/>
+                                            <TextBlock Text="{Binding CashCollected, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#0D47A1"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="4" Background="#FCE4EC" CornerRadius="6" Padding="12">
+                                        <StackPanel>
+                                            <TextBlock Text="UPI" FontSize="10" FontWeight="Bold" Foreground="#C2185B"/>
+                                            <TextBlock Text="{Binding UpiCollected, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#880E4F"/>
+                                        </StackPanel>
+                                    </Border>
                                 </Grid>
                             </StackPanel>
                         </materialDesign:Card>

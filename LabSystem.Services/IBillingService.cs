@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using LabSystem.Core.Models;
@@ -9,7 +10,8 @@ namespace LabSystem.Services
         Task<Invoice> GenerateInvoiceAsync(int orderId);
         Task<Invoice> GetInvoiceForOrderAsync(int orderId);
         Task<IEnumerable<Invoice>> GetAllInvoicesAsync();
-        Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discount, decimal tax);
+        Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discountPercent, decimal taxPercent);
         Task AddPaymentAsync(int invoiceId, decimal amount, string paymentMethod);
+        Task<RevenueReportStats> GetRevenueReportAsync(DateTime start, DateTime end);
     }
 }
