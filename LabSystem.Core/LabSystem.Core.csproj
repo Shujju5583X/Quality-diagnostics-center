@@ -3,7 +3,7 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
   </ItemGroup>
   <PropertyGroup>
-    <TargetFramework>net451</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <LangVersion>10.0</LangVersion>
   </PropertyGroup>
 </Project>

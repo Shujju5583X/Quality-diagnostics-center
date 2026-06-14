@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
+using LabSystem.Core.Enums;
 
 namespace LabSystem.Services
 {
@@ -53,7 +54,7 @@ namespace LabSystem.Services
                     SampleType = sampleType,
                     CollectionTime = DateTime.UtcNow,
                     CollectedBy = "System",
-                    Status = "Collected"
+                    StatusEnum = SpecimenStatus.Collected
                 };
                 await _specimenRepo.AddAsync(specimen, cancellationToken);
                 index++;

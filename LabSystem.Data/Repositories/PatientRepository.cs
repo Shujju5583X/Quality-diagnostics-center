@@ -26,7 +26,7 @@ namespace LabSystem.Data.Repositories
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                q = q.Where(p => p.FullName.Contains(query) || p.ContactPhone.Contains(query) || p.PatientId.ToString().Equals(query) || p.Uhid.Contains(query));
+                q = q.Where(p => p.FullName.Contains(query) || (p.ContactPhone != null && p.ContactPhone.Contains(query)) || p.PatientId.ToString().Equals(query) || p.Uhid.Contains(query));
             }
 
             if (startDate.HasValue)
@@ -53,7 +53,7 @@ namespace LabSystem.Data.Repositories
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                q = q.Where(p => p.FullName.Contains(query) || p.ContactPhone.Contains(query) || p.PatientId.ToString().Equals(query) || p.Uhid.Contains(query));
+                q = q.Where(p => p.FullName.Contains(query) || (p.ContactPhone != null && p.ContactPhone.Contains(query)) || p.PatientId.ToString().Equals(query) || p.Uhid.Contains(query));
             }
 
             if (startDate.HasValue)

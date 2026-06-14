@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS TestTypes (
     Interpretation TEXT,
     SortOrder INTEGER DEFAULT 0,
     Price REAL DEFAULT 0,
-    SampleType TEXT
+    SampleType TEXT,
+    InputType INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS Staff (

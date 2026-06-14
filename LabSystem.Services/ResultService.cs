@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Core.Services;
+using LabSystem.Core.Enums;
 
 namespace LabSystem.Services
 {
@@ -36,7 +37,7 @@ namespace LabSystem.Services
             if (testType != null && order != null)
             {
                 var specimen = order.Specimens?.FirstOrDefault(s => string.Equals(s.SampleType, testType.SampleType, StringComparison.OrdinalIgnoreCase));
-                if (specimen != null && string.Equals(specimen.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                if (specimen != null && specimen.StatusEnum == SpecimenStatus.Rejected)
                 {
                     isRejected = true;
                 }

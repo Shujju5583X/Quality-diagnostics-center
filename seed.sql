@@ -312,3 +312,8 @@ INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
 ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triiodothyronine (T3)')),
 ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Thyroxine (T4)')),
 ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'));
+
+-- Set InputTypes for non-numeric TestTypes
+UPDATE TestTypes SET InputType = 1 WHERE Name IN ('Urine Sugar', 'Urine Protein');
+UPDATE TestTypes SET InputType = 2 WHERE Name = 'Blood Grouping & Rh';
+UPDATE TestTypes SET InputType = 3 WHERE Name IN ('Rapid Malaria (HRP-2/pLDH)', 'PBS Malarial Parasite', 'HBsAg Screening', 'Anti-HCV Antibody', 'VDRL Screening', 'HIV 1 Antibody Screening', 'HIV 2 Antibody Screening');

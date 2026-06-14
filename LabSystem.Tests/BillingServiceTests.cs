@@ -28,7 +28,7 @@ namespace LabSystem.Tests
             _context = new LabDbContext(_connection);
 
             // Read V1__init.sql and run it to create tables
-            var initSqlPath = FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
+            var initSqlPath = TestHelper.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
             if (initSqlPath == null || !File.Exists(initSqlPath))
             {
                 throw new FileNotFoundException("Could not find V1__init.sql for SQLite setup.");
@@ -73,19 +73,6 @@ namespace LabSystem.Tests
         {
             _context?.Dispose();
             _connection?.Dispose();
-        }
-
-        private static string FindFileUpwards(params string[] pathParts)
-        {
-            var dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
-            while (dir != null)
-            {
-                var candidate = Path.Combine(dir.FullName, Path.Combine(pathParts));
-                if (File.Exists(candidate))
-                    return candidate;
-                dir = dir.Parent;
-            }
-            return null;
         }
 
         [Test]

@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
+using LabSystem.Core.Enums;
 using Serilog;
 using LabSystem.Services;
 
@@ -30,6 +31,7 @@ namespace LabSystem.UI.ViewModels
 
         private Patient _selectedPatient;
         private TestOrder _selectedOrder;
+        private Invoice _selectedInvoice;
 
         // Patient tab fields
         private string _newPatientName;
@@ -104,7 +106,14 @@ namespace LabSystem.UI.ViewModels
             {
                 _selectedOrder = value;
                 OnPropertyChanged();
+                _ = LoadResultsForSelectedOrderSafeAsync();
             }
+        }
+
+        public Invoice SelectedInvoice
+        {
+            get => _selectedInvoice;
+            set { _selectedInvoice = value; OnPropertyChanged(); }
         }
 
         public UnifiedQueueViewModel UnifiedQueueVM { get; }
@@ -142,41 +151,42 @@ namespace LabSystem.UI.ViewModels
         public ICommand AddCatalogTestCommand { get; }
         public ICommand PreviousPatientPageCommand { get; }
         public ICommand NextPatientPageCommand { get; }
+        public ICommand AddPaymentCashCommand { get; }
+        public ICommand AddPaymentUpiCommand { get; }
 
         public DashboardViewModel(
-            IPatientRepository patientRepo,
-            ITestOrderRepository orderRepo,
-            IResultRepository resultRepo,
-            IRepository<TestType> testTypeRepo,
-            IOrderService orderService,
-            IResultService resultService,
-            IPdfReportService reportService,
+            PatientsTabViewModel patientsTabVM,
+            OrdersTabViewModel ordersTabVM,
+            LabTabViewModel labTabVM,
+            BillingTabViewModel billingTabVM,
             IBackupService backupService,
-            IBillingService billingService,
-            IRepository<TestPanel> testPanelRepo,
             UnifiedQueueViewModel unifiedQueueVM)
         {
-            _patientRepo = patientRepo;
-            _orderRepo = orderRepo;
-            _resultRepo = resultRepo;
-            _testTypeRepo = testTypeRepo;
-            _orderService = orderService;
-            _resultService = resultService;
-            _reportService = reportService;
+            _patientRepo = patientsTabVM.PatientRepo;
+            _orderRepo = ordersTabVM.OrderRepo;
+            _orderService = ordersTabVM.OrderService;
+            _reportService = ordersTabVM.ReportService;
+
+            _resultRepo = labTabVM.ResultRepo;
+            _testTypeRepo = labTabVM.TestTypeRepo;
+            _resultService = labTabVM.ResultService;
+
+            _billingService = billingTabVM.BillingService;
+            _testPanelRepo = billingTabVM.TestPanelRepo;
+
             _backupService = backupService;
-            _billingService = billingService;
-            _testPanelRepo = testPanelRepo;
-            
             UnifiedQueueVM = unifiedQueueVM;
 
-            AddPatientCommand = new RelayCommand(async o => await ExecuteAddPatientAsync(o));
-            CreateOrderCommand = new RelayCommand(async o => await ExecuteCreateOrderAsync(o));
-            BackupCommand = new RelayCommand(async o => await _backupService.BackupNowAsync());
-            RefreshCommand = new RelayCommand(async o => await LoadDataAsync());
-            SaveCatalogTestCommand = new RelayCommand(async o => await ExecuteSaveCatalogTestAsync(o));
-            AddCatalogTestCommand = new RelayCommand(async o => await ExecuteAddCatalogTestAsync(o));
+            AddPatientCommand = new AsyncRelayCommand(async o => await ExecuteAddPatientAsync(o));
+            CreateOrderCommand = new AsyncRelayCommand(async o => await ExecuteCreateOrderAsync(o));
+            BackupCommand = new AsyncRelayCommand(async o => await _backupService.BackupNowAsync());
+            RefreshCommand = new AsyncRelayCommand(async o => await LoadDataAsync());
+            SaveCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteSaveCatalogTestAsync(o));
+            AddCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteAddCatalogTestAsync(o));
+            AddPaymentCashCommand = new AsyncRelayCommand(async o => await ExecuteAddPaymentAsync("Cash"));
+            AddPaymentUpiCommand = new AsyncRelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
 
-            PreviousPatientPageCommand = new RelayCommand(async o =>
+            PreviousPatientPageCommand = new AsyncRelayCommand(async o =>
             {
                 if (PatientCurrentPage > 1)
                 {
@@ -185,7 +195,7 @@ namespace LabSystem.UI.ViewModels
                 }
             });
 
-            NextPatientPageCommand = new RelayCommand(async o =>
+            NextPatientPageCommand = new AsyncRelayCommand(async o =>
             {
                 if (PatientCurrentPage < PatientTotalPages)
                 {
@@ -194,8 +204,19 @@ namespace LabSystem.UI.ViewModels
                 }
             });
 
-            _ = LoadDataAsync();
-            _ = RefreshAbnormalCountAsync();
+            _ = InitializeAsync();
+        }
+
+        private async Task InitializeAsync()
+        {
+            try
+            {
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to initialize dashboard.");
+            }
         }
 
         private async Task LoadDataAsync()
@@ -250,11 +271,14 @@ namespace LabSystem.UI.ViewModels
 
                 await UnifiedQueueVM.LoadQueueAsync();
 
+                // Load Invoices
+                await LoadInvoicesAsync();
+
                 // Load ReferredBy autocomplete history
                 await LoadReferredByHistoryAsync();
 
                 // Calculate Dashboard Statistics
-                CalculateDashboardStatsFromLoadedData();
+                await RefreshDashboardStatsAsync();
             }
             catch (Exception ex)
             {
@@ -263,33 +287,69 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private void CalculateDashboardStatsFromLoadedData()
+        private async Task LoadInvoicesAsync()
+        {
+            try
+            {
+                Invoices.Clear();
+                var invoices = await _billingService.GetAllInvoicesAsync();
+                foreach (var inv in invoices.OrderByDescending(i => i.InvoiceId))
+                {
+                    Invoices.Add(inv);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load invoices.");
+            }
+        }
+
+        private async Task ExecuteAddPaymentAsync(string paymentMethod)
+        {
+            try
+            {
+                if (SelectedInvoice == null || SelectedInvoice.IsPaid)
+                {
+                    MessageBox.Show("Please select an unpaid invoice.", "No Invoice Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                await _billingService.AddPaymentAsync(SelectedInvoice.InvoiceId, SelectedInvoice.TotalAmount, paymentMethod);
+                MessageBox.Show($"Payment of ₹{SelectedInvoice.TotalAmount:N2} recorded via {paymentMethod}.", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                await LoadInvoicesAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to process payment.");
+                MessageBox.Show($"Payment failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task RefreshDashboardStatsAsync()
         {
             try
             {
                 TotalPatients = PatientTotalCount;
-                PendingOrders = Orders.Count(o => o.Status == "Pending");
-                CompletedOrders = Orders.Count(o => o.Status == "Complete");
-                AbnormalResultsFlagged = _cachedAbnormalCount;
+                PendingOrders = Orders.Count(o => o.StatusEnum == OrderStatus.Pending);
+                CompletedOrders = Orders.Count(o => o.StatusEnum == OrderStatus.Complete);
+
+                var results = await _resultRepo.GetAllAsync();
+                AbnormalResultsFlagged = results.Count(r => r.IsAbnormal);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to calculate dashboard statistics.");
+                Log.Error(ex, "Failed to refresh dashboard statistics.");
             }
         }
 
-        private int _cachedAbnormalCount;
-
-        private async Task RefreshAbnormalCountAsync()
+        private async Task LoadResultsForSelectedOrderSafeAsync()
         {
             try
             {
-                var results = await _resultRepo.GetAllAsync();
-                _cachedAbnormalCount = results.Count(r => r.IsAbnormal);
+                await LoadResultsForSelectedOrderAsync();
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to load abnormal count.");
+                Log.Error(ex, "Failed to load results for selected order.");
             }
         }
     }

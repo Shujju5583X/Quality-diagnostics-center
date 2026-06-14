@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using LabSystem.Core.Enums;
 
 namespace LabSystem.Core.Models
 {
     public class TestType
     {
         public int TypeId { get; set; }
+        public ResultInputType InputType { get; set; }
         public string Name { get; set; }
         public string Unit { get; set; }
         public double? ReferenceRangeLow { get; set; }

@@ -84,8 +84,8 @@ namespace LabSystem.UI.ViewModels
                     RecordedAt = DateTime.UtcNow
                 }).ToList();
 
-                // Assuming technician ID 1 for now (DashboardViewModel.DefaultStaffId)
-                await _workflowService.QuickFinalizeAsync(SelectedItem.OrderId, results, 1, "Cash");
+                // Use the authenticated technician ID
+                await _workflowService.QuickFinalizeAsync(SelectedItem.OrderId, results, App.AuthenticatedStaffId, "Cash");
 
                 MessageBox.Show("Order finalized successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 await LoadQueueAsync();

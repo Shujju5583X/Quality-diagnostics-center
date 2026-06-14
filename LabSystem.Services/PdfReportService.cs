@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Core.Services;
+using LabSystem.Core.Enums;
+using LabSystem.Core;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
 using MigraDoc.Rendering;
@@ -40,7 +42,7 @@ namespace LabSystem.Services
 
         private static string GetDefaultLetterheadPath()
         {
-            var path = FindFileUpwards("Sample reports", "10 001.jpg.jpeg");
+            var path = FileUtilities.FindFileUpwards("Sample reports", "10 001.jpg.jpeg");
             if (path != null && File.Exists(path))
                 return path;
 
@@ -62,20 +64,6 @@ namespace LabSystem.Services
             }
 
             return candidates[0];
-        }
-
-        private static string FindFileUpwards(params string[] pathParts)
-        {
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            var dir = new DirectoryInfo(baseDir);
-            while (dir != null)
-            {
-                var candidate = Path.Combine(dir.FullName, Path.Combine(pathParts));
-                if (File.Exists(candidate))
-                    return candidate;
-                dir = dir.Parent;
-            }
-            return null;
         }
 
         public async Task<string> GenerateReportAsync(TestOrder order, bool includeLetterhead = true, CancellationToken cancellationToken = default)
@@ -245,7 +233,7 @@ namespace LabSystem.Services
                     specRow.Cells[2].AddParagraph(spec.CollectionTime.HasValue ? spec.CollectionTime.Value.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt") : "N/A");
                     
                     var statusCell = specRow.Cells[3];
-                    if (string.Equals(spec.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                    if (spec.StatusEnum == SpecimenStatus.Rejected)
                     {
                         var statusPara = statusCell.AddParagraph();
                         var statusText = statusPara.AddFormattedText("REJECTED", TextFormat.Bold);
@@ -310,7 +298,7 @@ namespace LabSystem.Services
                 // Adjust spelling of "BIOCHEMISTRY" to "BIO-CHEMISRTY" if it matches
                 if (string.Equals(categoryName, "BIOCHEMISTRY", StringComparison.OrdinalIgnoreCase))
                 {
-                    categoryName = "BIO-CHEMISRTY";
+                    categoryName = "BIO-CHEMISTRY";
                 }
 
                 // Category Header Row
@@ -496,7 +484,7 @@ namespace LabSystem.Services
             sigText.Color = Colors.Black;
 
             // Render Document
-            PdfDocumentRenderer renderer = new PdfDocumentRenderer()
+            var renderer = new PdfDocumentRenderer()
             {
                 Document = document
             };
@@ -679,9 +667,7 @@ namespace LabSystem.Services
 
                 if (_testPanelRepo != null)
                 {
-                    var panelsTask = _testPanelRepo.GetAllAsync(CancellationToken.None);
-                    panelsTask.Wait();
-                    var panels = panelsTask.Result;
+                    var panels = await _testPanelRepo.GetAllAsync(cancellationToken);
 
                     var orderedTestTypeIds = new HashSet<int>(tests.Select(t => t.TypeId));
 
@@ -818,7 +804,7 @@ namespace LabSystem.Services
             }
 
             // Render Document
-            PdfDocumentRenderer renderer = new PdfDocumentRenderer()
+            var renderer = new PdfDocumentRenderer()
             {
                 Document = document
             };

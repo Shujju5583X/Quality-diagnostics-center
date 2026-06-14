@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using LabSystem.Core.Models;
 using LabSystem.Core.Services;
+using LabSystem.Core.Enums;
 using Serilog;
 
 namespace LabSystem.UI.ViewModels
@@ -19,7 +20,7 @@ namespace LabSystem.UI.ViewModels
             {
                 if (SelectedOrder == null || SelectedOrder.Specimens == null)
                     return false;
-                return SelectedOrder.Specimens.Any(s => string.Equals(s.Status, "Rejected", StringComparison.OrdinalIgnoreCase));
+                return SelectedOrder.Specimens.Any(s => s.StatusEnum == SpecimenStatus.Rejected);
             }
         }
 

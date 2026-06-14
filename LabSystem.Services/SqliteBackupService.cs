@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using ClosedXML.Excel;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
+using LabSystem.Core.Enums;
 
 namespace LabSystem.Services
 {
@@ -142,7 +143,7 @@ namespace LabSystem.Services
                     
                     // Specific formatting for Pending vs Complete status
                     var statusCell = wsOrders.Cell(oRow, 6);
-                    if (o.Status == "Complete")
+                    if (o.StatusEnum == OrderStatus.Complete)
                     {
                         statusCell.Style.Font.FontColor = XLColor.FromHtml("#00796B");
                         statusCell.Style.Font.Bold = true;

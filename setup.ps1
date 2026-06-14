@@ -72,8 +72,8 @@ dotnet add LabSystem.UI/LabSystem.UI.csproj reference LabSystem.Core/LabSystem.C
 dotnet add LabSystem.Tests/LabSystem.Tests.csproj reference LabSystem.Core/LabSystem.Core.csproj LabSystem.Services/LabSystem.Services.csproj LabSystem.UI/LabSystem.UI.csproj
 
 dotnet add LabSystem.Data/LabSystem.Data.csproj package EntityFramework -v 6.4.4
-dotnet add LabSystem.Data/LabSystem.Data.csproj package System.Data.SQLite.EF6 -v 1.0.118
-dotnet add LabSystem.Data/LabSystem.Data.csproj package System.Data.SQLite -v 1.0.118
+dotnet add LabSystem.Data/LabSystem.Data.csproj package System.Data.SQLite.EF6 -v 1.0.115.5
+dotnet add LabSystem.Data/LabSystem.Data.csproj package System.Data.SQLite -v 1.0.115.5
 dotnet add LabSystem.Services/LabSystem.Services.csproj package MigraDoc -v 1.50.5147
 dotnet add LabSystem.Services/LabSystem.Services.csproj package ClosedXML -v 0.95.4
 dotnet add LabSystem.UI/LabSystem.UI.csproj package SimpleInjector -v 5.4.1

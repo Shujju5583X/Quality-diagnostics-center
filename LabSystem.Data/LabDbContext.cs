@@ -34,38 +34,19 @@ namespace LabSystem.Data
 
         public IQueryable<UnifiedQueueItem> GetUnifiedQueue()
         {
-            var orders = TestOrders
-                .Include(o => o.Patient)
-                .Include(o => o.TestTypes)
-                .ToList();
-
-            var orderIds = orders.Select(o => o.OrderId).ToList();
-
-            var invoices = Invoices
-                .Where(i => orderIds.Contains(i.OrderId))
-                .ToList();
-
-            var results = Results
-                .Where(r => orderIds.Contains(r.OrderId))
-                .ToList();
-
-            return orders.Select(o =>
-            {
-                var invoice = invoices.FirstOrDefault(i => i.OrderId == o.OrderId);
-                var expectedResultsCount = o.TestTypes.Count;
-                var actualResultsCount = results.Count(r => r.OrderId == o.OrderId);
-
-                return new UnifiedQueueItem
-                {
-                    OrderId = o.OrderId,
-                    PatientName = o.Patient?.FullName,
-                    OrderedAt = o.OrderedAt,
-                    OrderStatus = o.Status,
-                    HasAllResults = expectedResultsCount > 0 && actualResultsCount >= expectedResultsCount,
-                    IsPaid = invoice != null && invoice.IsPaid,
-                    InvoiceId = invoice?.InvoiceId
-                };
-            }).AsQueryable();
+            return from o in TestOrders
+                   join i in Invoices on o.OrderId equals i.OrderId into invoiceGroup
+                   from invoice in invoiceGroup.DefaultIfEmpty()
+                   select new UnifiedQueueItem
+                   {
+                       OrderId = o.OrderId,
+                       PatientName = o.Patient != null ? o.Patient.FullName : null,
+                       OrderedAt = o.OrderedAt,
+                       OrderStatus = o.Status,
+                       IsPaid = invoice != null && invoice.IsPaid,
+                       InvoiceId = (int?)invoice.InvoiceId,
+                       HasAllResults = o.TestTypes.Any() && Results.Count(r => r.OrderId == o.OrderId) >= o.TestTypes.Count()
+                   };
         }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)

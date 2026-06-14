@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using LabSystem.Core.Enums;
 
 namespace LabSystem.UI.ViewModels
 {
@@ -32,6 +33,7 @@ namespace LabSystem.UI.ViewModels
     public class ResultInput : ViewModelBase
     {
         public int TypeId { get; set; }
+        public ResultInputType InputType { get; set; }
         public string TestName { get; set; }
         public string Unit { get; set; }
         public double? Low { get; set; }

@@ -10,7 +10,7 @@
     <PackageReference Include="Serilog" Version="2.10.0" />
   </ItemGroup>
   <PropertyGroup>
-    <TargetFramework>net451</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <LangVersion>10.0</LangVersion>
   </PropertyGroup>
 </Project>

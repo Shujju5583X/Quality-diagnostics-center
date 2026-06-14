@@ -20,7 +20,7 @@ namespace LabSystem.Core.Services
 
         public static ReferenceRange FindMatchingRange(TestType tt, Patient patient)
         {
-            if (tt == null || tt.ReferenceRanges == null || tt.ReferenceRanges.Count == 0 || patient == null)
+            if (tt == null || tt.ReferenceRanges == null || tt.ReferenceRanges.Count == 0 || patient == null || patient.DateOfBirth == null)
             {
                 return null;
             }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using LabSystem.Core.Models;
+using LabSystem.Core.Enums;
 using Serilog;
 
 namespace LabSystem.UI.ViewModels
@@ -45,7 +46,7 @@ namespace LabSystem.UI.ViewModels
                 var order = new TestOrder
                 {
                     PatientId = SelectedPatient.PatientId,
-                    Status = "Pending",
+                    StatusEnum = OrderStatus.Pending,
                     Notes = OrderNotes ?? "",
                     ReferredBy = string.IsNullOrWhiteSpace(OrderReferredBy) ? "SELF" : OrderReferredBy.Trim(),
                     CreatedAt = DateTime.UtcNow,
@@ -78,7 +79,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private async void LoadResultsForSelectedOrder()
+        private async Task LoadResultsForSelectedOrderAsync()
         {
             SelectedOrderResults.Clear();
             ResultErrorMessage = string.Empty;
@@ -87,7 +88,7 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
-                if (SelectedOrder.Status == "Pending")
+                if (SelectedOrder.StatusEnum == OrderStatus.Pending)
                 {
                     // Pull tests directly from the many-to-many relationship loaded on the order
                     if (SelectedOrder.TestTypes != null)
@@ -98,7 +99,7 @@ namespace LabSystem.UI.ViewModels
                             if (SelectedOrder.Specimens != null)
                             {
                                 var spec = SelectedOrder.Specimens.FirstOrDefault(s => string.Equals(s.SampleType, testType.SampleType, StringComparison.OrdinalIgnoreCase));
-                                if (spec != null && string.Equals(spec.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                                if (spec != null && spec.StatusEnum == SpecimenStatus.Rejected)
                                 {
                                     isRejected = true;
                                 }
@@ -107,6 +108,7 @@ namespace LabSystem.UI.ViewModels
                             var ri = new ResultInput
                             {
                                 TypeId = testType.TypeId,
+                                InputType = testType.InputType,
                                 TestName = testType.Name,
                                 Unit = testType.Unit,
                                 IsAbnormal = false,
@@ -133,6 +135,7 @@ namespace LabSystem.UI.ViewModels
                         var ri = new ResultInput
                         {
                             TypeId = r.TypeId,
+                            InputType = r.TestType?.InputType ?? ResultInputType.Numeric,
                             TestName = r.TestType?.Name ?? "Unknown Test",
                             Unit = r.TestType?.Unit ?? "",
                             ValueText = r.Value == null ? "Sample Rejected" : r.Value.ToString(),
@@ -154,31 +157,37 @@ namespace LabSystem.UI.ViewModels
         private void PopulateOptions(ResultInput ri)
         {
             ri.Options.Clear();
-            if (ri.Unit == "Blood Group")
+            switch (ri.InputType)
             {
-                ri.Options.Add(new ResultOption { Display = "A Rh Positive", Value = "1" });
-                ri.Options.Add(new ResultOption { Display = "A Rh Negative", Value = "2" });
-                ri.Options.Add(new ResultOption { Display = "B Rh Positive", Value = "3" });
-                ri.Options.Add(new ResultOption { Display = "B Rh Negative", Value = "4" });
-                ri.Options.Add(new ResultOption { Display = "O Rh Positive", Value = "5" });
-                ri.Options.Add(new ResultOption { Display = "O Rh Negative", Value = "6" });
-                ri.Options.Add(new ResultOption { Display = "AB Rh Positive", Value = "7" });
-                ri.Options.Add(new ResultOption { Display = "AB Rh Negative", Value = "8" });
-            }
-            else if (ri.TestName.Contains("Malarial Parasite") || ri.TestName.Contains("PBS Malarial"))
-            {
-                ri.Options.Add(new ResultOption { Display = "Not Detected", Value = "0" });
-                ri.Options.Add(new ResultOption { Display = "Detected", Value = "1" });
-            }
-            else if (ri.TestName.Contains("Rapid Malaria"))
-            {
-                ri.Options.Add(new ResultOption { Display = "Negative", Value = "0" });
-                ri.Options.Add(new ResultOption { Display = "Positive", Value = "1" });
-            }
-            else if (ri.Unit == "Qualitative" || ri.TestName.Contains("Urine Sugar") || ri.TestName.Contains("Urine Protein"))
-            {
-                ri.Options.Add(new ResultOption { Display = "Absent", Value = "0" });
-                ri.Options.Add(new ResultOption { Display = "Present", Value = "1" });
+                case ResultInputType.BloodGroup:
+                    ri.Options.Add(new ResultOption { Display = "A Rh Positive", Value = "1" });
+                    ri.Options.Add(new ResultOption { Display = "A Rh Negative", Value = "2" });
+                    ri.Options.Add(new ResultOption { Display = "B Rh Positive", Value = "3" });
+                    ri.Options.Add(new ResultOption { Display = "B Rh Negative", Value = "4" });
+                    ri.Options.Add(new ResultOption { Display = "O Rh Positive", Value = "5" });
+                    ri.Options.Add(new ResultOption { Display = "O Rh Negative", Value = "6" });
+                    ri.Options.Add(new ResultOption { Display = "AB Rh Positive", Value = "7" });
+                    ri.Options.Add(new ResultOption { Display = "AB Rh Negative", Value = "8" });
+                    break;
+                case ResultInputType.Categorical:
+                    if (ri.TestName.Contains("Rapid Malaria") || ri.TestName.Contains("HBsAg") || ri.TestName.Contains("HCV") || ri.TestName.Contains("VDRL") || ri.TestName.Contains("HIV"))
+                    {
+                        ri.Options.Add(new ResultOption { Display = "Negative", Value = "0" });
+                        ri.Options.Add(new ResultOption { Display = "Positive", Value = "1" });
+                    }
+                    else
+                    {
+                        ri.Options.Add(new ResultOption { Display = "Not Detected", Value = "0" });
+                        ri.Options.Add(new ResultOption { Display = "Detected", Value = "1" });
+                    }
+                    break;
+                case ResultInputType.Qualitative:
+                    ri.Options.Add(new ResultOption { Display = "Absent", Value = "0" });
+                    ri.Options.Add(new ResultOption { Display = "Present", Value = "1" });
+                    break;
+                case ResultInputType.Numeric:
+                default:
+                    break;
             }
 
             if (ri.HasOptions && !string.IsNullOrEmpty(ri.ValueText))
