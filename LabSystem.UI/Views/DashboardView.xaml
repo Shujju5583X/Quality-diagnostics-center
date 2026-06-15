@@ -50,7 +50,6 @@
             </CollectionViewSource.GroupDescriptions>
         </CollectionViewSource>
 
-        <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <converters:InvertBoolConverter x:Key="InvertBool" />
 
         <!-- Row style: highlight abnormal results in red -->
@@ -998,7 +997,7 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border Background="#F5F5F5" Padding="12" CornerRadius="4" Visibility="{Binding IsStaffSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border Background="#F5F5F5" Padding="12" CornerRadius="4" Visibility="{Binding IsStaffSelected, Converter={StaticResource BoolToVis}}">
                                     <StackPanel>
                                         <TextBlock Text="{Binding SelectedStaff.FullName, StringFormat=Selected: {0}}" FontWeight="SemiBold" Margin="0 0 0 8"/>
                                         <Grid>

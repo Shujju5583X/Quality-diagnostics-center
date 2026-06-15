@@ -307,6 +307,9 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to initialize dashboard.");
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} DASHBOARD INIT ERROR: {ex}\r\n");
             }
         }
 

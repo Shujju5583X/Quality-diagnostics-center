@@ -13,6 +13,7 @@ using SimpleInjector;
 using Serilog;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace LabSystem.UI
@@ -36,16 +37,38 @@ namespace LabSystem.UI
             string logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
             Directory.CreateDirectory(logDir);
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Warning()
+                .MinimumLevel.Debug()
                 .WriteTo.File(Path.Combine(logDir, "lab_.log"), rollingInterval: RollingInterval.Day,
                     fileSizeLimitBytes: 5 * 1024 * 1024, // 5MB max per log file
                     retainedFileCountLimit: 14)           // Keep only 2 weeks of logs
                 .CreateLogger();
+            Log.Information("Application startup begin.");
+
+            // Catch WPF Dispatcher thread exceptions (XAML parse, binding, rendering errors)
+            DispatcherUnhandledException += (s, args) =>
+            {
+                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
+                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} DISPATCHER ERROR: {args.Exception}\r\n");
+                Log.Fatal(args.Exception, "Dispatcher unhandled exception.");
+                MessageBox.Show($"Dispatcher error: {args.Exception.Message}\n\n{args.Exception.InnerException?.Message}",
+                    "Dispatcher Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                args.Handled = true;
+            };
 
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
             {
+                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
+                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} APPDOMAIN ERROR: {args.ExceptionObject}\r\n");
                 Log.Fatal(args.ExceptionObject as Exception, "Unhandled exception occurred.");
                 MessageBox.Show("A critical error occurred. Please check the logs.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            };
+
+            TaskScheduler.UnobservedTaskException += (s, args) =>
+            {
+                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
+                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} UNOBSERVED TASK ERROR: {args.Exception}\r\n");
+                Log.Fatal(args.Exception, "Unobserved task exception.");
+                args.SetObserved();
             };
 
             try
@@ -112,27 +135,48 @@ namespace LabSystem.UI
             Container.Register<ViewModels.AppointmentsViewModel>();
             Container.Register<ViewModels.StaffManagementViewModel>();
 
-            // Hold a backup service reference for auto-backup on exit
-            _backupServiceForExit = Container.GetInstance<IBackupService>();
-
-            // Display PIN Login modal before opening dashboard
-            var loginViewModel = Container.GetInstance<ViewModels.LoginViewModel>();
-            loginViewModel.InitializeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-
-            var loginView = new Views.LoginView();
-            loginView.DataContext = loginViewModel;
-            loginViewModel.CloseAction = () => loginView.DialogResult = true;
-
-            bool? loginResult = loginView.ShowDialog();
-            if (loginResult != true || !loginViewModel.IsLoginSuccess)
+            try
             {
-                Shutdown();
-                return;
-            }
+                // Hold a backup service reference for auto-backup on exit
+                _backupServiceForExit = Container.GetInstance<IBackupService>();
 
-            var mainWindow = new MainWindow();
-            mainWindow.DataContext = Container.GetInstance<ViewModels.MainViewModel>();
-            mainWindow.Show();
+                // Display PIN Login modal before opening dashboard
+                Log.Information("Resolving LoginViewModel...");
+                var loginViewModel = Container.GetInstance<ViewModels.LoginViewModel>();
+                Log.Information("Calling loginViewModel.InitializeAsync()...");
+                loginViewModel.InitializeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                Log.Information("LoginViewModel initialized. Showing login dialog...");
+
+                var loginView = new Views.LoginView();
+                loginView.DataContext = loginViewModel;
+                loginViewModel.CloseAction = () => loginView.DialogResult = true;
+
+                bool? loginResult = loginView.ShowDialog();
+                Log.Information("Login dialog returned: {Result}, IsLoginSuccess: {Success}", loginResult, loginViewModel?.IsLoginSuccess);
+                if (loginResult != true || !loginViewModel.IsLoginSuccess)
+                {
+                    Shutdown();
+                    return;
+                }
+
+                Log.Information("Creating MainWindow...");
+                var mainWindow = new MainWindow();
+                Log.Information("Resolving MainViewModel...");
+                mainWindow.DataContext = Container.GetInstance<ViewModels.MainViewModel>();
+                Log.Information("Calling mainWindow.Show()...");
+                this.MainWindow = mainWindow;
+                mainWindow.Show();
+                Log.Information("mainWindow.Show() completed.");
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Failed to start MainWindow after login.");
+                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
+                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} STARTUP CRASH: {ex}\r\n");
+                MessageBox.Show($"Startup crash: {ex.Message}\n\n{ex.InnerException?.Message}",
+                    "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+            }
         }
 
         protected override void OnExit(ExitEventArgs e)

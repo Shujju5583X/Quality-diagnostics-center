@@ -11,5 +11,6 @@ namespace LabSystem.Core.Models
         public string PinHash { get; set; }
         public int FailedLoginAttempts { get; set; }
         public DateTime? LockoutEnd { get; set; }
+        public int BranchId { get; set; } = 1;
     }
 }

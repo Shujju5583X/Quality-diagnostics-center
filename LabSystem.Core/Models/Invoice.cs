@@ -33,6 +33,7 @@ namespace LabSystem.Core.Models
 
         // Allowed values: "Cash", "UPI", or null
         public string PaymentMethod { get; set; }
+        public int BranchId { get; set; } = 1;
 
         public virtual ICollection<Payment> Payments { get; set; }
     }

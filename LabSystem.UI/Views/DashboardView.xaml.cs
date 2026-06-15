@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using System.Windows.Controls;
 using System.Windows.Data;
 using LabSystem.Core.Models;
+using Serilog;
 
 namespace LabSystem.UI.Views
 {
@@ -9,7 +11,18 @@ namespace LabSystem.UI.Views
     {
         public DashboardView()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
+                Log.Information("DashboardView XAML loaded successfully.");
+            }
+            catch (Exception ex)
+            {
+                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
+                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} DASHBOARDVIEW XAML PARSE ERROR: {ex}\r\n");
+                Log.Fatal(ex, "Failed to parse DashboardView XAML.");
+                throw;
+            }
         }
 
         private void CatalogSearchBox_TextChanged(object sender, TextChangedEventArgs e)

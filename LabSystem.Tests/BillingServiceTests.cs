@@ -64,6 +64,9 @@ namespace LabSystem.Tests
             // Add DiscountPercent and TaxPercent columns if they don't exist
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN DiscountPercent REAL DEFAULT 0;"); } catch { }
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN TaxPercent REAL DEFAULT 0;"); } catch { }
+            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+            try { _context.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
 
             var invoiceRepo = new InvoiceRepository(_context);
             var paymentRepo = new PaymentRepository(_context);

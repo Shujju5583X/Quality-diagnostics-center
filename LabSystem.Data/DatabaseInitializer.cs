@@ -302,6 +302,32 @@ namespace LabSystem.Data
 
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Appointments_AppointmentDate ON Appointments (AppointmentDate);");
 
+                // Branches table
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS Branches (
+                        BranchId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL,
+                        Address TEXT,
+                        Phone TEXT,
+                        IsActive INTEGER NOT NULL DEFAULT 1,
+                        CreatedAt DATETIME
+                    );
+                ");
+
+                // Add BranchId to existing tables for multi-branch support
+                try { db.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+                try { db.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+                try { db.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+                try { db.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+
+                // Seed default branch if empty
+                var branchCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Branches").FirstOrDefault();
+                if (branchCount == 0)
+                {
+                    db.Database.ExecuteSqlCommand("INSERT INTO Branches (Name, Address, Phone, IsActive, CreatedAt) VALUES ('Main Branch', 'Quality Diagnostics Center', '1234567890', 1, CURRENT_TIMESTAMP);");
+                    Log.Information("Default branch seeded.");
+                }
+
                 try
                 {
                     db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN IsAmended INTEGER NOT NULL DEFAULT 0;");

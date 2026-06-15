@@ -40,6 +40,7 @@ namespace LabSystem.Tests
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN PinHash TEXT;"); } catch { }
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN FailedLoginAttempts INTEGER NOT NULL DEFAULT 0;"); } catch { }
             try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN LockoutEnd DATETIME;"); } catch { }
+            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
 
             _repo = new StaffRepository(_context);
             _service = new StaffService(_repo);

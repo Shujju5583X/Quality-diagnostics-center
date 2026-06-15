@@ -14,6 +14,7 @@ namespace LabSystem.Core.Models
         public string ContactEmail { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Gender { get; set; }
+        public int BranchId { get; set; } = 1;
 
         [NotMapped]
         public GenderType GenderEnum

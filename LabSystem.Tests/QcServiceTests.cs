@@ -36,6 +36,10 @@ namespace LabSystem.Tests
             string sql = File.ReadAllText(initSqlPath);
             _context.Database.ExecuteSqlCommand(sql);
 
+            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+            try { _context.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+
             // Create QC tables
             _context.Database.ExecuteSqlCommand(@"
                 CREATE TABLE IF NOT EXISTS QcRuns (

@@ -26,6 +26,7 @@ namespace LabSystem.Core.Models
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public int BranchId { get; set; } = 1;
 
         public virtual ICollection<Specimen> Specimens { get; set; } = new HashSet<Specimen>();
         public virtual ICollection<TestType> TestTypes { get; set; } = new HashSet<TestType>();

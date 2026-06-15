@@ -35,6 +35,7 @@ namespace LabSystem.Data
         public DbSet<QcLot> QcLots { get; set; }
         public DbSet<SmsLog> SmsLogs { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<Branch> Branches { get; set; }
 
         public IQueryable<UnifiedQueueItem> GetUnifiedQueue()
         {
@@ -178,6 +179,9 @@ namespace LabSystem.Data
                 .HasColumnAnnotation(
                     IndexAnnotation.AnnotationName,
                     new IndexAnnotation(new IndexAttribute("IX_Appointments_AppointmentDate")));
+
+            modelBuilder.Entity<Branch>().ToTable("Branches");
+            modelBuilder.Entity<Branch>().HasKey(b => b.BranchId);
 
             // Index configurations
             modelBuilder.Entity<TestOrder>()
