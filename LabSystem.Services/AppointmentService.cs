@@ -11,12 +11,10 @@ namespace LabSystem.Services
     public class AppointmentService : IAppointmentService
     {
         private readonly IAppointmentRepository _appointmentRepo;
-        private readonly ISmsService _smsService;
 
-        public AppointmentService(IAppointmentRepository appointmentRepo, ISmsService smsService = null)
+        public AppointmentService(IAppointmentRepository appointmentRepo)
         {
             _appointmentRepo = appointmentRepo;
-            _smsService = smsService;
         }
 
         public async Task<Appointment> BookAppointmentAsync(Appointment appointment, CancellationToken cancellationToken = default)
@@ -42,16 +40,6 @@ namespace LabSystem.Services
             appointment.CreatedAt = DateTime.UtcNow;
             appointment.UpdatedAt = DateTime.UtcNow;
             await _appointmentRepo.AddAsync(appointment, cancellationToken);
-
-            if (_smsService != null && appointment.Patient != null && !string.IsNullOrWhiteSpace(appointment.Patient.ContactPhone))
-            {
-                try
-                {
-                    var msg = SmsTemplates.AppointmentReminder(appointment.Patient.FullName, appointment.AppointmentDate);
-                    await _smsService.SendSmsAsync(appointment.Patient.ContactPhone, msg, cancellationToken);
-                }
-                catch { }
-            }
 
             return appointment;
         }

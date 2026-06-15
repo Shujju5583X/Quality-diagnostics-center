@@ -120,17 +120,13 @@ namespace LabSystem.UI
             Container.Register<IStaffService, StaffService>(Lifestyle.Transient);
             Container.Register<QcService>(Lifestyle.Transient);
             Container.Register<IAppointmentService, AppointmentService>(Lifestyle.Transient);
-            Container.Register<ISmsService>(() => new SmsService("", "", Container.GetInstance<IRepository<SmsLog>>()), Lifestyle.Singleton);
 
             // Register ViewModels
             Container.Register<ViewModels.MainViewModel>();
             Container.Register<ViewModels.DashboardViewModel>();
             Container.Register<ViewModels.UnifiedQueueViewModel>();
             Container.Register<ViewModels.LoginViewModel>();
-            Container.Register<ViewModels.PatientsTabViewModel>();
-            Container.Register<ViewModels.OrdersTabViewModel>();
-            Container.Register<ViewModels.LabTabViewModel>();
-            Container.Register<ViewModels.BillingTabViewModel>();
+            Container.Register<ViewModels.PinSetupViewModel>(Lifestyle.Transient);
             Container.Register<ViewModels.QcViewModel>();
             Container.Register<ViewModels.AppointmentsViewModel>();
             Container.Register<ViewModels.StaffManagementViewModel>();

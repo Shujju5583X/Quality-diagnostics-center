@@ -101,6 +101,16 @@ namespace LabSystem.Tests
         }
 
         [Test]
+        public async Task ResetPin_CanBeVerifiedWithBCrypt()
+        {
+            var staff = await _service.CreateStaffAsync("Bob", "Admin", "0000");
+            await _service.ResetPinAsync(staff.StaffId, "9999");
+            
+            var updated = await _repo.GetByIdAsync(staff.StaffId);
+            Assert.IsTrue(BCrypt.Net.BCrypt.Verify("9999", updated.PinHash));
+        }
+
+        [Test]
         public async Task ToggleLockout_LocksAndUnlocks()
         {
             var staff = await _service.CreateStaffAsync("John", "Technician", "1234");

@@ -235,27 +235,32 @@ namespace LabSystem.UI.ViewModels
         public ICommand GenerateRevenueReportCommand { get; }
 
         public DashboardViewModel(
-            PatientsTabViewModel patientsTabVM,
-            OrdersTabViewModel ordersTabVM,
-            LabTabViewModel labTabVM,
-            BillingTabViewModel billingTabVM,
+            IPatientRepository patientRepo,
+            ITestOrderRepository orderRepo,
+            IOrderService orderService,
+            IPdfReportService reportService,
+            IResultRepository resultRepo,
+            IRepository<TestType> testTypeRepo,
+            IResultService resultService,
+            IBillingService billingService,
+            IRepository<TestPanel> testPanelRepo,
             IBackupService backupService,
             UnifiedQueueViewModel unifiedQueueVM,
             QcViewModel qcVM,
             AppointmentsViewModel appointmentsVM,
             StaffManagementViewModel staffManagementVM)
         {
-            _patientRepo = patientsTabVM.PatientRepo;
-            _orderRepo = ordersTabVM.OrderRepo;
-            _orderService = ordersTabVM.OrderService;
-            _reportService = ordersTabVM.ReportService;
+            _patientRepo = patientRepo;
+            _orderRepo = orderRepo;
+            _orderService = orderService;
+            _reportService = reportService;
 
-            _resultRepo = labTabVM.ResultRepo;
-            _testTypeRepo = labTabVM.TestTypeRepo;
-            _resultService = labTabVM.ResultService;
+            _resultRepo = resultRepo;
+            _testTypeRepo = testTypeRepo;
+            _resultService = resultService;
 
-            _billingService = billingTabVM.BillingService;
-            _testPanelRepo = billingTabVM.TestPanelRepo;
+            _billingService = billingService;
+            _testPanelRepo = testPanelRepo;
 
             _backupService = backupService;
             UnifiedQueueVM = unifiedQueueVM;
@@ -525,8 +530,7 @@ namespace LabSystem.UI.ViewModels
                 PendingOrders = Orders.Count(o => o.StatusEnum == OrderStatus.Pending);
                 CompletedOrders = Orders.Count(o => o.StatusEnum == OrderStatus.Complete);
 
-                var results = await _resultRepo.GetAllAsync();
-                AbnormalResultsFlagged = results.Count(r => r.IsAbnormal);
+                AbnormalResultsFlagged = await _resultRepo.CountAbnormalAsync();
             }
             catch (Exception ex)
             {

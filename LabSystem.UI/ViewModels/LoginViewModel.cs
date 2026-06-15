@@ -117,8 +117,30 @@ namespace LabSystem.UI.ViewModels
                 }
                 else
                 {
-                    // Fallback in case PIN is not set yet: allow empty pin or "1234"
-                    isPinValid = (Pin == "1234");
+                    // First-time PIN setup required
+                    var pinSetupVM = App.Container.GetInstance<PinSetupViewModel>();
+                    pinSetupVM.Initialize(staff);
+                    
+                    // We must dispatch UI creation to the view layer conceptually, but for simplicity we instantiate it here
+                    var pinSetupView = new Views.PinSetupView { DataContext = pinSetupVM };
+                    pinSetupVM.CloseAction = () => pinSetupView.DialogResult = true;
+                    
+                    if (pinSetupView.ShowDialog() == true && pinSetupVM.IsSuccess)
+                    {
+                        // PIN successfully set, consider them logged in
+                        staff.FailedLoginAttempts = 0;
+                        staff.LockoutEnd = null;
+                        
+                        IsLoginSuccess = true;
+                        App.AuthenticatedStaffId = staff.StaffId;
+                        CloseAction?.Invoke();
+                        return;
+                    }
+                    else
+                    {
+                        ErrorMessage = "PIN setup was cancelled or failed.";
+                        return;
+                    }
                 }
 
                 if (isPinValid)

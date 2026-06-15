@@ -34,8 +34,8 @@ namespace LabSystem.Data
             var staffCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Staff").FirstOrDefault();
             if (staffCount == 0)
             {
-                db.Database.ExecuteSqlCommand("INSERT INTO Staff (FullName, PinHash) VALUES ('Lab Technician', '$2a$11$kqAe1LF4dOyHZYBxS2LVCuqYuFe86RStkbVUPpbbDNeFJPPH5wRei');");
-                Log.Information("Default staff record seeded.");
+                db.Database.ExecuteSqlCommand("INSERT INTO Staff (FullName, PinHash) VALUES ('Lab Technician', NULL);");
+                Log.Information("Default staff record seeded without PIN.");
             }
             else
             {
@@ -267,22 +267,6 @@ namespace LabSystem.Data
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcRuns_TestTypeId ON QcRuns (TestTypeId);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcRuns_RunDate ON QcRuns (RunDate);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcLots_TestTypeId ON QcLots (TestTypeId);");
-
-                // SmsLog table
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS SmsLogs (
-                        SmsLogId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        PatientId INTEGER,
-                        PhoneNumber TEXT NOT NULL,
-                        Message TEXT NOT NULL,
-                        Status TEXT NOT NULL DEFAULT 'Pending',
-                        GatewayResponse TEXT,
-                        SentAt DATETIME NOT NULL,
-                        FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
-                    );
-                ");
-
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_SmsLogs_PatientId ON SmsLogs (PatientId);");
 
                 // Appointments table
                 db.Database.ExecuteSqlCommand(@"

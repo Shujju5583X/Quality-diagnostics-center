@@ -20,6 +20,7 @@ namespace LabSystem.Tests
         private Mock<IResultRepository> _mockResultRepo;
         private Mock<IRepository<TestType>> _mockTestTypeRepo;
         private Mock<IRepository<Staff>> _mockStaffRepo;
+        private Mock<IInvoiceRepository> _mockInvoiceRepo;
 
         private SqliteBackupService _backupService;
         private string _backupsDir;
@@ -33,13 +34,15 @@ namespace LabSystem.Tests
             _mockResultRepo = new Mock<IResultRepository>();
             _mockTestTypeRepo = new Mock<IRepository<TestType>>();
             _mockStaffRepo = new Mock<IRepository<Staff>>();
+            _mockInvoiceRepo = new Mock<IInvoiceRepository>();
 
             _backupService = new SqliteBackupService(
                 _mockPatientRepo.Object,
                 _mockOrderRepo.Object,
                 _mockResultRepo.Object,
                 _mockTestTypeRepo.Object,
-                _mockStaffRepo.Object
+                _mockStaffRepo.Object,
+                _mockInvoiceRepo.Object
             );
 
             _backupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups");
@@ -86,6 +89,7 @@ namespace LabSystem.Tests
             {
                 new Staff { StaffId = 1, FullName = "Dr. Alice Smith" }
             });
+            _mockInvoiceRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Invoice>());
         }
 
         [TearDown]

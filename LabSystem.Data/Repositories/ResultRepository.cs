@@ -30,5 +30,10 @@ namespace LabSystem.Data.Repositories
                          .OrderBy(r => r.RecordedAt)
                          .ToListAsync();
         }
+
+        public async Task<int> CountAbnormalAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.CountAsync(r => r.IsAbnormal, cancellationToken);
+        }
     }
 }

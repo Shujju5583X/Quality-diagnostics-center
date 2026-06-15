@@ -9,5 +9,6 @@ namespace LabSystem.Core.Interfaces
     {
         Task<IEnumerable<Result>> GetResultsForOrderAsync(int orderId, CancellationToken cancellationToken = default);
         Task<IEnumerable<Result>> GetPatientHistoryAsync(int patientId, int testTypeId);
+        Task<int> CountAbnormalAsync(CancellationToken cancellationToken = default);
     }
 }

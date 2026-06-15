@@ -73,3 +73,10 @@ ENV/
 
 # Local AI prompt/history files
 initial_prompt.txt
+
+# Local configurations, backups, debug tools, and test traces
+appsettings.json
+appsettings.*.json
+*.bak
+tools/
+InternalTrace*.log

@@ -18,28 +18,33 @@ namespace LabSystem.Services
         private readonly IResultRepository _resultRepo;
         private readonly IRepository<TestType> _testTypeRepo;
         private readonly IRepository<Staff> _staffRepo;
+        private readonly IInvoiceRepository _invoiceRepo;
 
         public SqliteBackupService(
             IPatientRepository patientRepo,
             ITestOrderRepository orderRepo,
             IResultRepository resultRepo,
             IRepository<TestType> testTypeRepo,
-            IRepository<Staff> staffRepo)
+            IRepository<Staff> staffRepo,
+            IInvoiceRepository invoiceRepo)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
             _resultRepo = resultRepo;
             _testTypeRepo = testTypeRepo;
             _staffRepo = staffRepo;
+            _invoiceRepo = invoiceRepo;
         }
 
         public async Task BackupNowAsync(CancellationToken cancellationToken = default)
         {
             string dbBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Database");
             string excelBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Excel");
+            string csvBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "CSV");
             
             Directory.CreateDirectory(dbBackupsDir);
             Directory.CreateDirectory(excelBackupsDir);
+            Directory.CreateDirectory(csvBackupsDir);
             
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmm");
             
@@ -54,6 +59,10 @@ namespace LabSystem.Services
             // 2. Human-Readable Excel Spreadsheet Backup (for Lab Technicians)
             string excelDestFile = Path.Combine(excelBackupsDir, $"lab_backup_{timestamp}.xlsx");
             await GenerateExcelBackupAsync(excelDestFile, cancellationToken);
+
+            // 3. Raw CSV Backup
+            string csvDestFolder = Path.Combine(csvBackupsDir, $"csv_backup_{timestamp}");
+            await GenerateCsvBackupAsync(csvDestFolder, cancellationToken);
         }
 
         private async Task GenerateExcelBackupAsync(string filePath, CancellationToken cancellationToken = default)
@@ -394,6 +403,59 @@ namespace LabSystem.Services
                 return $"<= {tt.ReferenceRangeHigh.Value}";
             }
             return "N/A";
+        }
+
+        private async Task GenerateCsvBackupAsync(string outputDirectory, CancellationToken cancellationToken = default)
+        {
+            Directory.CreateDirectory(outputDirectory);
+
+            var patients = await _patientRepo.GetAllAsync(cancellationToken);
+            var orders = await _orderRepo.GetAllAsync(cancellationToken);
+            var results = await _resultRepo.GetAllAsync(cancellationToken);
+            var testTypes = await _testTypeRepo.GetAllAsync(cancellationToken);
+            var staff = await _staffRepo.GetAllAsync(cancellationToken);
+            var invoices = await _invoiceRepo.GetAllAsync(cancellationToken);
+
+            WriteCsv(Path.Combine(outputDirectory, "patients.csv"),
+                patients.Select(p => new { p.PatientId, p.Uhid, p.FullName, p.Gender, p.DateOfBirth, p.ContactPhone, p.ContactEmail, p.CreatedAt, p.BranchId }));
+
+            WriteCsv(Path.Combine(outputDirectory, "orders.csv"),
+                orders.Select(o => new { o.OrderId, o.PatientId, o.OrderedAt, o.Status, o.ReferredBy, o.CreatedAt, o.UpdatedAt, o.BranchId }));
+
+            WriteCsv(Path.Combine(outputDirectory, "results.csv"),
+                results.Select(r => new { r.ResultId, r.OrderId, r.TypeId, r.Value, r.ValueText, r.IsAbnormal, r.IsAmended, r.RecordedAt, r.TechnicianId, r.CreatedAt }));
+
+            WriteCsv(Path.Combine(outputDirectory, "test_types.csv"),
+                testTypes.Select(t => new { t.TypeId, t.Name, t.Unit, t.ReferenceRangeLow, t.ReferenceRangeHigh, t.Category, t.Price, t.SampleType, t.InputType }));
+
+            WriteCsv(Path.Combine(outputDirectory, "staff.csv"),
+                staff.Select(s => new { s.StaffId, s.FullName, s.Role, s.CreatedAt, s.BranchId }));
+
+            WriteCsv(Path.Combine(outputDirectory, "invoices.csv"),
+                invoices.Select(i => new { i.InvoiceId, i.OrderId, i.TotalAmount, i.DiscountPercent, i.TaxPercent, i.IsPaid, i.PaidAt, i.PaymentMethod, i.CreatedAt, i.BranchId }));
+        }
+
+        private void WriteCsv<T>(string filePath, IEnumerable<T> data)
+        {
+            var lines = new List<string>();
+            var properties = typeof(T).GetProperties();
+            lines.Add(string.Join(",", properties.Select(p => p.Name)));
+
+            foreach (var item in data)
+            {
+                var values = properties.Select(p =>
+                {
+                    var val = p.GetValue(item);
+                    if (val == null) return "";
+                    if (val is string s && s.Contains(",")) return $"\"{s}\"";
+                    if (val is DateTime dt) return dt.ToString("yyyy-MM-dd HH:mm:ss");
+                    if (val is bool b) return b ? "1" : "0";
+                    return val.ToString();
+                });
+                lines.Add(string.Join(",", values));
+            }
+
+            File.WriteAllLines(filePath, lines);
         }
     }
 }

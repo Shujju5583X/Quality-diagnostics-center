@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -13,8 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabSystem.UI", "LabSystem.U
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabSystem.Tests", "LabSystem.Tests\LabSystem.Tests.csproj", "{1F950DFD-8549-490C-B1AC-8FFEE94A2DAF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabSystem.Api", "LabSystem.Api\LabSystem.Api.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
-EndProject
+
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,10 +84,7 @@ Global
 		{1F950DFD-8549-490C-B1AC-8FFEE94A2DAF}.Release|x64.Build.0 = Release|Any CPU
 		{1F950DFD-8549-490C-B1AC-8FFEE94A2DAF}.Release|x86.ActiveCfg = Release|Any CPU
 		{1F950DFD-8549-490C-B1AC-8FFEE94A2DAF}.Release|x86.Build.0 = Release|Any CPU
-		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

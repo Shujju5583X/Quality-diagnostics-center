@@ -56,7 +56,7 @@ namespace LabSystem.Data
 
             // Generate a new secure random password
             string newPassword;
-            using (var rng = new RNGCryptoServiceProvider())
+            using (var rng = RandomNumberGenerator.Create())
             {
                 byte[] randomBytes = new byte[32];
                 rng.GetBytes(randomBytes);
