@@ -27,33 +27,7 @@ namespace LabSystem.Tests
 
             _context = new LabDbContext(_connection);
 
-            var initSqlPath = TestHelper.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
-            if (initSqlPath == null || !File.Exists(initSqlPath))
-            {
-                throw new FileNotFoundException("Could not find V1__init.sql for SQLite setup.");
-            }
-            string sql = File.ReadAllText(initSqlPath);
-            _context.Database.ExecuteSqlCommand(sql);
-
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-
-            // Create Appointments table
-            _context.Database.ExecuteSqlCommand(@"
-                CREATE TABLE IF NOT EXISTS Appointments (
-                    AppointmentId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    PatientId INTEGER NOT NULL,
-                    AppointmentDate DATETIME NOT NULL,
-                    DurationMinutes INTEGER NOT NULL DEFAULT 15,
-                    Purpose TEXT,
-                    Status TEXT NOT NULL DEFAULT 'Scheduled',
-                    Notes TEXT,
-                    CreatedAt DATETIME,
-                    UpdatedAt DATETIME,
-                    FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
-                );
-            ");
+            TestHelper.InitializeTestDatabase(_context);
 
             _repo = new AppointmentRepository(_context);
             _service = new AppointmentService(_repo);

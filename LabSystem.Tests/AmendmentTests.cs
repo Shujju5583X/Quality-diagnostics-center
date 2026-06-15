@@ -26,27 +26,7 @@ namespace LabSystem.Tests
 
             _context = new LabDbContext(_connection);
 
-            var initSqlPath = TestHelper.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
-            if (initSqlPath == null || !File.Exists(initSqlPath))
-            {
-                throw new FileNotFoundException("Could not find V1__init.sql for SQLite setup.");
-            }
-            string sql = File.ReadAllText(initSqlPath);
-            _context.Database.ExecuteSqlCommand(sql);
-
-            // Add amendment columns if not present
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN IsAmended INTEGER NOT NULL DEFAULT 0;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN AmendmentReason TEXT;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN AmendedAt DATETIME;"); } catch { }
-
-            // Add PinHash column if not present (added in Phase 1)
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN Role TEXT;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN PinHash TEXT;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN FailedLoginAttempts INTEGER NOT NULL DEFAULT 0;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN LockoutEnd DATETIME;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+            TestHelper.InitializeTestDatabase(_context);
 
             var resultRepo = new ResultRepository(_context);
             var testTypeRepo = new TestTypeRepository(_context);
@@ -152,7 +132,7 @@ namespace LabSystem.Tests
         public async Task Amend_ReevaluatesAbnormality()
         {
             // Arrange
-            var patient = new Patient { FullName = "Test Patient", DateOfBirth = DateTime.UtcNow.AddYears(-25), CreatedAt = DateTime.UtcNow };
+            var patient = new Patient { FullName = "Test Patient", Age = 25, CreatedAt = DateTime.UtcNow };
             _context.Patients.Add(patient);
             await _context.SaveChangesAsync();
 

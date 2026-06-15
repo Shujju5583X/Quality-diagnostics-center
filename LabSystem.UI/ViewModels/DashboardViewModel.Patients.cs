@@ -18,10 +18,10 @@ namespace LabSystem.UI.ViewModels
             set { _newPatientName = value; OnPropertyChanged(); }
         }
 
-        public DateTime? NewPatientDOB
+        public int NewPatientAge
         {
-            get => _newPatientDOB;
-            set { _newPatientDOB = value; OnPropertyChanged(); }
+            get => _newPatientAge;
+            set { _newPatientAge = value; OnPropertyChanged(); }
         }
 
         public string NewPatientPhone
@@ -140,6 +140,29 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
+        private Patient _editingPatient;
+        public string PatientFormTitle => _editingPatient == null ? "Register New Patient" : "Edit Patient";
+        public string PatientFormButtonText => _editingPatient == null ? "REGISTER PATIENT" : "UPDATE PATIENT";
+
+        private ICommand _editPatientCommand;
+        public ICommand EditPatientCommand => _editPatientCommand ?? (_editPatientCommand = new RelayCommand(ExecuteEditPatient));
+
+        private void ExecuteEditPatient(object obj)
+        {
+            if (obj is Patient patient)
+            {
+                _editingPatient = patient;
+                NewPatientName = patient.FullName;
+                NewPatientAge = patient.Age;
+                NewPatientGender = patient.Gender;
+                NewPatientPhone = patient.ContactPhone;
+                NewPatientEmail = patient.ContactEmail;
+                
+                OnPropertyChanged(nameof(PatientFormTitle));
+                OnPropertyChanged(nameof(PatientFormButtonText));
+            }
+        }
+
         private async Task ExecuteAddPatientAsync(object obj)
         {
             if (string.IsNullOrWhiteSpace(NewPatientName))
@@ -172,53 +195,72 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
-                // Duplicate check
-                var patients = await _patientRepo.GetAllAsync();
-                var exists = patients.Any(p => 
-                    p.FullName.Equals(NewPatientName, StringComparison.OrdinalIgnoreCase) && 
-                    p.ContactPhone == (NewPatientPhone ?? ""));
-
-                if (exists)
+                if (_editingPatient != null)
                 {
-                    var dialogResult = MessageBox.Show("A patient with this name and phone number is already registered. Register anyway?", "Duplicate Patient", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (dialogResult == MessageBoxResult.No)
-                    {
-                        return;
-                    }
+                    // Update existing patient
+                    _editingPatient.FullName = NewPatientName.Trim();
+                    _editingPatient.Age = NewPatientAge;
+                    _editingPatient.Gender = NewPatientGender ?? "Male";
+                    _editingPatient.ContactPhone = NewPatientPhone ?? "";
+                    _editingPatient.ContactEmail = NewPatientEmail ?? "";
+
+                    await _patientRepo.UpdateAsync(_editingPatient);
+                    Log.Information("Updated patient: {PatientName} with UHID {Uhid}", NewPatientName, _editingPatient.Uhid);
+                    MessageBox.Show("Patient information updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    _editingPatient = null;
+                    OnPropertyChanged(nameof(PatientFormTitle));
+                    OnPropertyChanged(nameof(PatientFormButtonText));
                 }
-
-                // Generate UHID
-                var uhid = await GenerateNextUhidAsync();
-
-                var patient = new Patient
+                else
                 {
-                    Uhid = uhid,
-                    FullName = NewPatientName,
-                    DateOfBirth = NewPatientDOB,
-                    Gender = NewPatientGender ?? "Male",
-                    ContactPhone = NewPatientPhone ?? "",
-                    ContactEmail = NewPatientEmail ?? "",
-                    CreatedAt = DateTime.UtcNow
-                };
+                    // Duplicate check
+                    var patients = await _patientRepo.GetAllAsync();
+                    var exists = patients.Any(p => 
+                        p.FullName.Equals(NewPatientName, StringComparison.OrdinalIgnoreCase) && 
+                        p.ContactPhone == (NewPatientPhone ?? ""));
 
-                await _patientRepo.AddAsync(patient);
-                Log.Information("Added patient: {PatientName} with UHID {Uhid}", NewPatientName, uhid);
+                    if (exists)
+                    {
+                        var dialogResult = MessageBox.Show("A patient with this name and phone number is already registered. Register anyway?", "Duplicate Patient", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        if (dialogResult == MessageBoxResult.No)
+                        {
+                            return;
+                        }
+                    }
 
+                    // Generate UHID
+                    var uhid = await GenerateNextUhidAsync();
+
+                    var patient = new Patient
+                    {
+                        Uhid = uhid,
+                        FullName = NewPatientName,
+                        Age = NewPatientAge,
+                        Gender = NewPatientGender ?? "Male",
+                        ContactPhone = NewPatientPhone ?? "",
+                        ContactEmail = NewPatientEmail ?? "",
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _patientRepo.AddAsync(patient);
+                    Log.Information("Added patient: {PatientName} with UHID {Uhid}", NewPatientName, uhid);
+                    MessageBox.Show($"Patient registered successfully!\nUHID: {uhid}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
 
                 // Reset fields
                 NewPatientName = string.Empty;
-                NewPatientDOB = null;
+                NewPatientAge = 0;
                 NewPatientPhone = string.Empty;
                 NewPatientEmail = string.Empty;
                 NewPatientGender = "Male";
 
                 await LoadDataAsync();
-                MessageBox.Show($"Patient registered successfully!\nUHID: {uhid}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to add patient.");
-                MessageBox.Show("Error adding patient to database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Log.Error(ex, "Failed to save patient.");
+                MessageBox.Show("Error saving patient to database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

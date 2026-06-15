@@ -12,6 +12,8 @@
 [Aa][Rr][Mm]64/
 bld/
 publish/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
 
 # Visual Studio files
 .vs/
@@ -23,6 +25,7 @@ publish/
 *.cache
 *.dbmdl
 *.opendb
+*.bak
 
 # JetBrains Rider & IntelliJ files
 .idea/
@@ -36,10 +39,6 @@ packages/
 project.lock.json
 project.assets.json
 
-# Test results
-[Tt]est[Rr]esult*/
-[Bb]uild[Ll]og.*
-
 # Local Databases, Logs, Backups, and Reports
 *.db
 *.sqlite
@@ -52,6 +51,7 @@ project.assets.json
 [Bb]ackups/
 [Rr]eports/
 [Ii]nvoices/
+InternalTrace*.log
 
 # OS generated files
 .DS_Store
@@ -67,16 +67,14 @@ env/
 venv/
 ENV/
 
-# Application output
-[Ss]ample\ reports/*.pdf
-![Ss]ample\ reports/Sample_Verification_Report.pdf
+# Application output PDFs
+[Ss]ample\ reports/001.pdf
+[Ss]ample\ reports/2-.pdf
+
+# Local configurations and secret templates
+appsettings.json
+appsettings.*.json
+!appsettings.example.json
 
 # Local AI prompt/history files
 initial_prompt.txt
-
-# Local configurations, backups, debug tools, and test traces
-appsettings.json
-appsettings.*.json
-*.bak
-tools/
-InternalTrace*.log

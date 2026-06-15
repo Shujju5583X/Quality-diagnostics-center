@@ -80,6 +80,13 @@ namespace LabSystem.UI.ViewModels
             set { _catalogTestSortOrder = value; OnPropertyChanged(); }
         }
 
+        private decimal _catalogTestPrice;
+        public decimal CatalogTestPrice
+        {
+            get => _catalogTestPrice;
+            set { _catalogTestPrice = value; OnPropertyChanged(); }
+        }
+
         private void PopulateCatalogEditFields()
         {
             if (SelectedCatalogTest == null)
@@ -94,6 +101,7 @@ namespace LabSystem.UI.ViewModels
                 CatalogTestMethod = string.Empty;
                 CatalogTestInterpretation = string.Empty;
                 CatalogTestSortOrder = 0;
+                CatalogTestPrice = 0;
                 return;
             }
 
@@ -107,6 +115,7 @@ namespace LabSystem.UI.ViewModels
             CatalogTestMethod = SelectedCatalogTest.Method;
             CatalogTestInterpretation = SelectedCatalogTest.Interpretation;
             CatalogTestSortOrder = SelectedCatalogTest.SortOrder;
+            CatalogTestPrice = SelectedCatalogTest.Price;
         }
 
         private async Task ExecuteSaveCatalogTestAsync(object obj)
@@ -133,6 +142,7 @@ namespace LabSystem.UI.ViewModels
                 entityToUpdate.Method = CatalogTestMethod;
                 entityToUpdate.Interpretation = CatalogTestInterpretation;
                 entityToUpdate.SortOrder = CatalogTestSortOrder;
+                entityToUpdate.Price = CatalogTestPrice;
 
                 await _testTypeRepo.UpdateAsync(entityToUpdate);
 
@@ -146,6 +156,7 @@ namespace LabSystem.UI.ViewModels
                 SelectedCatalogTest.Method = CatalogTestMethod;
                 SelectedCatalogTest.Interpretation = CatalogTestInterpretation;
                 SelectedCatalogTest.SortOrder = CatalogTestSortOrder;
+                SelectedCatalogTest.Price = CatalogTestPrice;
 
                 Log.Information("Admin updated TestType {TypeId}: {TestName}", SelectedCatalogTest.TypeId, CatalogTestName);
 
@@ -180,7 +191,8 @@ namespace LabSystem.UI.ViewModels
                     GroupName = CatalogTestGroupName,
                     Method = CatalogTestMethod,
                     Interpretation = CatalogTestInterpretation,
-                    SortOrder = CatalogTestSortOrder
+                    SortOrder = CatalogTestSortOrder,
+                    Price = CatalogTestPrice
                 };
 
                 await _testTypeRepo.AddAsync(newTest);

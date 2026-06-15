@@ -121,8 +121,184 @@ namespace LabSystem.Data
             }
         }
 
+        private class PatientDobDto
+        {
+            public int PatientId { get; set; }
+            public DateTime? DateOfBirth { get; set; }
+        }
+
         private static void EnsureSchemaUpToDate(LabDbContext db)
         {
+            // 1. Migrate Patients: DateOfBirth -> Age
+            bool dobColumnExists = false;
+            try
+            {
+                db.Database.ExecuteSqlCommand("SELECT DateOfBirth FROM Patients LIMIT 1;");
+                dobColumnExists = true;
+            }
+            catch
+            {
+                dobColumnExists = false;
+            }
+
+            if (dobColumnExists)
+            {
+                try
+                {
+                    // Add Age column
+                    db.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN Age INTEGER NOT NULL DEFAULT 0;");
+                    Log.Information("Added column Age to Patients.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "Age column addition skipped or failed.");
+                }
+
+                try
+                {
+                    // Migrate DOB data to Age
+                    var dobData = db.Database.SqlQuery<PatientDobDto>("SELECT PatientId, DateOfBirth FROM Patients").ToList();
+                    foreach (var item in dobData)
+                    {
+                        int age = 0;
+                        if (item.DateOfBirth.HasValue)
+                        {
+                            var relativeTo = DateTime.UtcNow;
+                            var birthDate = item.DateOfBirth.Value;
+                            age = relativeTo.Year - birthDate.Year;
+                            if (relativeTo.Month < birthDate.Month || (relativeTo.Month == birthDate.Month && relativeTo.Day < birthDate.Day))
+                            {
+                                age--;
+                            }
+                            if (age < 0) age = 0;
+                        }
+                        db.Database.ExecuteSqlCommand("UPDATE Patients SET Age = @p0 WHERE PatientId = @p1", age, item.PatientId);
+                    }
+                    Log.Information("Successfully migrated DateOfBirth to Age for existing patients.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to migrate DateOfBirth data to Age.");
+                }
+
+                try
+                {
+                    // Drop DateOfBirth column
+                    db.Database.ExecuteSqlCommand("ALTER TABLE Patients DROP COLUMN DateOfBirth;");
+                    Log.Information("Dropped column DateOfBirth from Patients.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to drop DateOfBirth column; it will remain unused.");
+                }
+            }
+
+            // 2. Create Doctors table
+            try
+            {
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS Doctors (
+                        DoctorId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        FullName TEXT NOT NULL,
+                        ContactPhone TEXT NOT NULL,
+                        Commission REAL NOT NULL DEFAULT 0.0,
+                        CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                    );
+                ");
+                Log.Information("Doctors table verified/created.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to create Doctors table.");
+            }
+
+            // 3. Create Departments table and migrate TestTypes.Category to it
+            try
+            {
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS Departments (
+                        DepartmentId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE
+                    );
+                ");
+                Log.Information("Departments table verified/created.");
+
+                // Migrate distinct categories from TestTypes to Departments
+                db.Database.ExecuteSqlCommand(@"
+                    INSERT OR IGNORE INTO Departments (Name)
+                    SELECT DISTINCT Category FROM TestTypes WHERE Category IS NOT NULL AND Category != '';
+                ");
+
+                // Add DepartmentId to TestTypes
+                try
+                {
+                    db.Database.ExecuteSqlCommand("ALTER TABLE TestTypes ADD COLUMN DepartmentId INTEGER REFERENCES Departments(DepartmentId) ON DELETE SET NULL;");
+                    Log.Information("Added DepartmentId to TestTypes table.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "DepartmentId column addition to TestTypes skipped.");
+                }
+
+                // Update DepartmentId in TestTypes
+                db.Database.ExecuteSqlCommand(@"
+                    UPDATE TestTypes
+                    SET DepartmentId = (SELECT DepartmentId FROM Departments WHERE Name = TestTypes.Category)
+                    WHERE DepartmentId IS NULL OR DepartmentId = 0;
+                ");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to create Departments table or migrate categories.");
+            }
+
+            // 4. Update TestOrders table with DoctorId FK column
+            try
+            {
+                db.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN DoctorId INTEGER REFERENCES Doctors(DoctorId) ON DELETE SET NULL;");
+                Log.Information("Added DoctorId column to TestOrders table.");
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "DoctorId column addition to TestOrders skipped.");
+            }
+
+            // 5. Update Invoices table with AmountPaid column
+            try
+            {
+                db.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN AmountPaid REAL NOT NULL DEFAULT 0.0;");
+                Log.Information("Added AmountPaid column to Invoices table.");
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "AmountPaid column addition to Invoices skipped.");
+            }
+
+            // 6. Create Settings table if not exists and seed
+            try
+            {
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS Settings (
+                        Key TEXT PRIMARY KEY,
+                        Value TEXT
+                    );
+                ");
+                db.Database.ExecuteSqlCommand(@"
+                    INSERT OR IGNORE INTO Settings (Key, Value) VALUES
+                    ('operator_name', ''),
+                    ('operator_address', ''),
+                    ('operator_phone', ''),
+                    ('letterhead_path', ''),
+                    ('last_backup', NULL);
+                ");
+                Log.Information("Settings table verified/created and seeded.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to create/seed Settings table.");
+            }
+
             // Safe incremental column additions (idempotent — skipped if column already exists)
             var migrations = new[]
             {

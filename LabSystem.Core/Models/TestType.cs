@@ -22,6 +22,8 @@ namespace LabSystem.Core.Models
         public decimal Price { get; set; }
         
         public string SampleType { get; set; }
+        public int? DepartmentId { get; set; }
+        public virtual Department Department { get; set; }
         public virtual ICollection<ReferenceRange> ReferenceRanges { get; set; } = new HashSet<ReferenceRange>();
     }
 }

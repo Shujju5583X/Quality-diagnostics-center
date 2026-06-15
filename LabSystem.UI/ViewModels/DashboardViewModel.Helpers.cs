@@ -15,12 +15,24 @@ namespace LabSystem.UI.ViewModels
         public double? High { get; set; }
         public string GroupName { get; set; }
         public string Category { get; set; }
+        public decimal Price { get; set; }
+        public string RefRangeMale { get; set; }
+        public string RefRangeFemale { get; set; }
+        public Action OnSelectionChanged { get; set; }
 
         private bool _isSelected;
         public bool IsSelected
         {
             get => _isSelected;
-            set { _isSelected = value; OnPropertyChanged(); }
+            set
+            {
+                if (_isSelected != value)
+                {
+                    _isSelected = value;
+                    OnPropertyChanged();
+                    OnSelectionChanged?.Invoke();
+                }
+            }
         }
     }
 

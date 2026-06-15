@@ -15,8 +15,8 @@
         <Style x:Key="SidebarItemStyle" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Margin" Value="10 4 10 4"/>
-            <Setter Property="Padding" Value="16 12"/>
+            <Setter Property="Margin" Value="4 4 4 4"/>
+            <Setter Property="Padding" Value="0 12"/>
             <Setter Property="Height" Value="48"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -51,6 +51,7 @@
         </CollectionViewSource>
 
         <converters:InvertBoolConverter x:Key="InvertBool" />
+        <converters:DecimalToVisibilityConverter x:Key="DecimalToVis" />
 
         <!-- Row style: highlight abnormal results in red -->
         <Style x:Key="AbnormalRowStyle" TargetType="DataGridRow">
@@ -66,12 +67,12 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!-- ══════════════ LEFT SIDEBAR NAVIGATION ══════════════ -->
-        <Border Grid.Column="0" Background="#1E1926" BorderThickness="0">
+        <Border x:Name="SidebarBorder" Grid.Column="0" Width="60" Background="#1E1926" BorderThickness="0" ClipToBounds="True" MouseEnter="SidebarBorder_MouseEnter" MouseLeave="SidebarBorder_MouseLeave">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -79,94 +80,159 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Brand / Logo -->
-                <StackPanel Grid.Row="0" Margin="16 28 16 20">
-                    <materialDesign:PackIcon Kind="Microscope" Width="42" Height="42" HorizontalAlignment="Center" Foreground="#B39DDB" Margin="0 0 0 10"/>
-                    <TextBlock Text="QDC SYSTEM" FontSize="11" FontWeight="Bold" Foreground="#9E8FB2" HorizontalAlignment="Center"/>
-                </StackPanel>
+                <!-- Brand / Logo & Pin -->
+                <Grid Grid.Row="0" Margin="0 20 0 20" Height="50">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Microscope Icon (Centered in the 60px collapsed sidebar) -->
+                    <materialDesign:PackIcon Grid.Column="0" Kind="Microscope" Width="32" Height="32" Foreground="#B39DDB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <!-- Brand Text -->
+                    <TextBlock Grid.Column="1" Text="QDC SYSTEM" FontSize="14" FontWeight="Bold" Foreground="#9E8FB2" VerticalAlignment="Center" Margin="0 0 8 0"/>
+                    <!-- Pin button -->
+                    <Button Grid.Column="2" Click="PinButton_Click" Style="{StaticResource MaterialDesignFlatButton}" Padding="4" Width="36" Height="36" Foreground="#9E8FB2" Margin="0 0 10 0" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Width="18" Height="18">
+                            <materialDesign:PackIcon.Style>
+                                <Style TargetType="materialDesign:PackIcon">
+                                    <Setter Property="Kind" Value="PinOutline"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSidebarPinned}" Value="True">
+                                            <Setter Property="Kind" Value="Pin"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </materialDesign:PackIcon.Style>
+                        </materialDesign:PackIcon>
+                    </Button>
+                </Grid>
 
                 <!-- Navigation ListBox synced to MainTabControl -->
                 <ListBox Grid.Row="1" 
-                         Background="Transparent" 
-                         BorderThickness="0"
-                         SelectedIndex="{Binding ElementName=MainTabControl, Path=SelectedIndex}"
-                         ItemContainerStyle="{StaticResource SidebarItemStyle}">
+                          Background="Transparent" 
+                          BorderThickness="0"
+                          SelectedIndex="{Binding ElementName=MainTabControl, Path=SelectedIndex}"
+                          ItemContainerStyle="{StaticResource SidebarItemStyle}">
 
+                    <!-- Tab 0: Overview -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="Home" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="Home" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Overview" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
+                    <!-- Tab 1: Patients -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="AccountGroup" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="AccountGroup" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Patients" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
+                    <!-- Tab 2: New Order -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="ClipboardText" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="ClipboardText" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="New Order" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
-                    <!-- Tab 3: Work Queue (3-column layout) -->
+                    <!-- Tab 3: Work Queue -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="TestTube" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="TestTube" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Work Queue" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
-                    <!-- Tab 4: Appointments -->
+                    <!-- Tab 4: Report Generation -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="Calendar" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
-                            <TextBlock Grid.Column="1" Text="Appointments" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="FileDocumentOutline" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Grid.Column="1" Text="Report Gen" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
+                    <!-- Tab 5: Billing -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="CashMultiple" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Billing" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
+                    <!-- Tab 6: Test Catalog -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="Database" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="Database" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Test Catalog" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
+                    <!-- Tab 7: Doctors -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="TestTube" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
-                            <TextBlock Grid.Column="1" Text="QC" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="Doctor" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Grid.Column="1" Text="Doctors" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
 
+                    <!-- Tab 8: Settings -->
                     <ListBoxItem>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <materialDesign:PackIcon Grid.Column="0" Kind="Cog" Width="22" Height="22" VerticalAlignment="Center" Foreground="#B39DDB"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="52"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="Cog" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#B39DDB"/>
                             <TextBlock Grid.Column="1" Text="Settings" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="8 0 0 0"/>
                         </Grid>
                     </ListBoxItem>
                 </ListBox>
 
                 <!-- Sidebar Footer -->
-                <Border Grid.Row="2" Background="#14111A" Padding="16 14" BorderBrush="#2A2235" BorderThickness="0 1 0 0">
+                <Border Grid.Row="2" Background="#14111A" Padding="0 14" BorderBrush="#2A2235" BorderThickness="0 1 0 0">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="60"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <materialDesign:PackIcon Grid.Column="0" Kind="AccountCircle" Width="24" Height="24" Foreground="#B39DDB" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Margin="10 0 0 0" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Grid.Column="0" Kind="AccountCircle" Width="24" Height="24" Foreground="#B39DDB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Margin="8 0 0 0" VerticalAlignment="Center">
                             <TextBlock Text="Lab Technician" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                             <TextBlock Text="Single Operator Mode" Foreground="#7E7094" FontSize="10" FontWeight="Regular"/>
                         </StackPanel>
@@ -263,7 +329,7 @@
             <TabItem>
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="3.2*" />
                         <ColumnDefinition Width="2*" />
                     </Grid.ColumnDefinitions>
 
@@ -300,8 +366,15 @@
                                     <DataGridTextColumn Header="UHID" Binding="{Binding Uhid}" Width="Auto" />
                                     <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
                                     <DataGridTextColumn Header="Gender" Binding="{Binding Gender, TargetNullValue='Male'}" Width="Auto" />
-                                    <DataGridTextColumn Header="Date of Birth" Binding="{Binding DateOfBirth, StringFormat=yyyy-MM-dd}" Width="Auto" />
+                                    <DataGridTextColumn Header="Age" Binding="{Binding Age}" Width="Auto" />
                                     <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
+                                    <DataGridTemplateColumn Header="Action" Width="Auto">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Edit" Command="{Binding DataContext.EditPatientCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignFlatButton}" Padding="4" Height="24"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
 
@@ -318,7 +391,7 @@
                     <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Register New Patient" />
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="{Binding PatientFormTitle}" />
 
                                 <TextBox materialDesign:HintAssist.Hint="Full Name *"
                                          Text="{Binding NewPatientName, UpdateSourceTrigger=PropertyChanged}"
@@ -329,15 +402,17 @@
                                 <ComboBox materialDesign:HintAssist.Hint="Gender"
                                           SelectedValue="{Binding NewPatientGender}" SelectedValuePath="Content"
                                           Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 20">
-                                    <ComboBoxItem Content="Male" IsSelected="True" />
+                                    <ComboBoxItem Content="select gender" IsEnabled="False" Visibility="Collapsed"/>
+                                    <ComboBoxItem Content="Male" />
                                     <ComboBoxItem Content="Female" />
-                                    <ComboBoxItem Content="Other" />
+                                    <ComboBoxItem Content="Others" />
                                 </ComboBox>
 
-                                <DatePicker materialDesign:HintAssist.Hint="Date of Birth"
-                                            SelectedDate="{Binding NewPatientDOB}"
-                                            Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
-                                            Margin="0 0 0 20" />
+                                <TextBox materialDesign:HintAssist.Hint="Age *"
+                                         Text="{Binding NewPatientAge, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                         materialDesign:TextFieldAssist.HasClearButton="True"
+                                         Margin="0 0 0 20" />
 
                                 <TextBox materialDesign:HintAssist.Hint="Contact Phone"
                                          Text="{Binding NewPatientPhone, UpdateSourceTrigger=PropertyChanged}"
@@ -354,7 +429,7 @@
                                 <Button Command="{Binding AddPatientCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="46">
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="AccountPlus" Margin="0 0 8 0" VerticalAlignment="Center" Width="20" Height="20" />
-                                        <TextBlock Text="REGISTER PATIENT" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding PatientFormButtonText}" VerticalAlignment="Center" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -367,144 +442,202 @@
             <TabItem>
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="260" />
+                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="3.5*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Select Patient -->
+                    <!-- Left Column: Patient, Referred By & Summary -->
                     <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="1. Select Patient" />
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="1. Patient &amp; Doctor" />
 
-                            <TextBox Grid.Row="1" materialDesign:HintAssist.Hint="Search patient..."
-                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                     materialDesign:TextFieldAssist.HasClearButton="True"
-                                     Margin="4 0 4 16"
-                                     Text="{Binding PatientSearchQuery, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <DataGrid Grid.Row="2" ItemsSource="{Binding Patients}" SelectedItem="{Binding SelectedPatient}"
-                                      AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
-                                      Margin="4 0 4 4" AlternatingRowBackground="#FAF9FC"
-                                      EnableRowVirtualization="True" VirtualizingStackPanel.IsVirtualizing="True">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="UHID" Binding="{Binding Uhid}" Width="Auto" />
-                                    <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
-                                </DataGrid.Columns>
-                            </DataGrid>
-
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="4 8 4 4">
-                                <Button Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding PreviousPatientPageCommand}" Content="&lt; Prev" />
-                                <TextBlock Text="{Binding PatientPageInfo}" VerticalAlignment="Center" Margin="16 0" FontWeight="SemiBold" />
-                                <Button Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding NextPatientPageCommand}" Content="Next &gt;" />
-                            </StackPanel>
-                        </Grid>
-                    </materialDesign:Card>
-
-                    <!-- Select Tests -->
-                    <materialDesign:Card Grid.Column="1" Margin="12 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 16" Text="2. Select Tests" />
-
-                            <ListBox Grid.Row="1" ItemsSource="{Binding Source={StaticResource GroupedTestTypes}}" BorderThickness="0" Background="Transparent" Margin="4 0 4 4"
-                                     VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
-                                <ListBox.GroupStyle>
-                                    <GroupStyle>
-                                        <GroupStyle.HeaderTemplate>
-                                            <DataTemplate>
-                                                <Border Background="#EDE7F6" CornerRadius="4" Padding="8 6" Margin="0 8 0 4">
-                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13" Foreground="#5E35B1" />
-                                                </Border>
-                                            </DataTemplate>
-                                        </GroupStyle.HeaderTemplate>
-                                    </GroupStyle>
-                                </ListBox.GroupStyle>
-                                <ListBox.ItemTemplate>
+                            <!-- Searchable Patient Dropdown -->
+                            <ComboBox Grid.Row="1"
+                                      IsEditable="True"
+                                      materialDesign:HintAssist.Hint="Search and Select Patient *"
+                                      ItemsSource="{Binding Patients}"
+                                      SelectedItem="{Binding SelectedPatient}"
+                                      Text="{Binding PatientSearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                      Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                      Margin="0 0 0 16">
+                                <ComboBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="#E0E0E0" BorderThickness="0 0 0 1" Padding="4 10">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0 0 12 0" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" Foreground="#333333" VerticalAlignment="Center"/>
-                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Low}" Foreground="#444444" FontSize="11"/>
-                                                    <TextBlock Text=" – " Foreground="#888888" FontSize="11"/>
-                                                    <TextBlock Text="{Binding High}" Foreground="#444444" FontSize="11"/>
-                                                    <TextBlock Text=" " Foreground="#888888" FontSize="11"/>
-                                                    <TextBlock Text="{Binding Unit}" Foreground="#888888" FontSize="11"/>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
+                                        <TextBlock>
+                                            <Run Text="{Binding FullName, Mode=OneWay}" FontWeight="Bold"/>
+                                            <Run Text=" (Age: " Foreground="#777777"/>
+                                            <Run Text="{Binding Age, Mode=OneWay}" Foreground="#777777"/>
+                                            <Run Text=", Phone: " Foreground="#777777"/>
+                                            <Run Text="{Binding ContactPhone, Mode=OneWay}" Foreground="#777777"/>
+                                            <Run Text=")" Foreground="#777777"/>
+                                        </TextBlock>
                                     </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </Grid>
-                    </materialDesign:Card>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
 
-                    <!-- Confirm Order -->
-                    <materialDesign:Card Grid.Column="2" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                            <!-- Referred By Dropdown (Populated from Doctors table + Self) -->
+                            <ComboBox Grid.Row="2"
+                                      materialDesign:HintAssist.Hint="Referred By"
+                                      ItemsSource="{Binding DoctorsForOrder}"
+                                      SelectedItem="{Binding SelectedDoctorForOrder}"
+                                      DisplayMemberPath="FullName"
+                                      Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                      Margin="0 0 0 16" />
 
-                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="3. Confirm Order" />
+                            <TextBox Grid.Row="3" materialDesign:HintAssist.Hint="Order Notes (optional)"
+                                     Text="{Binding OrderNotes, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                     AcceptsReturn="True" TextWrapping="Wrap" Height="60"
+                                     Margin="0 0 0 16" />
 
-                            <Border Grid.Row="1" Background="#F1EBF9" CornerRadius="6" Padding="12 14" Margin="0 0 0 16">
+                            <!-- Selection Summary Panel -->
+                            <GroupBox Grid.Row="4" Header="Selection Summary" Margin="0 0 0 16">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <!-- Selected Items List -->
+                                    <ListBox Grid.Row="0" ItemsSource="{Binding SelectedTestTypesSummary}" BorderThickness="0" Background="Transparent">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0 2">
+                                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Left"/>
+                                                    <TextBlock Text="{Binding Price, StringFormat='₹{0:N2}'}" FontSize="12" FontWeight="Bold" Foreground="#00796B" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <!-- Running Total -->
+                                    <Border Grid.Row="1" Background="#E0F2F1" CornerRadius="4" Padding="8" Margin="0 8 0 0">
+                                        <Grid>
+                                            <TextBlock Text="Total Cost:" FontWeight="Bold" Foreground="#004D40" FontSize="14" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding OrderRunningTotal, StringFormat='₹{0:N2}'}" FontWeight="Bold" Foreground="#004D40" FontSize="16" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </GroupBox>
+
+                            <!-- Selected Patient Display -->
+                            <Border Grid.Row="5" Background="#F1EBF9" CornerRadius="6" Padding="12" Margin="0 0 0 12">
                                 <TextBlock Text="{Binding SelectedPatient.FullName, TargetNullValue='No patient selected'}"
-                                           FontWeight="Bold" FontSize="14" Foreground="#311B92"
+                                           FontWeight="Bold" FontSize="13" Foreground="#311B92"
                                            HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
                             </Border>
 
-                            <ComboBox Grid.Row="2" materialDesign:HintAssist.Hint="Apply Test Panel / Package"
-                                      ItemsSource="{Binding TestPanels}"
-                                      SelectedItem="{Binding SelectedTestPanel}"
-                                      DisplayMemberPath="Name"
-                                      Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                                      Margin="0 0 0 16" />
-
-                            <!-- ReferredBy ComboBox with editable text for autocomplete -->
-                            <ComboBox Grid.Row="3"
-                                      IsEditable="True"
-                                      materialDesign:HintAssist.Hint="Referred By"
-                                      ItemsSource="{Binding ReferredByHistory}"
-                                      Text="{Binding OrderReferredBy, UpdateSourceTrigger=PropertyChanged}"
-                                      Style="{StaticResource MaterialDesignFloatingHintComboBox}"
-                                      Margin="0 0 0 16" />
-
-                            <TextBox Grid.Row="4" materialDesign:HintAssist.Hint="Order Notes (optional)"
-                                     Text="{Binding OrderNotes, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                     AcceptsReturn="True" TextWrapping="Wrap"
-                                     VerticalScrollBarVisibility="Auto" Height="80"
-                                     Margin="0 0 0 24" />
-
-                            <Button Grid.Row="5" Command="{Binding CreateOrderCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="46">
+                            <Button Grid.Row="6" Command="{Binding CreateOrderCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="46">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="Send" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
                                     <TextBlock Text="SUBMIT ORDER" VerticalAlignment="Center" FontWeight="Bold"/>
                                 </StackPanel>
                             </Button>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Right Column: Two-Pane Test Selector -->
+                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="2. Select Tests" />
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.8*" />
+                                    <ColumnDefinition Width="2.2*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Left Pane of Selector: Departments & Packages Tabs -->
+                                <TabControl Grid.Column="0" Margin="0 0 8 0" BorderThickness="0" Background="Transparent">
+                                    <TabItem Header="Departments" FontSize="13" FontWeight="SemiBold">
+                                        <ListBox ItemsSource="{Binding DepartmentsForOrder}" SelectedItem="{Binding SelectedDepartmentForOrder, Mode=TwoWay}" Margin="0 8 0 0">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" Margin="0 4">
+                                                        <CheckBox IsChecked="{Binding IsSelected}" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </TabItem>
+                                    <TabItem Header="Packages" FontSize="13" FontWeight="SemiBold">
+                                        <ListBox ItemsSource="{Binding PackagesForOrder}" SelectedItem="{Binding SelectedPackageForOrder, Mode=TwoWay}" Margin="0 8 0 0">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                                            <CheckBox IsChecked="{Binding IsSelected}" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="100"/>
+                                                            <TextBlock Text=" - ₹" Foreground="#00796B" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Price}" Foreground="#00796B" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                        <!-- Collapsed list of tests in package -->
+                                                        <Expander Grid.Row="1" Header="Tests List" FontSize="11" Margin="24 2 0 0" Padding="0">
+                                                            <ItemsControl ItemsSource="{Binding TestTypes}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <TextBlock Text="{Binding Name}" FontSize="11" Margin="4 2" Foreground="#555"/>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </Expander>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </TabItem>
+                                </TabControl>
+
+                                <!-- Right Pane of Selector: Tests in selected category -->
+                                <ListBox Grid.Column="1" ItemsSource="{Binding FilteredTestTypesForOrder}" BorderThickness="1" BorderBrush="#E0E0E0" Background="#FAFAFA" Padding="4" Margin="8 0 0 0">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#EEEEEE" BorderThickness="0 0 0 1" Padding="4 8">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0 0 8 0"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}" FontWeight="Bold" FontSize="12" Foreground="#333" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Price, StringFormat='₹{0:N2}'}" FontWeight="Bold" Foreground="#00796B" FontSize="12" VerticalAlignment="Center"/>
+                                                    
+                                                    <!-- Ranges below name -->
+                                                    <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0 4 0 0">
+                                                        <TextBlock Text="M: " FontSize="10" Foreground="#555"/>
+                                                        <TextBlock Text="{Binding RefRangeMale}" FontSize="10" Foreground="#555" Margin="0 0 8 0"/>
+                                                        <TextBlock Text="F: " FontSize="10" Foreground="#555"/>
+                                                        <TextBlock Text="{Binding RefRangeFemale}" FontSize="10" Foreground="#555"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
                         </Grid>
                     </materialDesign:Card>
                 </Grid>
@@ -518,8 +651,6 @@
                         <ColumnDefinition Width="280" />
                         <!-- Column 2: Action (Results Entry) -->
                         <ColumnDefinition Width="*" />
-                        <!-- Column 3: Output (Actions) -->
-                        <ColumnDefinition Width="240" />
                     </Grid.ColumnDefinitions>
 
                     <!-- ═══ COLUMN 1: PENDING ORDER QUEUE ═══ -->
@@ -650,6 +781,7 @@
                             <!-- Results DataGrid -->
                             <DataGrid Grid.Row="2"
                                       ItemsSource="{Binding SelectedOrderResults}"
+                                      PreviewKeyDown="ResultsEntryGrid_PreviewKeyDown"
                                       AutoGenerateColumns="False"
                                       SelectionMode="Single"
                                       CanUserAddRows="False"
@@ -813,146 +945,96 @@
                         </Grid>
                     </materialDesign:Card>
 
-                    <!-- ═══ COLUMN 3: OUTPUT / QUICK ACTIONS ═══ -->
-                    <materialDesign:Card Grid.Column="2" Margin="8 0 0 0" Padding="0" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+
+                </Grid>
+            </TabItem>
+
+            <!-- ─── TAB 4: REPORT GENERATION ─── -->
+            <TabItem>
+                <Grid Margin="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.5*" />
+                        <ColumnDefinition Width="3.5*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left Panel: Complete Orders list -->
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <Border Grid.Row="0" Background="#4A148C" CornerRadius="8 8 0 0" Padding="16 12">
-                                <TextBlock Text="QUICK ACTIONS" FontWeight="Bold" FontSize="13" Foreground="White"/>
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Completed Orders" />
+
+                            <TextBox Grid.Row="1" materialDesign:HintAssist.Hint="Search by patient name, order ID..."
+                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                     materialDesign:TextFieldAssist.HasClearButton="True"
+                                     Margin="4 0 4 16"
+                                     Text="{Binding ReportSearchQuery, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <DataGrid Grid.Row="2" x:Name="CompletedOrdersGrid" 
+                                      ItemsSource="{Binding CompleteOrders}" 
+                                      SelectedItem="{Binding SelectedReportOrder, Mode=TwoWay}"
+                                      SelectionChanged="CompletedOrdersGrid_SelectionChanged"
+                                      AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                                      Margin="4 0 4 4" AlternatingRowBackground="#FAF9FC"
+                                      EnableRowVirtualization="True" VirtualizingStackPanel.IsVirtualizing="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="Auto" />
+                                    <DataGridTextColumn Header="Patient Name" Binding="{Binding Patient.FullName}" Width="*" />
+                                    <DataGridTextColumn Header="Completed At" Binding="{Binding UpdatedAt, StringFormat={}{0:dd MMM HH:mm}}" Width="Auto" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Right Panel: Report Preview & Generation -->
+                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Report Preview" />
+
+                            <Grid Grid.Row="1" Margin="4 0 4 12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" x:Name="ReportLetterheadComboBox"
+                                          materialDesign:HintAssist.Hint="Letterhead Option"
+                                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                          SelectionChanged="ReportLetterheadComboBox_SelectionChanged"
+                                          Margin="0 0 12 0" SelectedIndex="0">
+                                    <ComboBoxItem Content="With Letterhead" />
+                                    <ComboBoxItem Content="Without Letterhead" />
+                                </ComboBox>
+                                <Button Grid.Column="1" Click="SaveReportPdf_Click" Style="{StaticResource MaterialDesignRaisedButton}" Height="36" Margin="0 0 8 0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 4 0" VerticalAlignment="Center" Width="16" Height="16" />
+                                        <TextBlock Text="SAVE PDF" VerticalAlignment="Center" FontWeight="Bold" FontSize="11"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="2" Click="PrintReportPdf_Click" Style="{StaticResource MaterialDesignRaisedAccentButton}" Height="36">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Printer" Margin="0 0 4 0" VerticalAlignment="Center" Width="16" Height="16" />
+                                        <TextBlock Text="PRINT" VerticalAlignment="Center" FontWeight="Bold" FontSize="11"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <Border Grid.Row="2" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4">
+                                <WebBrowser x:Name="ReportWebViewer" Margin="4" />
                             </Border>
-
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                                <StackPanel Margin="16">
-                                    <!-- Selected Order Info -->
-                                    <Border Background="#F3E5F5" CornerRadius="8" Padding="14" Margin="0 0 0 16">
-                                        <StackPanel>
-                                            <TextBlock Text="SELECTED ORDER" FontSize="10" FontWeight="Bold" Foreground="#7B1FA2" Margin="0 0 0 6"/>
-                                            <TextBlock Text="{Binding SelectedOrder.Patient.FullName, TargetNullValue='None selected'}"
-                                                       FontSize="13" FontWeight="Bold" Foreground="#4A148C" TextWrapping="Wrap"/>
-                                            <TextBlock Text="{Binding SelectedOrder.OrderId, StringFormat='Order #{0}', TargetNullValue=''}"
-                                                       FontSize="11" Foreground="#9C27B0" Margin="0 2 0 0"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Divider label -->
-                                    <TextBlock Text="REPORTS" FontSize="10" FontWeight="Bold" Foreground="#9E9E9E" Margin="0 0 0 8"/>
-
-                                    <!-- Generate PDF Report -->
-                                    <Button Command="{Binding GenerateReportCommand}"
-                                            Style="{StaticResource MaterialDesignRaisedButton}"
-                                            Background="#1565C0" BorderBrush="#1565C0"
-                                            Height="48" Width="208" HorizontalAlignment="Stretch"
-                                            Margin="0 0 0 10">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="FilePdfBox" Width="22" Height="22" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Generate Report" VerticalAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!-- Generate Bill -->
-                                    <Button Command="{Binding GenerateBillCommand}"
-                                            Style="{StaticResource MaterialDesignOutlinedButton}"
-                                            Height="44" HorizontalAlignment="Stretch"
-                                            Margin="0 0 0 20">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Receipt" Width="20" Height="20" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="View / Print Bill" VerticalAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!-- Divider label -->
-                                    <TextBlock Text="COLLECT PAYMENT" FontSize="10" FontWeight="Bold" Foreground="#9E9E9E" Margin="0 0 0 8"/>
-
-                                    <!-- Invoice Status -->
-                                    <Border Margin="0 0 0 12" CornerRadius="6" Padding="10">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="False">
-                                                        <Setter Property="Background" Value="#FFEBEE"/>
-                                                        <Setter Property="BorderBrush" Value="#FFCDD2"/>
-                                                        <Setter Property="BorderThickness" Value="1"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="True">
-                                                        <Setter Property="Background" Value="#E8F5E9"/>
-                                                        <Setter Property="BorderBrush" Value="#C8E6C9"/>
-                                                        <Setter Property="BorderThickness" Value="1"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding SelectedInvoice.TotalAmount, StringFormat='Amount: ₹{0:N2}', TargetNullValue='No invoice'}"
-                                                       FontWeight="Bold" FontSize="13"/>
-                                            <TextBlock FontSize="11" FontWeight="SemiBold" Margin="0 2 0 0">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="False">
-                                                                <Setter Property="Text" Value="❌ UNPAID"/>
-                                                                <Setter Property="Foreground" Value="#C62828"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding SelectedInvoice.IsPaid}" Value="True">
-                                                                <Setter Property="Text" Value="✔ PAID"/>
-                                                                <Setter Property="Foreground" Value="#2E7D32"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Cash Payment Button -->
-                                    <Button Command="{Binding AddPaymentCashCommand}"
-                                            Style="{StaticResource MaterialDesignRaisedButton}"
-                                            Background="#2E7D32" BorderBrush="#2E7D32"
-                                            Height="48" HorizontalAlignment="Stretch"
-                                            Margin="0 0 0 10">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Cash" Width="22" Height="22" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="💵 Cash Payment" VerticalAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!-- UPI Payment Button -->
-                                    <Button Command="{Binding AddPaymentUpiCommand}"
-                                            Style="{StaticResource MaterialDesignRaisedButton}"
-                                            Background="#E65100" BorderBrush="#E65100"
-                                            Height="48" HorizontalAlignment="Stretch"
-                                            Margin="0 0 0 20">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="QrcodeScan" Width="22" Height="22" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="📱 UPI Payment" VerticalAlignment="Center" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </Button>
-
-                                    <!-- Divider -->
-                                    <Separator Margin="0 0 0 16"/>
-
-                                    <!-- Manual Backup -->
-                                    <Button Command="{Binding BackupCommand}"
-                                            Style="{StaticResource MaterialDesignFlatButton}"
-                                            Height="40" HorizontalAlignment="Stretch">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="DatabaseSync" Width="18" Height="18" Margin="0 0 8 0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Manual Backup" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </ScrollViewer>
                         </Grid>
                     </materialDesign:Card>
                 </Grid>
-            </TabItem>
-
-            <!-- ─── TAB 4: APPOINTMENTS ─── -->
-            <TabItem>
-                <views:AppointmentsView DataContext="{Binding AppointmentsVM}"/>
             </TabItem>
             <!-- ─── TAB 5: BILLING ─── -->
             <TabItem>
@@ -1037,12 +1119,24 @@
                                         <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
                                             <TextBlock Text="Invoice #" Foreground="#5C6BC0" FontSize="12"/>
                                             <TextBlock Text="{Binding SelectedInvoice.InvoiceId, TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12" Margin="0 0 16 0"/>
-                                            <TextBlock Text="Total: ₹" Foreground="#5C6BC0" FontSize="12"/>
+                                            <TextBlock Text="Subtotal: ₹" Foreground="#5C6BC0" FontSize="12"/>
                                             <TextBlock Text="{Binding SelectedInvoice.TotalAmount, StringFormat='{}{0:N2}', TargetNullValue='-'}" FontWeight="Bold" Foreground="#3F51B5" FontSize="12"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0 4 0 0" Visibility="{Binding SelectedInvoice.DiscountAmount, Converter={StaticResource DecimalToVis}}">
+                                            <TextBlock Text="Discount: -₹" Foreground="#C62828" FontSize="12" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.DiscountAmount, StringFormat='{}{0:N2}'}" FontWeight="Bold" Foreground="#C62828" FontSize="12"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0 4 0 0" Visibility="{Binding SelectedInvoice.TaxAmount, Converter={StaticResource DecimalToVis}}">
+                                            <TextBlock Text="Tax: +₹" Foreground="#E65100" FontSize="12" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.TaxAmount, StringFormat='{}{0:N2}'}" FontWeight="Bold" Foreground="#E65100" FontSize="12"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
                                             <TextBlock Text="Grand Total: ₹" Foreground="#00796B" FontSize="12" FontWeight="Bold"/>
                                             <TextBlock Text="{Binding SelectedInvoice.GrandTotal, StringFormat='{}{0:N2}', TargetNullValue='-'}" FontWeight="Bold" Foreground="#004D40" FontSize="12"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0 4 0 0" Visibility="{Binding SelectedInvoice.DueAmount, Converter={StaticResource DecimalToVis}}">
+                                            <TextBlock Text="Due Amount: ₹" Foreground="#C62828" FontSize="12" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding SelectedInvoice.DueAmount, StringFormat='{}{0:N2}'}" FontWeight="Bold" Foreground="#C62828" FontSize="12"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
@@ -1053,12 +1147,12 @@
                                 <StackPanel>
                                     <TextBlock Text="DISCOUNT &amp; TAX" FontSize="11" FontWeight="Bold" Foreground="Gray" Margin="0 0 0 8"/>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Discount %:" VerticalAlignment="Center" Width="80" FontSize="12"/>
-                                        <TextBox Text="{Binding DiscountPercent, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0 0 16 0"
-                                                 Style="{StaticResource MaterialDesignTextBox}" materialDesign:HintAssist.Hint="%"/>
-                                        <TextBlock Text="Tax %:" VerticalAlignment="Center" Width="55" FontSize="12"/>
-                                        <TextBox Text="{Binding TaxPercent, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0 0 16 0"
-                                                 Style="{StaticResource MaterialDesignTextBox}" materialDesign:HintAssist.Hint="%"/>
+                                        <TextBlock Text="Discount (₹):" VerticalAlignment="Center" Width="80" FontSize="12"/>
+                                        <TextBox Text="{Binding DiscountAmount, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0 0 16 0"
+                                                 Style="{StaticResource MaterialDesignTextBox}" materialDesign:HintAssist.Hint="Amount"/>
+                                        <TextBlock Text="Tax (₹):" VerticalAlignment="Center" Width="55" FontSize="12"/>
+                                        <TextBox Text="{Binding TaxAmount, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0 0 16 0"
+                                                 Style="{StaticResource MaterialDesignTextBox}" materialDesign:HintAssist.Hint="Amount"/>
                                         <Button Command="{Binding ApplyDiscountTaxCommand}" Content="APPLY" Style="{StaticResource MaterialDesignOutlinedButton}" Height="32"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -1071,7 +1165,7 @@
                                     <TextBox Text="{Binding PaymentAmount, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="8 0 0 0"
                                              Style="{StaticResource MaterialDesignTextBox}" materialDesign:HintAssist.Hint="Enter amount"/>
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 16">
                                     <Button Command="{Binding AddPaymentCashCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="50" Width="140" Margin="0 0 16 0">
                                         <StackPanel Orientation="Horizontal">
                                             <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" Margin="0 0 8 0" VerticalAlignment="Center"/>
@@ -1085,6 +1179,16 @@
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
+
+                                <Button Command="{Binding GenerateBillCommand}" 
+                                        IsEnabled="{Binding SelectedInvoice.IsPaid, FallbackValue=False}"
+                                        Style="{StaticResource MaterialDesignRaisedButton}" 
+                                        Height="46" Margin="0 8 0 0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Receipt" Width="20" Height="20" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="GENERATE BILL PREVIEW" VerticalAlignment="Center" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Button>
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
@@ -1095,34 +1199,72 @@
             <TabItem>
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="4*" />
-                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="220" /> <!-- Departments -->
+                        <ColumnDefinition Width="*" />   <!-- Tests Grid -->
+                        <ColumnDefinition Width="320" /> <!-- Test Edit Form -->
                     </Grid.ColumnDefinitions>
 
-                    <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <!-- Column 0: Department List -->
+                    <materialDesign:Card Grid.Column="0" Margin="0 0 8 0" Padding="12" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 12" Text="Departments" />
+
+                            <ListBox Grid.Row="1" ItemsSource="{Binding Departments}" SelectedItem="{Binding SelectedDepartment}" Margin="0 0 0 12">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <StackPanel Grid.Row="2">
+                                <TextBox materialDesign:HintAssist.Hint="New Department"
+                                         Text="{Binding NewDepartmentName, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                         Margin="0 0 0 8"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Command="{Binding AddDepartmentCommand}" Content="ADD" Style="{StaticResource MaterialDesignRaisedButton}" Height="32" Margin="0 0 4 0"/>
+                                    <Button Grid.Column="1" Command="{Binding DeleteDepartmentCommand}" Content="DELETE" Style="{StaticResource MaterialDesignOutlinedButton}" Height="32" Margin="4 0 0 0" Foreground="#C62828" BorderBrush="#C62828"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Column 1: Tests List -->
+                    <materialDesign:Card Grid.Column="1" Margin="8 0 8 0" Padding="16" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="4 4 4 12" Text="Reference Range Catalog" />
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 8" Text="Tests" />
 
                             <TextBox Grid.Row="1" x:Name="CatalogSearchBox"
-                                     materialDesign:HintAssist.Hint="Search by name, category, group..."
+                                     materialDesign:HintAssist.Hint="Search tests..."
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                      materialDesign:TextFieldAssist.HasClearButton="True"
-                                     Margin="4 0 4 16"
+                                     Margin="0 0 0 12"
                                      TextChanged="CatalogSearchBox_TextChanged"/>
 
                             <DataGrid Grid.Row="2" x:Name="CatalogGrid"
                                       ItemsSource="{Binding CatalogTestTypes}" SelectedItem="{Binding SelectedCatalogTest}"
                                       AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
-                                      Margin="4 0 4 4" AlternatingRowBackground="#FAF9FC"
+                                      Margin="0" AlternatingRowBackground="#FAF9FC"
                                       EnableRowVirtualization="True" VirtualizingStackPanel.IsVirtualizing="True">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Test Name" Binding="{Binding Name}" Width="*" />
-                                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="Auto" />
+                                    <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat='₹{0:N2}'}" Width="Auto" />
                                     <DataGridTextColumn Header="Group" Binding="{Binding GroupName}" Width="Auto" />
                                     <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="Auto" />
                                     <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="Auto" />
@@ -1131,80 +1273,92 @@
                         </Grid>
                     </materialDesign:Card>
 
-                    <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <!-- Column 2: Test Form -->
+                    <materialDesign:Card Grid.Column="2" Margin="8 0 0 0" Padding="16" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 20" Text="Manage Test Type" />
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0 0 0 16" Text="Manage Test Type" />
 
                                 <TextBox materialDesign:HintAssist.Hint="Test Name *"
                                          Text="{Binding CatalogTestName, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
 
-                                <Grid Margin="0 0 0 16">
+                                <TextBox materialDesign:HintAssist.Hint="Price (₹) *"
+                                         Text="{Binding CatalogTestPrice, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
+
+                                <Grid Margin="0 0 0 12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Category"
                                              Text="{Binding CatalogTestCategory, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 8 0" />
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 6 0" />
                                     <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Group Name"
                                              Text="{Binding CatalogTestGroupName, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="8 0 0 0" />
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="6 0 0 0" />
                                 </Grid>
 
-                                <Grid Margin="0 0 0 16">
+                                <Grid Margin="0 0 0 12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Unit"
                                              Text="{Binding CatalogTestUnit, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 8 0" />
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 6 0" />
                                     <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Sort Order"
                                              Text="{Binding CatalogTestSortOrder, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="8 0 0 0" />
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="6 0 0 0" />
                                 </Grid>
 
-                                <Grid Margin="0 0 0 16">
+                                <Grid Margin="0 0 0 12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Ref Range Low"
                                              Text="{Binding CatalogTestLow, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 8 0" />
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 6 0" />
                                     <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Ref Range High"
                                              Text="{Binding CatalogTestHigh, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="8 0 0 0" />
+                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="6 0 0 0" />
                                 </Grid>
 
                                 <TextBox materialDesign:HintAssist.Hint="Method (e.g. ELISA)"
                                          Text="{Binding CatalogTestMethod, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
 
                                 <TextBox materialDesign:HintAssist.Hint="Interpretation Notes"
                                          Text="{Binding CatalogTestInterpretation, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" Height="70" Margin="0 0 0 16" />
+                                         AcceptsReturn="True" TextWrapping="Wrap" Height="60" Margin="0 0 0 12" />
 
-                                <CheckBox Content="Is Active Test" IsChecked="{Binding CatalogTestIsActive}" Margin="0 0 0 24" />
+                                <CheckBox Content="Is Active Test" IsChecked="{Binding CatalogTestIsActive}" Margin="0 0 0 16" />
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" Command="{Binding SaveCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 6 0">
+                                    <Button Grid.Column="0" Command="{Binding SaveCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Margin="0 0 4 0" Height="36">
                                         <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                            <TextBlock Text="SAVE" VerticalAlignment="Center" FontWeight="Bold"/>
+                                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 2 0" VerticalAlignment="Center" Width="14" Height="14"/>
+                                            <TextBlock Text="SAVE" VerticalAlignment="Center" FontSize="10" FontWeight="Bold"/>
                                         </StackPanel>
                                     </Button>
-                                    <Button Grid.Column="1" Command="{Binding AddCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Margin="6 0 0 0">
+                                    <Button Grid.Column="1" Command="{Binding AddCatalogTestCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Margin="2 0 2 0" Height="36">
                                         <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Plus" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                            <TextBlock Text="ADD NEW" VerticalAlignment="Center" FontWeight="Bold"/>
+                                            <materialDesign:PackIcon Kind="Plus" Margin="0 0 2 0" VerticalAlignment="Center" Width="14" Height="14"/>
+                                            <TextBlock Text="ADD" VerticalAlignment="Center" FontSize="10" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Grid.Column="2" Command="{Binding DeleteCatalogTestCommand}" Style="{StaticResource MaterialDesignFlatButton}" Margin="4 0 0 0" Height="36" Foreground="#C62828">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Delete" Margin="0 0 2 0" VerticalAlignment="Center" Width="14" Height="14"/>
+                                            <TextBlock Text="DEL" VerticalAlignment="Center" FontSize="10" FontWeight="Bold"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
@@ -1214,165 +1368,141 @@
                 </Grid>
             </TabItem>
 
-            <!-- ─── TAB 7: QC (QUALITY CONTROL) ─── -->
+            <!-- ─── TAB 7: DOCTORS CRUD ─── -->
             <TabItem>
-                <views:QcView DataContext="{Binding QcVM}"/>
+                <Grid Margin="24">
+                    <materialDesign:Card Padding="20" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Style="{StaticResource MaterialDesignHeadline5TextBlock}" Text="Doctors Registry" Margin="0 0 0 16" FontWeight="Bold"/>
+
+                            <TabControl Grid.Row="1" x:Name="DoctorsTabControl">
+                                <!-- Tab A: Details / Form -->
+                                <TabItem Header="Doctor Form" FontSize="13" FontWeight="SemiBold">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel Margin="0 16" MaxWidth="500" HorizontalAlignment="Left">
+                                            <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Add / Edit Doctor" Margin="0 0 0 16"/>
+                                            
+                                            <TextBox materialDesign:HintAssist.Hint="Full Name *"
+                                                     Text="{Binding NewDoctorName, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                                     Margin="0 0 0 16"/>
+
+                                            <TextBox materialDesign:HintAssist.Hint="Contact Phone *"
+                                                     Text="{Binding NewDoctorPhone, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                                     Margin="0 0 0 16"/>
+
+                                            <TextBox materialDesign:HintAssist.Hint="Commission Rate (%) *"
+                                                     Text="{Binding NewDoctorCommission, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                                     Margin="0 0 0 24"/>
+
+                                            <Button Command="{Binding SaveDoctorCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="40">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="SAVE DOCTOR" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </TabItem>
+
+                                <!-- Tab B: Doctors List Grid -->
+                                <TabItem Header="Doctors List" FontSize="13" FontWeight="SemiBold">
+                                    <Grid Margin="0 16">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <DataGrid Grid.Row="0" ItemsSource="{Binding Doctors}" SelectedItem="{Binding SelectedDoctor, Mode=TwoWay}"
+                                                  SelectionChanged="DoctorsList_SelectionChanged"
+                                                  AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                                                  AlternatingRowBackground="#FAF9FC" EnableRowVirtualization="True">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Doctor ID" Binding="{Binding DoctorId}" Width="Auto"/>
+                                                <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="*"/>
+                                                <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto"/>
+                                                <DataGridTextColumn Header="Commission (%)" Binding="{Binding Commission, StringFormat='{}{0}%'}" Width="Auto"/>
+                                                <DataGridTemplateColumn Header="Action" Width="Auto">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Button Command="{Binding DataContext.DeleteDoctorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#C62828" Padding="4" Height="24">
+                                                                <materialDesign:PackIcon Kind="Delete" Width="16" Height="16"/>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Grid>
+                                </TabItem>
+                            </TabControl>
+                        </Grid>
+                    </materialDesign:Card>
+                </Grid>
             </TabItem>
 
             <!-- ─── TAB 8: SETTINGS / BACKUP ─── -->
             <TabItem>
-                <Grid Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="600">
+                <Grid Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="600" Width="500">
                     <StackPanel>
                         <TextBlock Style="{StaticResource MaterialDesignHeadline5TextBlock}" Text="Settings &amp; Backup" FontWeight="Bold" Margin="0 0 0 24"/>
 
-                        <materialDesign:Card Padding="24" UniformCornerRadius="8" Margin="0 0 0 16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <!-- Operator Info Card -->
+                        <materialDesign:Card Padding="24" UniformCornerRadius="8" Margin="0 0 0 20" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Database Backup" Margin="0 0 0 12"/>
-                                <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0 0 0 16"
-                                           Text="The system automatically creates an encrypted backup when the application closes. You can also trigger a manual backup at any time."/>
-                                <Button Command="{Binding BackupCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="46" HorizontalAlignment="Left">
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Operator Identity Settings" Margin="0 0 0 16" FontWeight="SemiBold"/>
+                                
+                                <TextBox materialDesign:HintAssist.Hint="Laboratory Name *"
+                                         Text="{Binding OperatorName, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                         Margin="0 0 0 16" />
+
+                                <TextBox materialDesign:HintAssist.Hint="Address *"
+                                         Text="{Binding OperatorAddress, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                         Margin="0 0 0 16" />
+
+                                <TextBox materialDesign:HintAssist.Hint="Phone Number *"
+                                         Text="{Binding OperatorPhone, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                                         Margin="0 0 0 24" />
+
+                                <Button Command="{Binding SaveSettingsCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="40" HorizontalAlignment="Right">
                                     <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="DatabaseSync" Margin="0 0 8 0" VerticalAlignment="Center" Width="20" Height="20" />
-                                        <TextBlock Text="BACKUP NOW" VerticalAlignment="Center" FontWeight="Bold"/>
+                                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18"/>
+                                        <TextBlock Text="SAVE SETTINGS" VerticalAlignment="Center" FontWeight="Bold"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
                         </materialDesign:Card>
 
+                        <!-- Database Backup Card -->
                         <materialDesign:Card Padding="24" UniformCornerRadius="8" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="System Information" Margin="0 0 0 12"/>
-                                <Grid>
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="CSV Database Backup Engine" Margin="0 0 0 12" FontWeight="SemiBold"/>
+                                <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0 0 0 16"
+                                           Text="Export full database tables (Patients, Doctors, Invoices, Tests, Results, Settings) to a single CSV backup file. Keep these safe in external storage."/>
+                                
+                                <Grid Margin="0 0 0 20">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Mode:" Foreground="Gray" Margin="0 0 16 8" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Single Operator (Authentication Disabled)" Margin="0 0 0 8"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Patients:" Foreground="Gray" Margin="0 0 16 8" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TotalPatients}" Margin="0 0 0 8"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Pending Orders:" Foreground="Gray" Margin="0 0 16 0" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PendingOrders}"/>
+                                    <TextBlock Grid.Column="0" Text="Last Backup:" Foreground="Gray" FontWeight="SemiBold" Margin="0 0 12 0" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding LastBackupTime}" FontWeight="SemiBold" Foreground="#311B92" VerticalAlignment="Center"/>
                                 </Grid>
-                            </StackPanel>
-                        </materialDesign:Card>
 
-                        <materialDesign:Card Padding="24" UniformCornerRadius="8" Margin="0 16 0 0" materialDesign:ShadowAssist.ShadowDepth="Depth2" DataContext="{Binding StaffManagementVM}">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Staff Management" Margin="0 0 0 12"/>
-                                <DataGrid ItemsSource="{Binding StaffMembers}" AutoGenerateColumns="False" IsReadOnly="True" 
-                                          SelectionMode="Single" SelectedItem="{Binding SelectedStaff}" MaxHeight="200"
-                                          materialDesign:DataGridAssist.CellPadding="4 2" BorderThickness="0" RowHeaderWidth="0" Margin="0 0 0 12">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="120"/>
-                                        <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="80"/>
-                                        <DataGridTextColumn Header="Created" Binding="{Binding CreatedAt, StringFormat={}{0:dd-MMM-yyyy}}" Width="90"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-
-                                <TextBlock Text="{Binding StatusMessage}" Foreground="Gray" FontStyle="Italic" Margin="0 0 0 8" TextWrapping="Wrap"/>
-
-                                <Border Background="#F5F5F5" Padding="12" CornerRadius="4" Margin="0 0 0 8">
-                                    <StackPanel>
-                                        <TextBlock Text="Add New Staff" FontWeight="SemiBold" Margin="0 0 0 8"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="100"/>
-                                                <ColumnDefinition Width="100"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0" Text="{Binding NewStaffName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Full Name" Margin="0 0 8 0"/>
-                                            <ComboBox Grid.Column="1" SelectedValue="{Binding NewStaffRole}" Margin="0 0 8 0">
-                                                <ComboBoxItem Content="Admin"/>
-                                                <ComboBoxItem Content="Technician" IsSelected="True"/>
-                                                <ComboBoxItem Content="Receptionist"/>
-                                            </ComboBox>
-                                            <TextBox Grid.Column="2" x:Name="StaffPinBox" materialDesign:HintAssist.Hint="PIN (4+ digits)" Margin="0 0 8 0"/>
-                                            <Button Grid.Column="3" Command="{Binding AddStaffCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Height="36">
-                                                <TextBlock Text="ADD" FontWeight="Bold"/>
-                                            </Button>
-                                        </Grid>
+                                <Button Command="{Binding BackupCommand}" Style="{StaticResource MaterialDesignRaisedAccentButton}" Height="42" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="DatabaseSync" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                        <TextBlock Text="DOWNLOAD CSV BACKUP" VerticalAlignment="Center" FontWeight="Bold"/>
                                     </StackPanel>
-                                </Border>
-
-                                <Border Background="#F5F5F5" Padding="12" CornerRadius="4" Visibility="{Binding IsStaffSelected, Converter={StaticResource BoolToVis}}">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding SelectedStaff.FullName, StringFormat=Selected: {0}}" FontWeight="SemiBold" Margin="0 0 0 8"/>
-                                        <Grid>
-                                                                    <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="120"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0" Text="{Binding PendingResetPin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="New PIN (4+ digits)" Margin="0 0 8 0"/>
-                                            <Button Grid.Column="1" Command="{Binding ResetPinCommand}" Style="{StaticResource MaterialDesignFlatButton}" Height="36" Margin="0 0 8 0">
-                                                <TextBlock Text="RESET PIN" FontWeight="Bold"/>
-                                            </Button>
-                                            <Button Grid.Column="2" Command="{Binding ToggleLockoutCommand}" CommandParameter="{Binding SelectedStaff}" Style="{StaticResource MaterialDesignFlatButton}" Height="36">
-                                                <TextBlock Text="{Binding SelectedStaff.LockoutEnd, StringFormat=Lock/Unlock}" FontWeight="Bold"/>
-                                            </Button>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </materialDesign:Card>
-
-                        <materialDesign:Card Padding="24" UniformCornerRadius="8" Margin="0 16 0 0" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="REVENUE REPORT" Margin="0 0 0 12"/>
-                                <StackPanel Orientation="Horizontal" Margin="0 0 0 8">
-                                    <TextBlock Text="From:" VerticalAlignment="Center" Width="50"/>
-                                    <DatePicker SelectedDate="{Binding ReportStartDate}" Width="150" Margin="0 0 16 0"/>
-                                    <TextBlock Text="To:" VerticalAlignment="Center" Width="30"/>
-                                    <DatePicker SelectedDate="{Binding ReportEndDate}" Width="150" Margin="0 0 16 0"/>
-                                    <Button Command="{Binding GenerateRevenueReportCommand}" Content="GENERATE"
-                                            Style="{StaticResource MaterialDesignRaisedButton}" Height="36"/>
-                                </StackPanel>
-                                <Grid DataContext="{Binding RevenueStats}" Margin="0 8 0 0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Background="#EDE7F6" CornerRadius="6" Padding="12" Margin="0 0 8 0">
-                                        <StackPanel>
-                                            <TextBlock Text="TOTAL REVENUE" FontSize="10" FontWeight="Bold" Foreground="#5E35B1"/>
-                                            <TextBlock Text="{Binding TotalRevenue, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#311B92"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Column="1" Background="#E0F2F1" CornerRadius="6" Padding="12" Margin="0 0 8 0">
-                                        <StackPanel>
-                                            <TextBlock Text="COLLECTED" FontSize="10" FontWeight="Bold" Foreground="#00796B"/>
-                                            <TextBlock Text="{Binding TotalCollected, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#004D40"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Column="2" Background="#FFF3E0" CornerRadius="6" Padding="12" Margin="0 0 8 0">
-                                        <StackPanel>
-                                            <TextBlock Text="OUTSTANDING" FontSize="10" FontWeight="Bold" Foreground="#EF6C00"/>
-                                            <TextBlock Text="{Binding OutstandingAmount, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#E65100"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Column="3" Background="#E3F2FD" CornerRadius="6" Padding="12" Margin="0 0 8 0">
-                                        <StackPanel>
-                                            <TextBlock Text="CASH" FontSize="10" FontWeight="Bold" Foreground="#1565C0"/>
-                                            <TextBlock Text="{Binding CashCollected, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#0D47A1"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Grid.Column="4" Background="#FCE4EC" CornerRadius="6" Padding="12">
-                                        <StackPanel>
-                                            <TextBlock Text="UPI" FontSize="10" FontWeight="Bold" Foreground="#C2185B"/>
-                                            <TextBlock Text="{Binding UpiCollected, StringFormat='₹{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#880E4F"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
+                                </Button>
                             </StackPanel>
                         </materialDesign:Card>
                     </StackPanel>

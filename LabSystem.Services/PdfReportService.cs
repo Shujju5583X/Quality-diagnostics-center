@@ -151,14 +151,7 @@ namespace LabSystem.Services
             string patientName = order.Patient?.FullName ?? "Unknown Patient";
             string gender = !string.IsNullOrWhiteSpace(order.Patient?.Gender) ? order.Patient.Gender : "Unknown";
             
-            string ageStr = "";
-            if (order.Patient?.DateOfBirth != null)
-            {
-                DateTime dob = order.Patient.DateOfBirth.Value;
-                int age = DateTime.Today.Year - dob.Year;
-                if (dob > DateTime.Today.AddYears(-age)) age--;
-                ageStr = age.ToString();
-            }
+            string ageStr = order.Patient != null ? order.Patient.Age.ToString() : "";
 
             string orderedDateStr = order.OrderedAt.ToLocalTime().ToString("dd-MM-yyyy");
             string reportingDateStr = (order.UpdatedAt == default(DateTime))

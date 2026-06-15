@@ -9,7 +9,7 @@ namespace LabSystem.Core.Models
         public int PatientId { get; set; }
         public string Uhid { get; set; }
         public string FullName { get; set; }
-        public DateTime? DateOfBirth { get; set; }
+        public int Age { get; set; }
         public string ContactPhone { get; set; }
         public string ContactEmail { get; set; }
         public DateTime CreatedAt { get; set; }

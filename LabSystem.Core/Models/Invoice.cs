@@ -12,19 +12,22 @@ namespace LabSystem.Core.Models
 
         public decimal TotalAmount { get; set; }
 
-        // Percent-based discount and tax (stored in DB)
+        // Flat amounts (stored in DB)
+        public decimal DiscountAmount { get; set; } = 0;
+        public decimal TaxAmount { get; set; } = 0;
+        public decimal AmountPaid { get; set; } = 0;
+
+        // Percentage helpers (not mapped)
+        [NotMapped]
         public decimal DiscountPercent { get; set; } = 0;
+        [NotMapped]
         public decimal TaxPercent { get; set; } = 0;
-
-        // Computed properties (not mapped to DB)
-        [NotMapped]
-        public decimal DiscountAmount => TotalAmount * DiscountPercent / 100m;
-
-        [NotMapped]
-        public decimal TaxAmount => (TotalAmount - DiscountAmount) * TaxPercent / 100m;
 
         [NotMapped]
         public decimal GrandTotal => TotalAmount - DiscountAmount + TaxAmount;
+
+        [NotMapped]
+        public decimal DueAmount => GrandTotal - AmountPaid;
 
         public bool IsPaid { get; set; }
         public DateTime? PaidAt { get; set; }

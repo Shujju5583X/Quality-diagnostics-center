@@ -120,7 +120,7 @@ namespace LabSystem.Tests
             {
                 OrderId = 3,
                 OrderedAt = DateTime.Now,
-                Patient = new Patient { PatientId = 3, FullName = "Abnormal Patient", DateOfBirth = DateTime.Now.AddYears(-30) }
+                Patient = new Patient { PatientId = 3, FullName = "Abnormal Patient", Age = 30 }
             };
 
             _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(3, default))
@@ -142,7 +142,7 @@ namespace LabSystem.Tests
             {
                 OrderId = 4,
                 OrderedAt = DateTime.Now,
-                Patient = new Patient { PatientId = 4, FullName = "Amended Patient", DateOfBirth = DateTime.Now.AddYears(-40) }
+                Patient = new Patient { PatientId = 4, FullName = "Amended Patient", Age = 40 }
             };
 
             _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(4, default))
@@ -164,7 +164,7 @@ namespace LabSystem.Tests
             {
                 OrderId = 5,
                 OrderedAt = DateTime.Now,
-                Patient = new Patient { PatientId = 5, FullName = "Empty Patient", DateOfBirth = DateTime.Now.AddYears(-20) }
+                Patient = new Patient { PatientId = 5, FullName = "Empty Patient", Age = 20 }
             };
 
             _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(5, default))
@@ -177,13 +177,13 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public async Task GenerateReport_ShouldHandleNullDateOfBirth()
+        public async Task GenerateReport_ShouldHandleZeroAge()
         {
             var order = new TestOrder
             {
                 OrderId = 6,
                 OrderedAt = DateTime.Now,
-                Patient = new Patient { PatientId = 6, FullName = "Null DOB Patient", DateOfBirth = null }
+                Patient = new Patient { PatientId = 6, FullName = "Null DOB Patient", Age = 0 }
             };
 
             _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(6, default))

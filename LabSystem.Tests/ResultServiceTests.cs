@@ -68,7 +68,7 @@ namespace LabSystem.Tests
         public async Task AddResult_ShouldUseBiologicalRange_BasedOnAgeAndGender()
         {
             // Arrange
-            var patient = new Patient { Gender = "Female", DateOfBirth = DateTime.Today.AddYears(-25) }; // Female, 25 years old
+            var patient = new Patient { Gender = "Female", Age = 25 }; // Female, 25 years old
             var order = new TestOrder { OrderId = 10, Patient = patient };
             
             var testType = new TestType 
@@ -100,7 +100,7 @@ namespace LabSystem.Tests
         public async Task AddResult_ShouldSaveSentinelValue_WhenSpecimenIsRejected()
         {
             // Arrange
-            var patient = new Patient { Gender = "Male", DateOfBirth = DateTime.Today.AddYears(-30) };
+            var patient = new Patient { Gender = "Male", Age = 30 };
             var order = new TestOrder 
             { 
                 OrderId = 10, 
@@ -162,7 +162,7 @@ namespace LabSystem.Tests
             // Arrange
             var result = new Result { ResultId = 1, TypeId = 1, OrderId = 10, Value = 15, IsAbnormal = false };
             var testType = new TestType { TypeId = 1, ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
-            var patient = new Patient { Gender = "Male", DateOfBirth = DateTime.Today.AddYears(-30) };
+            var patient = new Patient { Gender = "Male", Age = 30 };
             var order = new TestOrder { OrderId = 10, Patient = patient };
 
             _mockResultRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(result);

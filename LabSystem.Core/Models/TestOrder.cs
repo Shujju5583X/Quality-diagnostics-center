@@ -23,6 +23,8 @@ namespace LabSystem.Core.Models
 
         // Simple string referral field (replaces Doctor entity FK)
         public string ReferredBy { get; set; }
+        public int? DoctorId { get; set; }
+        public virtual Doctor Doctor { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

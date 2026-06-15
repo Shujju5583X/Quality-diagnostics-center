@@ -97,13 +97,13 @@ namespace LabSystem.Services
             return await _invoiceRepo.GetAllWithDetailsAsync();
         }
 
-        public async Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discountPercent, decimal taxPercent)
+        public async Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discountAmount, decimal taxAmount)
         {
             var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
             if (invoice != null)
             {
-                invoice.DiscountPercent = discountPercent;
-                invoice.TaxPercent = taxPercent;
+                invoice.DiscountAmount = discountAmount;
+                invoice.TaxAmount = taxAmount;
                 var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
                 decimal paidAmount = payments.Sum(p => p.Amount);
                 invoice.IsPaid = paidAmount >= invoice.GrandTotal;

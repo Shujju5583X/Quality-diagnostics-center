@@ -10,7 +10,7 @@ namespace LabSystem.Services
         Task<Invoice> GenerateInvoiceAsync(int orderId);
         Task<Invoice> GetInvoiceForOrderAsync(int orderId);
         Task<IEnumerable<Invoice>> GetAllInvoicesAsync();
-        Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discountPercent, decimal taxPercent);
+        Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discountAmount, decimal taxAmount);
         Task AddPaymentAsync(int invoiceId, decimal amount, string paymentMethod);
         Task<RevenueReportStats> GetRevenueReportAsync(DateTime start, DateTime end);
     }

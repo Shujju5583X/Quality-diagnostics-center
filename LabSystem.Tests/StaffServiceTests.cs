@@ -27,20 +27,7 @@ namespace LabSystem.Tests
 
             _context = new LabDbContext(_connection);
 
-            var initSqlPath = TestHelper.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
-            if (initSqlPath == null || !File.Exists(initSqlPath))
-            {
-                throw new FileNotFoundException("Could not find V1__init.sql for SQLite setup.");
-            }
-            string sql = File.ReadAllText(initSqlPath);
-            _context.Database.ExecuteSqlCommand(sql);
-
-            // Add Role, PinHash, FailedLoginAttempts, LockoutEnd columns
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN Role TEXT;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN PinHash TEXT;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN FailedLoginAttempts INTEGER NOT NULL DEFAULT 0;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN LockoutEnd DATETIME;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+            TestHelper.InitializeTestDatabase(_context);
 
             _repo = new StaffRepository(_context);
             _service = new StaffService(_repo);

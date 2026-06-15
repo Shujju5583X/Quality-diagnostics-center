@@ -69,7 +69,7 @@ namespace LabSystem.Tests
             // Arrange mocks to return default empty lists to avoid exceptions
             _mockPatientRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Patient>
             {
-                new Patient { PatientId = 1, FullName = "John Doe", DateOfBirth = DateTime.Parse("1990-01-01"), Gender = "Male", ContactPhone = "123456", ContactEmail = "john@example.com", CreatedAt = DateTime.Parse("2026-06-09"), Uhid = "QDC-2026-00001" }
+                new Patient { PatientId = 1, FullName = "John Doe", Age = 36, Gender = "Male", ContactPhone = "123456", ContactEmail = "john@example.com", CreatedAt = DateTime.Parse("2026-06-09"), Uhid = "QDC-2026-00001" }
             });
 
             var order = new TestOrder { OrderId = 10, PatientId = 1, Status = "Pending", OrderedAt = DateTime.Parse("2026-06-09"), Notes = "101,102", ReferredBy = "Dr. Clark" };

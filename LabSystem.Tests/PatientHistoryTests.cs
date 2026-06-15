@@ -25,18 +25,7 @@ namespace LabSystem.Tests
 
             _context = new LabDbContext(_connection);
 
-            var initSqlPath = TestHelper.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
-            if (initSqlPath == null || !File.Exists(initSqlPath))
-            {
-                throw new FileNotFoundException("Could not find V1__init.sql for SQLite setup.");
-            }
-            string sql = File.ReadAllText(initSqlPath);
-            _context.Database.ExecuteSqlCommand(sql);
-
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+            TestHelper.InitializeTestDatabase(_context);
 
             _repository = new PatientRepository(_context);
         }

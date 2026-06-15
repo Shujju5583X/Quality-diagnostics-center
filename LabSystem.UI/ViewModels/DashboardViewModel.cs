@@ -25,6 +25,9 @@ namespace LabSystem.UI.ViewModels
         private readonly IBackupService _backupService;
         private readonly IBillingService _billingService;
         private readonly IRepository<TestPanel> _testPanelRepo;
+        private readonly IRepository<Doctor> _doctorRepo;
+        private readonly IRepository<Department> _departmentRepo;
+        private readonly IRepository<Setting> _settingRepo;
 
         // Fixed operator identity — single-person mode, no login required
         public const int DefaultStaffId = 1;
@@ -35,7 +38,7 @@ namespace LabSystem.UI.ViewModels
 
         // Patient tab fields
         private string _newPatientName;
-        private DateTime? _newPatientDOB;
+        private int _newPatientAge;
         private string _newPatientPhone;
         private string _newPatientEmail;
         private string _newPatientGender = "Male";
@@ -67,9 +70,9 @@ namespace LabSystem.UI.ViewModels
         private int _completedOrders;
         private int _abnormalResultsFlagged;
 
-        // Billing fields - Discount/Tax percent
-        private decimal _discountPercent;
-        private decimal _taxPercent;
+        // Billing fields - Discount/Tax amount (ruling out percent)
+        private decimal _discountAmount;
+        private decimal _taxAmount;
         private decimal _paymentAmount;
 
         // Revenue report fields
@@ -90,6 +93,121 @@ namespace LabSystem.UI.ViewModels
         private string _catalogTestInterpretation;
         private int _catalogTestSortOrder;
 
+        // Sidebar pin fields
+        private bool _isSidebarPinned;
+        public bool IsSidebarPinned
+        {
+            get => _isSidebarPinned;
+            set
+            {
+                _isSidebarPinned = value;
+                OnPropertyChanged();
+                try
+                {
+                    var path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "sidebar_pinned.txt");
+                    System.IO.File.WriteAllText(path, value.ToString());
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to save sidebar pin state.");
+                }
+            }
+        }
+
+        // Settings Operator info fields
+        private string _operatorName;
+        public string OperatorName
+        {
+            get => _operatorName;
+            set { _operatorName = value; OnPropertyChanged(); }
+        }
+
+        private string _operatorAddress;
+        public string OperatorAddress
+        {
+            get => _operatorAddress;
+            set { _operatorAddress = value; OnPropertyChanged(); }
+        }
+
+        private string _operatorPhone;
+        public string OperatorPhone
+        {
+            get => _operatorPhone;
+            set { _operatorPhone = value; OnPropertyChanged(); }
+        }
+
+        private string _lastBackupTime;
+        public string LastBackupTime
+        {
+            get => _lastBackupTime;
+            set { _lastBackupTime = value; OnPropertyChanged(); }
+        }
+
+        // Doctors CRUD fields
+        private string _newDoctorName;
+        public string NewDoctorName
+        {
+            get => _newDoctorName;
+            set { _newDoctorName = value; OnPropertyChanged(); }
+        }
+
+        private string _newDoctorPhone;
+        public string NewDoctorPhone
+        {
+            get => _newDoctorPhone;
+            set { _newDoctorPhone = value; OnPropertyChanged(); }
+        }
+
+        private decimal _newDoctorCommission;
+        public decimal NewDoctorCommission
+        {
+            get => _newDoctorCommission;
+            set { _newDoctorCommission = value; OnPropertyChanged(); }
+        }
+
+        private Doctor _selectedDoctor;
+        public Doctor SelectedDoctor
+        {
+            get => _selectedDoctor;
+            set
+            {
+                _selectedDoctor = value;
+                OnPropertyChanged();
+                if (value != null)
+                {
+                    NewDoctorName = value.FullName;
+                    NewDoctorPhone = value.ContactPhone;
+                    NewDoctorCommission = value.Commission;
+                }
+                else
+                {
+                    NewDoctorName = string.Empty;
+                    NewDoctorPhone = string.Empty;
+                    NewDoctorCommission = 0;
+                }
+            }
+        }
+
+        // Departments CRUD fields
+        private string _newDepartmentName;
+        public string NewDepartmentName
+        {
+            get => _newDepartmentName;
+            set { _newDepartmentName = value; OnPropertyChanged(); }
+        }
+
+        private Department _selectedDepartment;
+        public Department SelectedDepartment
+        {
+            get => _selectedDepartment;
+            set
+            {
+                _selectedDepartment = value;
+                OnPropertyChanged();
+                _ = LoadCatalogTestsForDepartmentAsync();
+            }
+        }
+
         public ObservableCollection<Patient> Patients { get; } = new ObservableCollection<Patient>();
         public ObservableCollection<TestOrder> Orders { get; } = new ObservableCollection<TestOrder>();
         public ObservableCollection<TestTypeSelection> TestTypes { get; } = new ObservableCollection<TestTypeSelection>();
@@ -102,6 +220,10 @@ namespace LabSystem.UI.ViewModels
 
         // Billing Items
         public ObservableCollection<Invoice> Invoices { get; } = new ObservableCollection<Invoice>();
+
+        // New collections
+        public ObservableCollection<Doctor> Doctors { get; } = new ObservableCollection<Doctor>();
+        public ObservableCollection<Department> Departments { get; } = new ObservableCollection<Department>();
 
         // Patient History
         public ObservableCollection<PatientHistoryEntry> PatientHistory { get; } = new ObservableCollection<PatientHistoryEntry>();
@@ -147,8 +269,9 @@ namespace LabSystem.UI.ViewModels
                 if (_selectedInvoice != null)
                 {
                     PaymentAmount = _selectedInvoice.GrandTotal;
-                    DiscountPercent = _selectedInvoice.DiscountPercent;
-                    TaxPercent = _selectedInvoice.TaxPercent;
+                    DiscountAmount = _selectedInvoice.DiscountAmount;
+                    TaxAmount = _selectedInvoice.TaxAmount;
+                    SelectedOrder = _selectedInvoice.Order ?? Orders.FirstOrDefault(o => o.OrderId == _selectedInvoice.OrderId);
                 }
             }
         }
@@ -182,17 +305,17 @@ namespace LabSystem.UI.ViewModels
             set { _abnormalResultsFlagged = value; OnPropertyChanged(); }
         }
 
-        // Billing properties - Discount/Tax percent
-        public decimal DiscountPercent
+        // Billing properties - Discount/Tax amount (flat rupee amount)
+        public decimal DiscountAmount
         {
-            get => _discountPercent;
-            set { _discountPercent = value; OnPropertyChanged(); }
+            get => _discountAmount;
+            set { _discountAmount = value; OnPropertyChanged(); }
         }
 
-        public decimal TaxPercent
+        public decimal TaxAmount
         {
-            get => _taxPercent;
-            set { _taxPercent = value; OnPropertyChanged(); }
+            get => _taxAmount;
+            set { _taxAmount = value; OnPropertyChanged(); }
         }
 
         public decimal PaymentAmount
@@ -237,6 +360,14 @@ namespace LabSystem.UI.ViewModels
         public ICommand GenerateReportCommand { get; }
         public ICommand GenerateBillCommand { get; }
 
+        // New commands
+        public ICommand SaveSettingsCommand { get; }
+        public ICommand SaveDoctorCommand { get; }
+        public ICommand DeleteDoctorCommand { get; }
+        public ICommand AddDepartmentCommand { get; }
+        public ICommand DeleteDepartmentCommand { get; }
+        public ICommand DeleteCatalogTestCommand { get; }
+
         public DashboardViewModel(
             IPatientRepository patientRepo,
             ITestOrderRepository orderRepo,
@@ -248,6 +379,9 @@ namespace LabSystem.UI.ViewModels
             IBillingService billingService,
             IRepository<TestPanel> testPanelRepo,
             IBackupService backupService,
+            IRepository<Doctor> doctorRepo,
+            IRepository<Department> departmentRepo,
+            IRepository<Setting> settingRepo,
             QcViewModel qcVM,
             AppointmentsViewModel appointmentsVM,
             StaffManagementViewModel staffManagementVM)
@@ -263,11 +397,29 @@ namespace LabSystem.UI.ViewModels
 
             _billingService = billingService;
             _testPanelRepo = testPanelRepo;
-
             _backupService = backupService;
+
+            _doctorRepo = doctorRepo;
+            _departmentRepo = departmentRepo;
+            _settingRepo = settingRepo;
+
             QcVM = qcVM;
             AppointmentsVM = appointmentsVM;
             StaffManagementVM = staffManagementVM;
+
+            // Load sidebar pin state
+            try
+            {
+                var path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "sidebar_pinned.txt");
+                if (System.IO.File.Exists(path))
+                {
+                    bool.TryParse(System.IO.File.ReadAllText(path), out _isSidebarPinned);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load sidebar pin state.");
+            }
 
             SaveResultsCommand = new AsyncRelayCommand(async o => await ExecuteSaveResultsAsync(o));
             GenerateReportCommand = new RelayCommand(ExecuteGenerateReport);
@@ -275,7 +427,7 @@ namespace LabSystem.UI.ViewModels
 
             AddPatientCommand = new AsyncRelayCommand(async o => await ExecuteAddPatientAsync(o));
             CreateOrderCommand = new AsyncRelayCommand(async o => await ExecuteCreateOrderAsync(o));
-            BackupCommand = new AsyncRelayCommand(async o => await _backupService.BackupNowAsync());
+            BackupCommand = new AsyncRelayCommand(async o => await ExecuteBackupCSVAsync());
             RefreshCommand = new AsyncRelayCommand(async o => await LoadDataAsync());
             SaveCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteSaveCatalogTestAsync(o));
             AddCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteAddCatalogTestAsync(o));
@@ -283,6 +435,13 @@ namespace LabSystem.UI.ViewModels
             AddPaymentUpiCommand = new AsyncRelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
             ApplyDiscountTaxCommand = new AsyncRelayCommand(async o => await ExecuteApplyDiscountTaxAsync());
             GenerateRevenueReportCommand = new AsyncRelayCommand(async o => await ExecuteGenerateRevenueReportAsync());
+
+            SaveSettingsCommand = new AsyncRelayCommand(async o => await ExecuteSaveSettingsAsync());
+            SaveDoctorCommand = new AsyncRelayCommand(async o => await ExecuteSaveDoctorAsync());
+            DeleteDoctorCommand = new AsyncRelayCommand(async o => await ExecuteDeleteDoctorAsync());
+            AddDepartmentCommand = new AsyncRelayCommand(async o => await ExecuteAddDepartmentAsync());
+            DeleteDepartmentCommand = new AsyncRelayCommand(async o => await ExecuteDeleteDepartmentAsync());
+            DeleteCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteDeleteCatalogTestAsync());
 
             PreviousPatientPageCommand = new AsyncRelayCommand(async o =>
             {
@@ -304,6 +463,7 @@ namespace LabSystem.UI.ViewModels
 
             InitializeAmendResultCommand();
             LoadPatientHistoryCommand = new AsyncRelayCommand(async o => await ExecuteLoadPatientHistoryAsync());
+            InitializeRework();
 
             _ = InitializeAsync();
         }
@@ -327,6 +487,30 @@ namespace LabSystem.UI.ViewModels
         {
             try
             {
+                // Load Settings
+                var settingsList = await _settingRepo.GetAllAsync();
+                OperatorName = settingsList.FirstOrDefault(s => s.Key == "operator_name")?.Value ?? "";
+                OperatorAddress = settingsList.FirstOrDefault(s => s.Key == "operator_address")?.Value ?? "";
+                OperatorPhone = settingsList.FirstOrDefault(s => s.Key == "operator_phone")?.Value ?? "";
+                var lastBackup = settingsList.FirstOrDefault(s => s.Key == "last_backup")?.Value;
+                LastBackupTime = string.IsNullOrEmpty(lastBackup) ? "No backup has been created yet." : lastBackup;
+
+                // Load Doctors
+                Doctors.Clear();
+                var doctorsList = await _doctorRepo.GetAllAsync();
+                foreach (var doc in doctorsList.OrderBy(d => d.FullName))
+                {
+                    Doctors.Add(doc);
+                }
+
+                // Load Departments
+                Departments.Clear();
+                var departmentsList = await _departmentRepo.GetAllAsync();
+                foreach (var dept in departmentsList.OrderBy(d => d.Name))
+                {
+                    Departments.Add(dept);
+                }
+
                 // Load Patients (paginated & filtered)
                 await LoadPatientsAsync();
 
@@ -345,7 +529,11 @@ namespace LabSystem.UI.ViewModels
                             Low = t.ReferenceRangeLow,
                             High = t.ReferenceRangeHigh,
                             GroupName = t.GroupName,
-                            Category = t.Category
+                            Category = t.Category,
+                            Price = t.Price,
+                            RefRangeMale = GetRangeString(t, "Male"),
+                            RefRangeFemale = GetRangeString(t, "Female"),
+                            OnSelectionChanged = OnTestSelectionChanged
                         });
                     }
                 }
@@ -373,8 +561,6 @@ namespace LabSystem.UI.ViewModels
                     CatalogTestTypes.Add(t);
                 }
 
-
-
                 // Load Invoices
                 await LoadInvoicesAsync();
 
@@ -383,11 +569,36 @@ namespace LabSystem.UI.ViewModels
 
                 // Calculate Dashboard Statistics
                 await RefreshDashboardStatsAsync();
+
+                LoadDataRework(doctorsList, departmentsList, panels);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to load dashboard data.");
                 MessageBox.Show("Error loading data from database. See logs.", "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task LoadCatalogTestsForDepartmentAsync()
+        {
+            if (SelectedDepartment == null) return;
+            try
+            {
+                var testTypes = await _testTypeRepo.GetAllAsync();
+                CatalogTestTypes.Clear();
+                var filtered = testTypes
+                    .Where(t => t.DepartmentId == SelectedDepartment.DepartmentId)
+                    .OrderBy(x => x.SortOrder)
+                    .ThenBy(x => x.Name);
+                
+                foreach (var t in filtered)
+                {
+                    CatalogTestTypes.Add(t);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load catalog tests for department.");
             }
         }
 
@@ -452,7 +663,7 @@ namespace LabSystem.UI.ViewModels
                     return;
                 }
 
-                await _billingService.UpdateInvoiceFinancialsAsync(SelectedInvoice.InvoiceId, DiscountPercent, TaxPercent);
+                await _billingService.UpdateInvoiceFinancialsAsync(SelectedInvoice.InvoiceId, DiscountAmount, TaxAmount);
                 MessageBox.Show("Discount/tax applied.", "Updated", MessageBoxButton.OK, MessageBoxImage.Information);
                 await LoadInvoicesAsync();
             }

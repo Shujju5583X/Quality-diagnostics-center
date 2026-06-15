@@ -95,7 +95,7 @@ namespace LabSystem.Services
                 wsPatients.Row(1).Height = 40;
 
                 // Headers
-                string[] pHeaders = { "Patient ID", "Full Name", "Date of Birth", "Gender", "Contact Phone", "Contact Email", "Registered Date" };
+                string[] pHeaders = { "Patient ID", "Full Name", "Age", "Gender", "Contact Phone", "Contact Email", "Registered Date" };
                 StyleHeaderRow(wsPatients, 3, pHeaders, patientAccent, headerTextColor, patientBorder);
                 wsPatients.Row(3).Height = 28;
 
@@ -104,7 +104,7 @@ namespace LabSystem.Services
                 {
                     wsPatients.Cell(pRow, 1).Value = p.PatientId;
                     wsPatients.Cell(pRow, 2).Value = p.FullName;
-                    wsPatients.Cell(pRow, 3).Value = p.DateOfBirth.HasValue ? p.DateOfBirth.Value.ToString("yyyy-MM-dd") : "";
+                    wsPatients.Cell(pRow, 3).Value = p.Age;
                     wsPatients.Cell(pRow, 4).Value = p.Gender;
                     wsPatients.Cell(pRow, 5).Value = p.ContactPhone;
                     wsPatients.Cell(pRow, 6).Value = p.ContactEmail;
@@ -417,7 +417,7 @@ namespace LabSystem.Services
             var invoices = await _invoiceRepo.GetAllAsync(cancellationToken);
 
             WriteCsv(Path.Combine(outputDirectory, "patients.csv"),
-                patients.Select(p => new { p.PatientId, p.Uhid, p.FullName, p.Gender, p.DateOfBirth, p.ContactPhone, p.ContactEmail, p.CreatedAt, p.BranchId }));
+                patients.Select(p => new { p.PatientId, p.Uhid, p.FullName, p.Gender, p.Age, p.ContactPhone, p.ContactEmail, p.CreatedAt, p.BranchId }));
 
             WriteCsv(Path.Combine(outputDirectory, "orders.csv"),
                 orders.Select(o => new { o.OrderId, o.PatientId, o.OrderedAt, o.Status, o.ReferredBy, o.CreatedAt, o.UpdatedAt, o.BranchId }));

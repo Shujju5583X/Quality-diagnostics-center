@@ -27,46 +27,7 @@ namespace LabSystem.Tests
 
             _context = new LabDbContext(_connection);
 
-            // Read V1__init.sql and run it to create tables
-            var initSqlPath = TestHelper.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
-            if (initSqlPath == null || !File.Exists(initSqlPath))
-            {
-                throw new FileNotFoundException("Could not find V1__init.sql for SQLite setup.");
-            }
-            string sql = File.ReadAllText(initSqlPath);
-            _context.Database.ExecuteSqlCommand(sql);
-
-            // Add Payments, TestPanels, and PanelTestTypes tables manually
-            _context.Database.ExecuteSqlCommand(@"
-                CREATE TABLE IF NOT EXISTS TestPanels (
-                    PanelId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL,
-                    Description TEXT,
-                    Price REAL NOT NULL
-                );
-                CREATE TABLE IF NOT EXISTS PanelTestTypes (
-                    PanelId INTEGER NOT NULL,
-                    TypeId INTEGER NOT NULL,
-                    PRIMARY KEY(PanelId, TypeId),
-                    FOREIGN KEY(PanelId) REFERENCES TestPanels(PanelId) ON DELETE CASCADE,
-                    FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE
-                );
-                CREATE TABLE IF NOT EXISTS Payments (
-                    PaymentId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    InvoiceId INTEGER NOT NULL,
-                    Amount REAL NOT NULL,
-                    PaymentMethod TEXT,
-                    PaymentDate DATETIME NOT NULL,
-                    FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId) ON DELETE CASCADE
-                );
-            ");
-
-            // Add DiscountPercent and TaxPercent columns if they don't exist
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN DiscountPercent REAL DEFAULT 0;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN TaxPercent REAL DEFAULT 0;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-            try { _context.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
+            TestHelper.InitializeTestDatabase(_context);
 
             var invoiceRepo = new InvoiceRepository(_context);
             var paymentRepo = new PaymentRepository(_context);
@@ -193,7 +154,7 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public async Task UpdateInvoiceFinancials_WithDiscountPercent_RecalculatesGrandTotal()
+        public async Task UpdateInvoiceFinancials_WithDiscountAmount_RecalculatesGrandTotal()
         {
             // Arrange
             var patient = new Patient { FullName = "Test Patient", CreatedAt = DateTime.UtcNow };
@@ -208,19 +169,18 @@ namespace LabSystem.Tests
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // Act: Apply 10% discount
-            await _service.UpdateInvoiceFinancialsAsync(invoice.InvoiceId, 10m, 0m);
+            // Act: Apply flat 100 discount
+            await _service.UpdateInvoiceFinancialsAsync(invoice.InvoiceId, 100m, 0m);
 
             // Assert
             var updatedInvoice = _context.Invoices.Find(invoice.InvoiceId);
-            Assert.AreEqual(10m, updatedInvoice.DiscountPercent);
-            Assert.AreEqual(0m, updatedInvoice.TaxPercent);
-            Assert.AreEqual(100m, updatedInvoice.DiscountAmount); // 1000 * 10% = 100
+            Assert.AreEqual(100m, updatedInvoice.DiscountAmount);
+            Assert.AreEqual(0m, updatedInvoice.TaxAmount);
             Assert.AreEqual(900m, updatedInvoice.GrandTotal);     // 1000 - 100 = 900
         }
 
         [Test]
-        public async Task UpdateInvoiceFinancials_WithTaxPercent_RecalculatesGrandTotal()
+        public async Task UpdateInvoiceFinancials_WithTaxAmount_RecalculatesGrandTotal()
         {
             // Arrange
             var patient = new Patient { FullName = "Test Patient", CreatedAt = DateTime.UtcNow };
@@ -235,15 +195,13 @@ namespace LabSystem.Tests
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // Act: Apply 18% tax
-            await _service.UpdateInvoiceFinancialsAsync(invoice.InvoiceId, 0m, 18m);
+            // Act: Apply flat 180 tax
+            await _service.UpdateInvoiceFinancialsAsync(invoice.InvoiceId, 0m, 180m);
 
             // Assert
             var updatedInvoice = _context.Invoices.Find(invoice.InvoiceId);
-            Assert.AreEqual(0m, updatedInvoice.DiscountPercent);
-            Assert.AreEqual(18m, updatedInvoice.TaxPercent);
             Assert.AreEqual(0m, updatedInvoice.DiscountAmount);
-            Assert.AreEqual(180m, updatedInvoice.TaxAmount);     // (1000 - 0) * 18% = 180
+            Assert.AreEqual(180m, updatedInvoice.TaxAmount);
             Assert.AreEqual(1180m, updatedInvoice.GrandTotal);   // 1000 - 0 + 180 = 1180
         }
 
@@ -263,14 +221,14 @@ namespace LabSystem.Tests
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // Act: Apply 10% discount + 18% tax
-            await _service.UpdateInvoiceFinancialsAsync(invoice.InvoiceId, 10m, 18m);
+            // Act: Apply flat 100 discount + 180 tax
+            await _service.UpdateInvoiceFinancialsAsync(invoice.InvoiceId, 100m, 180m);
 
             // Assert
             var updatedInvoice = _context.Invoices.Find(invoice.InvoiceId);
-            Assert.AreEqual(100m, updatedInvoice.DiscountAmount);  // 1000 * 10% = 100
-            Assert.AreEqual(162m, updatedInvoice.TaxAmount);       // (1000 - 100) * 18% = 162
-            Assert.AreEqual(1062m, updatedInvoice.GrandTotal);     // 1000 - 100 + 162 = 1062
+            Assert.AreEqual(100m, updatedInvoice.DiscountAmount);
+            Assert.AreEqual(180m, updatedInvoice.TaxAmount);
+            Assert.AreEqual(1080m, updatedInvoice.GrandTotal);     // 1000 - 100 + 180 = 1080
         }
 
         [Test]
@@ -339,8 +297,8 @@ namespace LabSystem.Tests
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // Apply 10% discount: GrandTotal = 900
-            await _service.UpdateInvoiceFinancialsAsync(invoice.InvoiceId, 10m, 0m);
+            // Apply flat 100 discount: GrandTotal = 900
+            await _service.UpdateInvoiceFinancialsAsync(invoice.InvoiceId, 100m, 0m);
 
             // Act: Pay 500 of 900
             await _service.AddPaymentAsync(invoice.InvoiceId, 500m, "Cash");

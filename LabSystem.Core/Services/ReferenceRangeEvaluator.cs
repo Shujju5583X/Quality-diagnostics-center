@@ -23,20 +23,14 @@ namespace LabSystem.Core.Services
             if (tt == null || tt.ReferenceRanges == null || tt.ReferenceRanges.Count == 0 || patient == null)
                 return null;
 
-            int? age = patient.DateOfBirth.HasValue
-                ? CalculateAge(patient.DateOfBirth, DateTime.UtcNow)
-                : (int?)null;
-
+            int age = patient.Age;
             string gender = patient.Gender ?? "All";
 
             // Try age-specific match first
-            if (age.HasValue)
-            {
-                var match = tt.ReferenceRanges.FirstOrDefault(r =>
-                    (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
-                    && age.Value >= r.AgeMin && age.Value <= r.AgeMax);
-                if (match != null) return match;
-            }
+            var match = tt.ReferenceRanges.FirstOrDefault(r =>
+                (string.Equals(r.Gender, gender, StringComparison.OrdinalIgnoreCase) || string.Equals(r.Gender, "All", StringComparison.OrdinalIgnoreCase))
+                && age >= r.AgeMin && age <= r.AgeMax);
+            if (match != null) return match;
 
             // Fallback: widest range for this gender (AgeMin=0, AgeMax >= 120)
             return tt.ReferenceRanges.FirstOrDefault(r =>

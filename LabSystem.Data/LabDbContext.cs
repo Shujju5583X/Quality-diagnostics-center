@@ -35,6 +35,9 @@ namespace LabSystem.Data
         public DbSet<QcLot> QcLots { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Branch> Branches { get; set; }
+        public DbSet<Doctor> Doctors { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<Setting> Settings { get; set; }
 
 
 
@@ -56,6 +59,9 @@ namespace LabSystem.Data
             modelBuilder.Entity<TestPanel>().ToTable("TestPanels");
             modelBuilder.Entity<QcRun>().ToTable("QcRuns");
             modelBuilder.Entity<QcLot>().ToTable("QcLots");
+            modelBuilder.Entity<Doctor>().ToTable("Doctors");
+            modelBuilder.Entity<Department>().ToTable("Departments");
+            modelBuilder.Entity<Setting>().ToTable("Settings");
 
             // SQLite explicit configurations
             modelBuilder.Entity<TestOrder>().HasKey(o => o.OrderId);
@@ -67,6 +73,9 @@ namespace LabSystem.Data
             modelBuilder.Entity<TestPanel>().HasKey(p => p.PanelId);
             modelBuilder.Entity<QcRun>().HasKey(q => q.QcRunId);
             modelBuilder.Entity<QcLot>().HasKey(q => q.QcLotId);
+            modelBuilder.Entity<Doctor>().HasKey(d => d.DoctorId);
+            modelBuilder.Entity<Department>().HasKey(d => d.DepartmentId);
+            modelBuilder.Entity<Setting>().HasKey(s => s.Key);
 
             // Configure foreign key relations
             modelBuilder.Entity<TestOrder>()
@@ -108,6 +117,16 @@ namespace LabSystem.Data
                 .HasRequired(i => i.Order)
                 .WithMany()
                 .HasForeignKey(i => i.OrderId);
+
+            modelBuilder.Entity<TestType>()
+                .HasOptional(t => t.Department)
+                .WithMany(d => d.TestTypes)
+                .HasForeignKey(t => t.DepartmentId);
+
+            modelBuilder.Entity<TestOrder>()
+                .HasOptional(o => o.Doctor)
+                .WithMany()
+                .HasForeignKey(o => o.DoctorId);
 
             modelBuilder.Entity<Payment>()
                 .HasRequired(p => p.Invoice)
