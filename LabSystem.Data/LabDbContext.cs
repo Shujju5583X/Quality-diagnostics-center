@@ -36,22 +36,7 @@ namespace LabSystem.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Branch> Branches { get; set; }
 
-        public IQueryable<UnifiedQueueItem> GetUnifiedQueue()
-        {
-            return from o in TestOrders
-                   join i in Invoices on o.OrderId equals i.OrderId into invoiceGroup
-                   from invoice in invoiceGroup.DefaultIfEmpty()
-                   select new UnifiedQueueItem
-                   {
-                       OrderId = o.OrderId,
-                       PatientName = o.Patient != null ? o.Patient.FullName : null,
-                       OrderedAt = o.OrderedAt,
-                       OrderStatus = o.Status,
-                       IsPaid = invoice != null && invoice.IsPaid,
-                       InvoiceId = (int?)invoice.InvoiceId,
-                       HasAllResults = o.TestTypes.Any() && Results.Count(r => r.OrderId == o.OrderId) >= o.TestTypes.Count()
-                   };
-        }
+
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

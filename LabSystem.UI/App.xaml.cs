@@ -116,7 +116,6 @@ namespace LabSystem.UI
                 GetLetterheadPath()), Lifestyle.Transient);
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
             Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
-            Container.Register<IWorkflowService, WorkflowService>(Lifestyle.Transient);
             Container.Register<IStaffService, StaffService>(Lifestyle.Transient);
             Container.Register<QcService>(Lifestyle.Transient);
             Container.Register<IAppointmentService, AppointmentService>(Lifestyle.Transient);
@@ -124,7 +123,6 @@ namespace LabSystem.UI
             // Register ViewModels
             Container.Register<ViewModels.MainViewModel>();
             Container.Register<ViewModels.DashboardViewModel>();
-            Container.Register<ViewModels.UnifiedQueueViewModel>();
             Container.Register<ViewModels.LoginViewModel>();
             Container.Register<ViewModels.PinSetupViewModel>(Lifestyle.Transient);
             Container.Register<ViewModels.QcViewModel>();

@@ -153,7 +153,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        public UnifiedQueueViewModel UnifiedQueueVM { get; }
+
         public QcViewModel QcVM { get; }
         public AppointmentsViewModel AppointmentsVM { get; }
         public StaffManagementViewModel StaffManagementVM { get; }
@@ -233,6 +233,9 @@ namespace LabSystem.UI.ViewModels
         public ICommand AddPaymentUpiCommand { get; }
         public ICommand ApplyDiscountTaxCommand { get; }
         public ICommand GenerateRevenueReportCommand { get; }
+        public ICommand SaveResultsCommand { get; }
+        public ICommand GenerateReportCommand { get; }
+        public ICommand GenerateBillCommand { get; }
 
         public DashboardViewModel(
             IPatientRepository patientRepo,
@@ -245,7 +248,6 @@ namespace LabSystem.UI.ViewModels
             IBillingService billingService,
             IRepository<TestPanel> testPanelRepo,
             IBackupService backupService,
-            UnifiedQueueViewModel unifiedQueueVM,
             QcViewModel qcVM,
             AppointmentsViewModel appointmentsVM,
             StaffManagementViewModel staffManagementVM)
@@ -263,10 +265,13 @@ namespace LabSystem.UI.ViewModels
             _testPanelRepo = testPanelRepo;
 
             _backupService = backupService;
-            UnifiedQueueVM = unifiedQueueVM;
             QcVM = qcVM;
             AppointmentsVM = appointmentsVM;
             StaffManagementVM = staffManagementVM;
+
+            SaveResultsCommand = new AsyncRelayCommand(async o => await ExecuteSaveResultsAsync(o));
+            GenerateReportCommand = new RelayCommand(ExecuteGenerateReport);
+            GenerateBillCommand = new AsyncRelayCommand(async o => await ExecuteGenerateBillAsync(o));
 
             AddPatientCommand = new AsyncRelayCommand(async o => await ExecuteAddPatientAsync(o));
             CreateOrderCommand = new AsyncRelayCommand(async o => await ExecuteCreateOrderAsync(o));
@@ -368,7 +373,7 @@ namespace LabSystem.UI.ViewModels
                     CatalogTestTypes.Add(t);
                 }
 
-                await UnifiedQueueVM.LoadQueueAsync();
+
 
                 // Load Invoices
                 await LoadInvoicesAsync();
