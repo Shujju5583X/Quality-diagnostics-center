@@ -12,7 +12,7 @@ namespace LabSystem.Data.Repositories
     {
         public PaymentRepository(LabDbContext context) : base(context) { }
 
-        public async Task<IEnumerable<Payment>> GetByInvoiceIdAsync(int invoiceId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Payment>> GetByInvoiceIdAsync(int invoiceId, CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.AsNoTracking()
                          .Where(p => p.InvoiceId == invoiceId)

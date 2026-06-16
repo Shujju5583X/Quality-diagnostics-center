@@ -21,8 +21,7 @@ namespace LabSystem.Tests
                     ContactEmail TEXT,
                     CreatedAt DATETIME NOT NULL,
                     Gender TEXT,
-                    Uhid TEXT UNIQUE,
-                    BranchId INTEGER DEFAULT 1
+                    Uhid TEXT UNIQUE
                 );
 
                 CREATE TABLE IF NOT EXISTS Departments (
@@ -64,8 +63,7 @@ namespace LabSystem.Tests
                     PinHash TEXT,
                     FailedLoginAttempts INTEGER DEFAULT 0,
                     LockoutEnd DATETIME,
-                    CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    BranchId INTEGER DEFAULT 1
+                    CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS TestOrders (
@@ -78,7 +76,6 @@ namespace LabSystem.Tests
                     ReferredBy TEXT,
                     CreatedAt DATETIME NOT NULL,
                     UpdatedAt DATETIME NOT NULL,
-                    BranchId INTEGER DEFAULT 1,
                     FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
                 );
 
@@ -88,18 +85,6 @@ namespace LabSystem.Tests
                     PRIMARY KEY (OrderId, TypeId),
                     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId) ON DELETE CASCADE,
                     FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE
-                );
-
-                CREATE TABLE IF NOT EXISTS Specimens (
-                    SpecimenId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    OrderId INTEGER NOT NULL,
-                    Barcode TEXT NOT NULL UNIQUE,
-                    SampleType TEXT NOT NULL,
-                    CollectionTime DATETIME,
-                    CollectedBy TEXT,
-                    Status TEXT NOT NULL,
-                    RejectionReason TEXT,
-                    FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId) ON DELETE CASCADE
                 );
 
                 CREATE TABLE IF NOT EXISTS ReferenceRanges (
@@ -142,7 +127,6 @@ namespace LabSystem.Tests
                     CreatedAt DATETIME NOT NULL,
                     UpdatedAt DATETIME,
                     PaymentMethod TEXT,
-                    BranchId INTEGER DEFAULT 1,
                     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId)
                 );
 
@@ -182,52 +166,6 @@ namespace LabSystem.Tests
                     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId)
                 );
 
-                CREATE TABLE IF NOT EXISTS QcRuns (
-                    QcRunId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    TestTypeId INTEGER NOT NULL,
-                    ControlName TEXT NOT NULL,
-                    RunDate DATETIME NOT NULL,
-                    MeasuredValue REAL NOT NULL,
-                    LotNumber TEXT,
-                    TargetValue REAL,
-                    SD REAL,
-                    CreatedAt DATETIME,
-                    FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId)
-                );
-
-                CREATE TABLE IF NOT EXISTS QcLots (
-                    QcLotId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    TestTypeId INTEGER NOT NULL,
-                    LotNumber TEXT NOT NULL,
-                    TargetValue REAL NOT NULL,
-                    SD REAL NOT NULL,
-                    IsActive INTEGER NOT NULL DEFAULT 1,
-                    CreatedAt DATETIME,
-                    FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId)
-                );
-
-                CREATE TABLE IF NOT EXISTS Appointments (
-                    AppointmentId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    PatientId INTEGER NOT NULL,
-                    AppointmentDate DATETIME NOT NULL,
-                    DurationMinutes INTEGER NOT NULL DEFAULT 15,
-                    Purpose TEXT,
-                    Status TEXT NOT NULL DEFAULT 'Scheduled',
-                    Notes TEXT,
-                    CreatedAt DATETIME,
-                    UpdatedAt DATETIME,
-                    FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
-                );
-
-                CREATE TABLE IF NOT EXISTS Branches (
-                    BranchId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL,
-                    Address TEXT,
-                    Phone TEXT,
-                    IsActive INTEGER NOT NULL DEFAULT 1,
-                    CreatedAt DATETIME
-                );
-
                 CREATE TABLE IF NOT EXISTS Settings (
                     Key TEXT PRIMARY KEY,
                     Value TEXT
@@ -238,15 +176,9 @@ namespace LabSystem.Tests
                 CREATE INDEX IF NOT EXISTS IX_Results_TypeId ON Results (TypeId);
                 CREATE INDEX IF NOT EXISTS IX_Results_TechnicianId ON Results (TechnicianId);
                 CREATE INDEX IF NOT EXISTS IX_Reports_OrderId ON Reports (OrderId);
-                CREATE INDEX IF NOT EXISTS IX_Specimens_OrderId ON Specimens (OrderId);
                 CREATE INDEX IF NOT EXISTS IX_ReferenceRanges_TestTypeId ON ReferenceRanges (TestTypeId);
                 CREATE INDEX IF NOT EXISTS IX_Payments_InvoiceId ON Payments (InvoiceId);
-                CREATE INDEX IF NOT EXISTS IX_QcRuns_TestTypeId ON QcRuns (TestTypeId);
-                CREATE INDEX IF NOT EXISTS IX_QcRuns_RunDate ON QcRuns (RunDate);
-                CREATE INDEX IF NOT EXISTS IX_QcLots_TestTypeId ON QcLots (TestTypeId);
-                CREATE INDEX IF NOT EXISTS IX_Appointments_AppointmentDate ON Appointments (AppointmentDate);
             ");
         }
     }
 }
-

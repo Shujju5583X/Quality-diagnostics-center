@@ -129,67 +129,21 @@ namespace LabSystem.Data
 
         private static void EnsureSchemaUpToDate(LabDbContext db)
         {
-            // 1. Migrate Patients: DateOfBirth -> Age
-            bool dobColumnExists = false;
+            // 1. Ensure DateOfBirth exists on Patients
             try
             {
                 db.Database.ExecuteSqlCommand("SELECT DateOfBirth FROM Patients LIMIT 1;");
-                dobColumnExists = true;
             }
             catch
             {
-                dobColumnExists = false;
-            }
-
-            if (dobColumnExists)
-            {
                 try
                 {
-                    // Add Age column
-                    db.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN Age INTEGER NOT NULL DEFAULT 0;");
-                    Log.Information("Added column Age to Patients.");
+                    db.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN DateOfBirth DATETIME;");
+                    Log.Information("Added DateOfBirth column to Patients table.");
                 }
                 catch (Exception ex)
                 {
-                    Log.Debug(ex, "Age column addition skipped or failed.");
-                }
-
-                try
-                {
-                    // Migrate DOB data to Age
-                    var dobData = db.Database.SqlQuery<PatientDobDto>("SELECT PatientId, DateOfBirth FROM Patients").ToList();
-                    foreach (var item in dobData)
-                    {
-                        int age = 0;
-                        if (item.DateOfBirth.HasValue)
-                        {
-                            var relativeTo = DateTime.UtcNow;
-                            var birthDate = item.DateOfBirth.Value;
-                            age = relativeTo.Year - birthDate.Year;
-                            if (relativeTo.Month < birthDate.Month || (relativeTo.Month == birthDate.Month && relativeTo.Day < birthDate.Day))
-                            {
-                                age--;
-                            }
-                            if (age < 0) age = 0;
-                        }
-                        db.Database.ExecuteSqlCommand("UPDATE Patients SET Age = @p0 WHERE PatientId = @p1", age, item.PatientId);
-                    }
-                    Log.Information("Successfully migrated DateOfBirth to Age for existing patients.");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Failed to migrate DateOfBirth data to Age.");
-                }
-
-                try
-                {
-                    // Drop DateOfBirth column
-                    db.Database.ExecuteSqlCommand("ALTER TABLE Patients DROP COLUMN DateOfBirth;");
-                    Log.Information("Dropped column DateOfBirth from Patients.");
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(ex, "Failed to drop DateOfBirth column; it will remain unused.");
+                    Log.Error(ex, "Failed to add DateOfBirth column to Patients.");
                 }
             }
 
@@ -310,6 +264,7 @@ namespace LabSystem.Data
                 new { Table = "Invoices",    Column = "TaxAmount",             Type = "REAL DEFAULT 0" },
                 new { Table = "Invoices",    Column = "DiscountPercent",       Type = "REAL DEFAULT 0" },
                 new { Table = "Invoices",    Column = "TaxPercent",            Type = "REAL DEFAULT 0" },
+                new { Table = "Invoices",    Column = "Status",                Type = "TEXT DEFAULT 'Pending'" },
                 // Audit timestamp columns for simplified single-person workflow
                 new { Table = "TestOrders",  Column = "CreatedAt",            Type = "DATETIME" },
                 new { Table = "TestOrders",  Column = "UpdatedAt",            Type = "DATETIME" },
@@ -317,6 +272,8 @@ namespace LabSystem.Data
                 new { Table = "Results",     Column = "UpdatedAt",            Type = "DATETIME" },
                 new { Table = "Results",     Column = "ValueText",            Type = "TEXT" },
                 new { Table = "Invoices",    Column = "UpdatedAt",            Type = "DATETIME" },
+                new { Table = "OrderTestTypes", Column = "PackageId",         Type = "INTEGER REFERENCES TestPanels(PanelId)" },
+                new { Table = "OrderTestTypes", Column = "BilledCost",        Type = "REAL NOT NULL DEFAULT 0.0" },
                 // Remove legacy auth columns from Staff table
                 new { Table = "Staff",       Column = "Role",                 Type = "TEXT" },
                 new { Table = "Staff",       Column = "PinHash",              Type = "TEXT" },
@@ -329,7 +286,7 @@ namespace LabSystem.Data
             {
                 try
                 {
-                    db.Database.ExecuteSqlCommand($"ALTER TABLE {migration.Table} ADD COLUMN {migration.Column} {migration.Type};");
+                    db.Database.ExecuteSqlCommand("ALTER TABLE " + migration.Table + " ADD COLUMN " + migration.Column + " " + migration.Type + ";");
                     Log.Information("Applied migration: Added column {Column} to {Table}", migration.Column, migration.Table);
                 }
                 catch (Exception ex)
@@ -350,20 +307,6 @@ namespace LabSystem.Data
 
             try
             {
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS Specimens (
-                        SpecimenId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        OrderId INTEGER NOT NULL,
-                        Barcode TEXT NOT NULL UNIQUE,
-                        SampleType TEXT NOT NULL,
-                        CollectionTime DATETIME,
-                        CollectedBy TEXT,
-                        Status TEXT NOT NULL,
-                        RejectionReason TEXT,
-                        FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId) ON DELETE CASCADE
-                    );
-                ");
-
                 db.Database.ExecuteSqlCommand(@"
                     CREATE TABLE IF NOT EXISTS ReferenceRanges (
                         ReferenceRangeId INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -407,86 +350,23 @@ namespace LabSystem.Data
                     );
                 ");
 
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Specimens_OrderId ON Specimens (OrderId);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_ReferenceRanges_TestTypeId ON ReferenceRanges (TestTypeId);");
                 db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Payments_InvoiceId ON Payments (InvoiceId);");
 
-                // QC tables
                 db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS QcRuns (
-                        QcRunId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        TestTypeId INTEGER NOT NULL,
-                        ControlName TEXT NOT NULL,
-                        RunDate DATETIME NOT NULL,
-                        MeasuredValue REAL NOT NULL,
-                        LotNumber TEXT,
-                        TargetValue REAL,
-                        SD REAL,
-                        CreatedAt DATETIME,
-                        FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId)
+                    CREATE TABLE IF NOT EXISTS DoctorCommissions (
+                        CommissionId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        DoctorId INTEGER NOT NULL,
+                        InvoiceId INTEGER NOT NULL,
+                        CommissionAmount REAL NOT NULL,
+                        Status TEXT NOT NULL DEFAULT 'Unpaid' CHECK (Status IN ('Unpaid', 'Paid')),
+                        CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(DoctorId) REFERENCES Doctors(DoctorId),
+                        FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId)
                     );
                 ");
-
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS QcLots (
-                        QcLotId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        TestTypeId INTEGER NOT NULL,
-                        LotNumber TEXT NOT NULL,
-                        TargetValue REAL NOT NULL,
-                        SD REAL NOT NULL,
-                        IsActive INTEGER NOT NULL DEFAULT 1,
-                        CreatedAt DATETIME,
-                        FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId)
-                    );
-                ");
-
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcRuns_TestTypeId ON QcRuns (TestTypeId);");
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcRuns_RunDate ON QcRuns (RunDate);");
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_QcLots_TestTypeId ON QcLots (TestTypeId);");
-
-                // Appointments table
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS Appointments (
-                        AppointmentId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        PatientId INTEGER NOT NULL,
-                        AppointmentDate DATETIME NOT NULL,
-                        DurationMinutes INTEGER NOT NULL DEFAULT 15,
-                        Purpose TEXT,
-                        Status TEXT NOT NULL DEFAULT 'Scheduled',
-                        Notes TEXT,
-                        CreatedAt DATETIME,
-                        UpdatedAt DATETIME,
-                        FOREIGN KEY(PatientId) REFERENCES Patients(PatientId)
-                    );
-                ");
-
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Appointments_AppointmentDate ON Appointments (AppointmentDate);");
-
-                // Branches table
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS Branches (
-                        BranchId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Name TEXT NOT NULL,
-                        Address TEXT,
-                        Phone TEXT,
-                        IsActive INTEGER NOT NULL DEFAULT 1,
-                        CreatedAt DATETIME
-                    );
-                ");
-
-                // Add BranchId to existing tables for multi-branch support
-                try { db.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-                try { db.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-                try { db.Database.ExecuteSqlCommand("ALTER TABLE Staff ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-                try { db.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN BranchId INTEGER DEFAULT 1;"); } catch { }
-
-                // Seed default branch if empty
-                var branchCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Branches").FirstOrDefault();
-                if (branchCount == 0)
-                {
-                    db.Database.ExecuteSqlCommand("INSERT INTO Branches (Name, Address, Phone, IsActive, CreatedAt) VALUES ('Main Branch', 'Quality Diagnostics Center', '1234567890', 1, CURRENT_TIMESTAMP);");
-                    Log.Information("Default branch seeded.");
-                }
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_DoctorCommissions_DoctorId ON DoctorCommissions (DoctorId);");
+                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_DoctorCommissions_InvoiceId ON DoctorCommissions (InvoiceId);");
 
                 try
                 {

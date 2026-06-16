@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using LabSystem.Core.Interfaces;
@@ -67,7 +68,7 @@ namespace LabSystem.Tests
             };
 
             // Arrange mocks to return default empty lists to avoid exceptions
-            _mockPatientRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Patient>
+            _mockPatientRepo.Setup(r => r.GetAllAsync(default(CancellationToken))).ReturnsAsync(new List<Patient>
             {
                 new Patient { PatientId = 1, FullName = "John Doe", Age = 36, Gender = "Male", ContactPhone = "123456", ContactEmail = "john@example.com", CreatedAt = DateTime.Parse("2026-06-09"), Uhid = "QDC-2026-00001" }
             });
@@ -78,18 +79,18 @@ namespace LabSystem.Tests
                 order.TestTypes.Add(tt);
             }
 
-            _mockOrderRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<TestOrder> { order });
+            _mockOrderRepo.Setup(r => r.GetAllAsync(default(CancellationToken))).ReturnsAsync(new List<TestOrder> { order });
 
-            _mockResultRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Result>
+            _mockResultRepo.Setup(r => r.GetAllAsync(default(CancellationToken))).ReturnsAsync(new List<Result>
             {
                 new Result { ResultId = 50, OrderId = 10, TypeId = 101, Value = 5.5, IsAbnormal = false, RecordedAt = DateTime.Parse("2026-06-09"), TechnicianId = 1 }
             });
-            _mockTestTypeRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(testTypes);
-            _mockStaffRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Staff>
+            _mockTestTypeRepo.Setup(r => r.GetAllAsync(default(CancellationToken))).ReturnsAsync(testTypes);
+            _mockStaffRepo.Setup(r => r.GetAllAsync(default(CancellationToken))).ReturnsAsync(new List<Staff>
             {
                 new Staff { StaffId = 1, FullName = "Dr. Alice Smith" }
             });
-            _mockInvoiceRepo.Setup(r => r.GetAllAsync(default)).ReturnsAsync(new List<Invoice>());
+            _mockInvoiceRepo.Setup(r => r.GetAllAsync(default(CancellationToken))).ReturnsAsync(new List<Invoice>());
         }
 
         [TearDown]

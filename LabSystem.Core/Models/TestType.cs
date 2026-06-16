@@ -5,6 +5,11 @@ namespace LabSystem.Core.Models
 {
     public class TestType
     {
+        public TestType()
+        {
+            ReferenceRanges = new HashSet<ReferenceRange>();
+        }
+
         public int TypeId { get; set; }
         public ResultInputType InputType { get; set; }
         public string Name { get; set; }
@@ -24,6 +29,6 @@ namespace LabSystem.Core.Models
         public string SampleType { get; set; }
         public int? DepartmentId { get; set; }
         public virtual Department Department { get; set; }
-        public virtual ICollection<ReferenceRange> ReferenceRanges { get; set; } = new HashSet<ReferenceRange>();
+        public virtual ICollection<ReferenceRange> ReferenceRanges { get; set; }
     }
 }

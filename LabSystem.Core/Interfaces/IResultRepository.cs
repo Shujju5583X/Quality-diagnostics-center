@@ -7,8 +7,8 @@ namespace LabSystem.Core.Interfaces
 {
     public interface IResultRepository : IRepository<Result>
     {
-        Task<IEnumerable<Result>> GetResultsForOrderAsync(int orderId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<Result>> GetResultsForOrderAsync(int orderId, CancellationToken cancellationToken = default(CancellationToken));
         Task<IEnumerable<Result>> GetPatientHistoryAsync(int patientId, int testTypeId);
-        Task<int> CountAbnormalAsync(CancellationToken cancellationToken = default);
+        Task<int> CountAbnormalAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

@@ -23,14 +23,17 @@ namespace LabSystem.UI.ViewModels
         private bool _isSelected;
         public bool IsSelected
         {
-            get => _isSelected;
+            get { return _isSelected; }
             set
             {
                 if (_isSelected != value)
                 {
                     _isSelected = value;
                     OnPropertyChanged();
-                    _onSelectionChanged?.Invoke(this);
+                    if (_onSelectionChanged != null)
+                    {
+                        _onSelectionChanged(this);
+                    }
                 }
             }
         }
@@ -53,14 +56,17 @@ namespace LabSystem.UI.ViewModels
         private bool _isSelected;
         public bool IsSelected
         {
-            get => _isSelected;
+            get { return _isSelected; }
             set
             {
                 if (_isSelected != value)
                 {
                     _isSelected = value;
                     OnPropertyChanged();
-                    _onSelectionChanged?.Invoke(this);
+                    if (_onSelectionChanged != null)
+                    {
+                        _onSelectionChanged(this);
+                    }
                 }
             }
         }
@@ -72,17 +78,17 @@ namespace LabSystem.UI.ViewModels
         private Doctor _selectedDoctorForOrder;
         public Doctor SelectedDoctorForOrder
         {
-            get => _selectedDoctorForOrder;
+            get { return _selectedDoctorForOrder; }
             set { _selectedDoctorForOrder = value; OnPropertyChanged(); }
         }
 
-        public ObservableCollection<Doctor> DoctorsForOrder { get; } = new ObservableCollection<Doctor>();
+        public ObservableCollection<Doctor> DoctorsForOrder { get; private set; }
 
         // 2. Select Tests Filter & Navigation
         private DepartmentSelection _selectedDepartmentForOrder;
         public DepartmentSelection SelectedDepartmentForOrder
         {
-            get => _selectedDepartmentForOrder;
+            get { return _selectedDepartmentForOrder; }
             set
             {
                 _selectedDepartmentForOrder = value;
@@ -91,14 +97,14 @@ namespace LabSystem.UI.ViewModels
                 {
                     SelectedPackageForOrder = null;
                 }
-                OnPropertyChanged(nameof(FilteredTestTypesForOrder));
+                OnPropertyChanged("FilteredTestTypesForOrder");
             }
         }
 
         private PackageSelection _selectedPackageForOrder;
         public PackageSelection SelectedPackageForOrder
         {
-            get => _selectedPackageForOrder;
+            get { return _selectedPackageForOrder; }
             set
             {
                 _selectedPackageForOrder = value;
@@ -107,12 +113,12 @@ namespace LabSystem.UI.ViewModels
                 {
                     SelectedDepartmentForOrder = null;
                 }
-                OnPropertyChanged(nameof(FilteredTestTypesForOrder));
+                OnPropertyChanged("FilteredTestTypesForOrder");
             }
         }
 
-        public ObservableCollection<DepartmentSelection> DepartmentsForOrder { get; } = new ObservableCollection<DepartmentSelection>();
-        public ObservableCollection<PackageSelection> PackagesForOrder { get; } = new ObservableCollection<PackageSelection>();
+        public ObservableCollection<DepartmentSelection> DepartmentsForOrder { get; private set; }
+        public ObservableCollection<PackageSelection> PackagesForOrder { get; private set; }
 
         public IEnumerable<TestTypeSelection> FilteredTestTypesForOrder
         {
@@ -167,25 +173,28 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        public IEnumerable<TestTypeSelection> SelectedTestTypesSummary => TestTypes.Where(t => t.IsSelected);
+        public IEnumerable<TestTypeSelection> SelectedTestTypesSummary
+        {
+            get { return TestTypes.Where(t => t.IsSelected); }
+        }
 
         // 4. Report Generation Tab Properties
         private string _reportSearchQuery;
         public string ReportSearchQuery
         {
-            get => _reportSearchQuery;
+            get { return _reportSearchQuery; }
             set
             {
                 _reportSearchQuery = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(CompleteOrders));
+                OnPropertyChanged("CompleteOrders");
             }
         }
 
         private TestOrder _selectedReportOrder;
         public TestOrder SelectedReportOrder
         {
-            get => _selectedReportOrder;
+            get { return _selectedReportOrder; }
             set { _selectedReportOrder = value; OnPropertyChanged(); }
         }
 
@@ -204,7 +213,10 @@ namespace LabSystem.UI.ViewModels
         }
 
         // 5. IPdfReportService public getter
-        public IPdfReportService ReportService => _reportService;
+        public IPdfReportService ReportService
+        {
+            get { return _reportService; }
+        }
 
         // 6. Synchronization logic
         private bool _updatingSelections = false;
@@ -212,6 +224,9 @@ namespace LabSystem.UI.ViewModels
         private void InitializeRework()
         {
             // Initial placeholder or setups
+            DepartmentsForOrder = new ObservableCollection<DepartmentSelection>();
+            PackagesForOrder = new ObservableCollection<PackageSelection>();
+            DoctorsForOrder = new ObservableCollection<Doctor>();
         }
 
         private void LoadDataRework(IEnumerable<Doctor> doctorsList, IEnumerable<Department> departmentsList, IEnumerable<TestPanel> panels)
@@ -299,8 +314,8 @@ namespace LabSystem.UI.ViewModels
             finally
             {
                 _updatingSelections = false;
-                OnPropertyChanged(nameof(OrderRunningTotal));
-                OnPropertyChanged(nameof(SelectedTestTypesSummary));
+                OnPropertyChanged("OrderRunningTotal");
+                OnPropertyChanged("SelectedTestTypesSummary");
             }
         }
 
@@ -319,8 +334,8 @@ namespace LabSystem.UI.ViewModels
             finally
             {
                 _updatingSelections = false;
-                OnPropertyChanged(nameof(OrderRunningTotal));
-                OnPropertyChanged(nameof(SelectedTestTypesSummary));
+                OnPropertyChanged("OrderRunningTotal");
+                OnPropertyChanged("SelectedTestTypesSummary");
             }
         }
 
@@ -345,23 +360,23 @@ namespace LabSystem.UI.ViewModels
             finally
             {
                 _updatingSelections = false;
-                OnPropertyChanged(nameof(OrderRunningTotal));
-                OnPropertyChanged(nameof(SelectedTestTypesSummary));
+                OnPropertyChanged("OrderRunningTotal");
+                OnPropertyChanged("SelectedTestTypesSummary");
             }
         }
 
         private string GetRangeString(TestType t, string gender)
         {
-            var r = t.ReferenceRanges?.FirstOrDefault(x => string.Equals(x.Gender, gender, StringComparison.OrdinalIgnoreCase));
+            var r = t.ReferenceRanges != null ? t.ReferenceRanges.FirstOrDefault(x => string.Equals(x.Gender, gender, StringComparison.OrdinalIgnoreCase)) : null;
             if (r != null)
             {
-                if (r.RangeLow.HasValue && r.RangeHigh.HasValue) return $"{r.RangeLow.Value} - {r.RangeHigh.Value} {t.Unit}";
-                if (r.RangeLow.HasValue) return $">= {r.RangeLow.Value} {t.Unit}";
-                if (r.RangeHigh.HasValue) return $"<{r.RangeHigh.Value} {t.Unit}";
+                if (r.RangeLow.HasValue && r.RangeHigh.HasValue) return r.RangeLow.Value + " - " + r.RangeHigh.Value + " " + t.Unit;
+                if (r.RangeLow.HasValue) return ">= " + r.RangeLow.Value + " " + t.Unit;
+                if (r.RangeHigh.HasValue) return "<" + r.RangeHigh.Value + " " + t.Unit;
             }
-            if (t.ReferenceRangeLow.HasValue && t.ReferenceRangeHigh.HasValue) return $"{t.ReferenceRangeLow.Value} - {t.ReferenceRangeHigh.Value} {t.Unit}";
-            if (t.ReferenceRangeLow.HasValue) return $">= {t.ReferenceRangeLow.Value} {t.Unit}";
-            if (t.ReferenceRangeHigh.HasValue) return $"<{t.ReferenceRangeHigh.Value} {t.Unit}";
+            if (t.ReferenceRangeLow.HasValue && t.ReferenceRangeHigh.HasValue) return t.ReferenceRangeLow.Value + " - " + t.ReferenceRangeHigh.Value + " " + t.Unit;
+            if (t.ReferenceRangeLow.HasValue) return ">= " + t.ReferenceRangeLow.Value + " " + t.Unit;
+            if (t.ReferenceRangeHigh.HasValue) return "<" + t.ReferenceRangeHigh.Value + " " + t.Unit;
             return "N/A";
         }
     }

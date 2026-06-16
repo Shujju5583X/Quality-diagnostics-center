@@ -7,6 +7,11 @@ namespace LabSystem.Core.Models
 {
     public class TestOrder
     {
+        public TestOrder()
+        {
+            TestTypes = new HashSet<TestType>();
+        }
+
         public int OrderId { get; set; }
         public int PatientId { get; set; }
         public virtual Patient Patient { get; set; }
@@ -16,8 +21,12 @@ namespace LabSystem.Core.Models
         [NotMapped]
         public OrderStatus StatusEnum
         {
-            get => Enum.TryParse<OrderStatus>(Status, true, out var s) ? s : OrderStatus.Pending;
-            set => Status = value.ToString();
+            get
+            {
+                OrderStatus s;
+                return Enum.TryParse<OrderStatus>(Status, true, out s) ? s : OrderStatus.Pending;
+            }
+            set { Status = value.ToString(); }
         }
         public string Notes { get; set; }
 
@@ -28,9 +37,22 @@ namespace LabSystem.Core.Models
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public int BranchId { get; set; } = 1;
 
-        public virtual ICollection<Specimen> Specimens { get; set; } = new HashSet<Specimen>();
-        public virtual ICollection<TestType> TestTypes { get; set; } = new HashSet<TestType>();
+        public virtual ICollection<TestType> TestTypes { get; set; }
+
+        [NotMapped]
+        public string TestNamesSummary
+        {
+            get
+            {
+                if (TestTypes == null || TestTypes.Count == 0) return "";
+                var names = new List<string>();
+                foreach (var t in TestTypes)
+                {
+                    names.Add(t.Name);
+                }
+                return string.Join(", ", names);
+            }
+        }
     }
 }

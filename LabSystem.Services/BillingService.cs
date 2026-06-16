@@ -14,17 +14,23 @@ namespace LabSystem.Services
         private readonly IPaymentRepository _paymentRepo;
         private readonly ITestOrderRepository _orderRepo;
         private readonly IRepository<TestPanel> _panelRepo;
+        private readonly IRepository<DoctorCommission> _commissionRepo;
+        private readonly IRepository<Doctor> _doctorRepo;
 
         public BillingService(
             IInvoiceRepository invoiceRepo,
             IPaymentRepository paymentRepo,
             ITestOrderRepository orderRepo,
-            IRepository<TestPanel> panelRepo)
+            IRepository<TestPanel> panelRepo,
+            IRepository<DoctorCommission> commissionRepo,
+            IRepository<Doctor> doctorRepo)
         {
             _invoiceRepo = invoiceRepo;
             _paymentRepo = paymentRepo;
             _orderRepo = orderRepo;
             _panelRepo = panelRepo;
+            _commissionRepo = commissionRepo;
+            _doctorRepo = doctorRepo;
         }
 
         public async Task<Invoice> GenerateInvoiceAsync(int orderId)
@@ -52,9 +58,12 @@ namespace LabSystem.Services
                     if (panelTestTypeIds.Count > 0 && panelTestTypeIds.All(id => orderedTestTypeIds.Contains(id) && !testTypesAppliedToPanels.Contains(id)))
                     {
                         total += panel.Price;
+                        double distributedCost = (double)panel.Price / panelTestTypeIds.Count;
+                        
                         foreach (var id in panelTestTypeIds)
                         {
                             testTypesAppliedToPanels.Add(id);
+                            await _orderRepo.UpdateOrderTestPricingAsync(orderId, id, panel.PanelId, distributedCost);
                         }
                     }
                 }
@@ -65,6 +74,7 @@ namespace LabSystem.Services
                     if (!testTypesAppliedToPanels.Contains(testType.TypeId))
                     {
                         total += testType.Price;
+                        await _orderRepo.UpdateOrderTestPricingAsync(orderId, testType.TypeId, null, (double)testType.Price);
                     }
                 }
 
@@ -72,6 +82,7 @@ namespace LabSystem.Services
                 {
                     OrderId = orderId,
                     TotalAmount = total,
+                    Status = "Pending",
                     IsPaid = false,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -82,7 +93,7 @@ namespace LabSystem.Services
             }
             catch (Exception ex)
             {
-                Log.Error(ex, $"Failed to generate invoice for order {orderId}");
+                Log.Error(ex, "Failed to generate invoice for order " + orderId);
                 throw;
             }
         }
@@ -106,7 +117,9 @@ namespace LabSystem.Services
                 invoice.TaxAmount = taxAmount;
                 var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
                 decimal paidAmount = payments.Sum(p => p.Amount);
+                invoice.AmountPaid = paidAmount;
                 invoice.IsPaid = paidAmount >= invoice.GrandTotal;
+                invoice.Status = invoice.IsPaid ? "Paid" : (paidAmount > 0 ? "Partial" : "Pending");
                 if (invoice.IsPaid && !invoice.PaidAt.HasValue) invoice.PaidAt = DateTime.UtcNow;
                 await _invoiceRepo.UpdateAsync(invoice);
             }
@@ -130,11 +143,32 @@ namespace LabSystem.Services
                 var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
                 decimal paidAmount = payments.Sum(p => p.Amount);
                 
+                invoice.AmountPaid = paidAmount;
                 invoice.IsPaid = paidAmount >= invoice.GrandTotal;
+                invoice.Status = invoice.IsPaid ? "Paid" : (paidAmount > 0 ? "Partial" : "Pending");
                 if (invoice.IsPaid && !invoice.PaidAt.HasValue)
                 {
                     invoice.PaidAt = DateTime.UtcNow;
                     invoice.PaymentMethod = paymentMethod;
+
+                    // Implement Doctor Commission Trigger
+                    var order = await _orderRepo.GetByIdAsync(invoice.OrderId);
+                    if (order != null && order.DoctorId.HasValue)
+                    {
+                        var doctor = await _doctorRepo.GetByIdAsync(order.DoctorId.Value);
+                        if (doctor != null && doctor.Commission > 0)
+                        {
+                            var commissionAmount = (double)invoice.GrandTotal * ((double)doctor.Commission / 100.0);
+                            await _commissionRepo.AddAsync(new DoctorCommission
+                            {
+                                DoctorId = doctor.DoctorId,
+                                InvoiceId = invoice.InvoiceId,
+                                CommissionAmount = commissionAmount,
+                                Status = "Unpaid",
+                                CreatedAt = DateTime.UtcNow
+                            });
+                        }
+                    }
                 }
                 
                 await _invoiceRepo.UpdateAsync(invoice);

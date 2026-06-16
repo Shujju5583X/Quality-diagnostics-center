@@ -13,14 +13,14 @@ namespace LabSystem.Data.Repositories
     {
         public PatientRepository(LabDbContext context) : base(context) { }
 
-        public async Task<IEnumerable<Patient>> SearchByNameAsync(string query, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Patient>> SearchByNameAsync(string query, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(query))
                 return await GetAllAsync(cancellationToken);
             return await _dbSet.Where(p => p.FullName.Contains(query)).ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Patient>> SearchPatientsAsync(string query, DateTime? startDate, DateTime? endDate, int page, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Patient>> SearchPatientsAsync(string query, DateTime? startDate, DateTime? endDate, int page, int pageSize, CancellationToken cancellationToken = default(CancellationToken))
         {
             var q = _dbSet.AsNoTracking().AsQueryable();
 
@@ -47,7 +47,7 @@ namespace LabSystem.Data.Repositories
                           .ToListAsync(cancellationToken);
         }
 
-        public async Task<int> GetPatientsCountAsync(string query, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken = default)
+        public async Task<int> GetPatientsCountAsync(string query, DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken = default(CancellationToken))
         {
             var q = _dbSet.AsNoTracking().AsQueryable();
 
@@ -71,9 +71,9 @@ namespace LabSystem.Data.Repositories
             return await q.CountAsync(cancellationToken);
         }
 
-        public async Task<string> GetMaxUhidForYearAsync(int year, CancellationToken cancellationToken = default)
+        public async Task<string> GetMaxUhidForYearAsync(int year, CancellationToken cancellationToken = default(CancellationToken))
         {
-            string prefix = $"QDC-{year}-";
+            string prefix = "QDC-" + year + "-";
             var match = await _dbSet.AsNoTracking()
                 .Where(p => p.Uhid.StartsWith(prefix))
                 .OrderByDescending(p => p.Uhid)
@@ -82,12 +82,11 @@ namespace LabSystem.Data.Repositories
             return match;
         }
 
-        public async Task<IEnumerable<TestOrder>> GetPatientOrdersAsync(int patientId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<TestOrder>> GetPatientOrdersAsync(int patientId, CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _context.TestOrders
                 .AsNoTracking()
                 .Include(o => o.TestTypes)
-                .Include(o => o.Specimens)
                 .Where(o => o.PatientId == patientId)
                 .OrderByDescending(o => o.OrderedAt)
                 .ToListAsync(cancellationToken);

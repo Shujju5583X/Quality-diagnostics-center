@@ -14,105 +14,108 @@ namespace LabSystem.UI.ViewModels
         // New Patient Bindings
         public string NewPatientName
         {
-            get => _newPatientName;
+            get { return _newPatientName; }
             set { _newPatientName = value; OnPropertyChanged(); }
         }
 
         public int NewPatientAge
         {
-            get => _newPatientAge;
+            get { return _newPatientAge; }
             set { _newPatientAge = value; OnPropertyChanged(); }
         }
 
         public string NewPatientPhone
         {
-            get => _newPatientPhone;
+            get { return _newPatientPhone; }
             set { _newPatientPhone = value; OnPropertyChanged(); }
         }
 
         public string NewPatientEmail
         {
-            get => _newPatientEmail;
+            get { return _newPatientEmail; }
             set { _newPatientEmail = value; OnPropertyChanged(); }
         }
 
         public string NewPatientGender
         {
-            get => _newPatientGender;
+            get { return _newPatientGender; }
             set { _newPatientGender = value; OnPropertyChanged(); }
         }
 
         // Search & Pagination Bindings for Patients
         public string PatientSearchQuery
         {
-            get => _patientSearchQuery;
+            get { return _patientSearchQuery; }
             set
             {
                 _patientSearchQuery = value;
                 OnPropertyChanged();
                 PatientCurrentPage = 1;
-                _ = LoadPatientsAsync();
+                var unused = LoadPatientsAsync();
             }
         }
 
         public DateTime? PatientStartDate
         {
-            get => _patientStartDate;
+            get { return _patientStartDate; }
             set
             {
                 _patientStartDate = value;
                 OnPropertyChanged();
                 PatientCurrentPage = 1;
-                _ = LoadPatientsAsync();
+                var unused = LoadPatientsAsync();
             }
         }
 
         public DateTime? PatientEndDate
         {
-            get => _patientEndDate;
+            get { return _patientEndDate; }
             set
             {
                 _patientEndDate = value;
                 OnPropertyChanged();
                 PatientCurrentPage = 1;
-                _ = LoadPatientsAsync();
+                var unused = LoadPatientsAsync();
             }
         }
 
         public int PatientCurrentPage
         {
-            get => _patientCurrentPage;
+            get { return _patientCurrentPage; }
             set
             {
                 _patientCurrentPage = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(PatientPageInfo));
+                OnPropertyChanged("PatientPageInfo");
             }
         }
 
         public int PatientTotalPages
         {
-            get => _patientTotalPages;
+            get { return _patientTotalPages; }
             set
             {
                 _patientTotalPages = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(PatientPageInfo));
+                OnPropertyChanged("PatientPageInfo");
             }
         }
 
         public int PatientTotalCount
         {
-            get => _patientTotalCount;
+            get { return _patientTotalCount; }
             set
             {
                 _patientTotalCount = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(PatientPageInfo));
+                OnPropertyChanged("PatientPageInfo");
             }
         }
 
-        public string PatientPageInfo => $"Page {PatientCurrentPage} of {PatientTotalPages} (Total: {PatientTotalCount})";
+        public string PatientPageInfo
+        {
+            get { return "Page " + PatientCurrentPage + " of " + PatientTotalPages + " (Total: " + PatientTotalCount + ")"; }
+        }
 
         public async Task LoadPatientsAsync()
         {
@@ -141,15 +144,32 @@ namespace LabSystem.UI.ViewModels
         }
 
         private Patient _editingPatient;
-        public string PatientFormTitle => _editingPatient == null ? "Register New Patient" : "Edit Patient";
-        public string PatientFormButtonText => _editingPatient == null ? "REGISTER PATIENT" : "UPDATE PATIENT";
+        public string PatientFormTitle
+        {
+            get { return _editingPatient == null ? "Register New Patient" : "Edit Patient"; }
+        }
+        public string PatientFormButtonText
+        {
+            get { return _editingPatient == null ? "REGISTER PATIENT" : "UPDATE PATIENT"; }
+        }
 
         private ICommand _editPatientCommand;
-        public ICommand EditPatientCommand => _editPatientCommand ?? (_editPatientCommand = new RelayCommand(ExecuteEditPatient));
+        public ICommand EditPatientCommand
+        {
+            get
+            {
+                if (_editPatientCommand == null)
+                {
+                    _editPatientCommand = new RelayCommand(ExecuteEditPatient);
+                }
+                return _editPatientCommand;
+            }
+        }
 
         private void ExecuteEditPatient(object obj)
         {
-            if (obj is Patient patient)
+            var patient = obj as Patient;
+            if (patient != null)
             {
                 _editingPatient = patient;
                 NewPatientName = patient.FullName;
@@ -158,8 +178,8 @@ namespace LabSystem.UI.ViewModels
                 NewPatientPhone = patient.ContactPhone;
                 NewPatientEmail = patient.ContactEmail;
                 
-                OnPropertyChanged(nameof(PatientFormTitle));
-                OnPropertyChanged(nameof(PatientFormButtonText));
+                OnPropertyChanged("PatientFormTitle");
+                OnPropertyChanged("PatientFormButtonText");
             }
         }
 
@@ -209,8 +229,8 @@ namespace LabSystem.UI.ViewModels
                     MessageBox.Show("Patient information updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
                     _editingPatient = null;
-                    OnPropertyChanged(nameof(PatientFormTitle));
-                    OnPropertyChanged(nameof(PatientFormButtonText));
+                    OnPropertyChanged("PatientFormTitle");
+                    OnPropertyChanged("PatientFormButtonText");
                 }
                 else
                 {
@@ -245,7 +265,7 @@ namespace LabSystem.UI.ViewModels
 
                     await _patientRepo.AddAsync(patient);
                     Log.Information("Added patient: {PatientName} with UHID {Uhid}", NewPatientName, uhid);
-                    MessageBox.Show($"Patient registered successfully!\nUHID: {uhid}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Patient registered successfully!\nUHID: " + uhid, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
 
                 // Reset fields
@@ -272,12 +292,13 @@ namespace LabSystem.UI.ViewModels
             if (maxUhid != null)
             {
                 var parts = maxUhid.Split('-');
-                if (parts.Length == 3 && int.TryParse(parts[2], out int parsedSeq))
+                int parsedSeq;
+                if (parts.Length == 3 && int.TryParse(parts[2], out parsedSeq))
                 {
                     seq = parsedSeq + 1;
                 }
             }
-            return $"QDC-{currentYear}-{seq:D5}";
+            return string.Format("QDC-{0}-{1:D5}", currentYear, seq);
         }
     }
 }

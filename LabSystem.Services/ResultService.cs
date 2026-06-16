@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Core.Services;
-using LabSystem.Core.Enums;
 
 namespace LabSystem.Services
 {
@@ -25,32 +24,15 @@ namespace LabSystem.Services
             _orderRepo = orderRepo;
         }
 
-        public async Task AddResultAsync(Result result, CancellationToken cancellationToken = default)
+        public async Task AddResultAsync(Result result, CancellationToken cancellationToken = default(CancellationToken))
         {
             var testType = await _testTypeRepo.GetByIdAsync(result.TypeId, cancellationToken);
             
-
-
             var order = await _orderRepo.GetByIdAsync(result.OrderId, cancellationToken);
-            
-            bool isRejected = false;
-            if (testType != null && order != null)
-            {
-                var specimen = order.Specimens?.FirstOrDefault(s => string.Equals(s.SampleType, testType.SampleType, StringComparison.OrdinalIgnoreCase));
-                if (specimen != null && specimen.StatusEnum == SpecimenStatus.Rejected)
-                {
-                    isRejected = true;
-                }
-            }
 
-            if (isRejected)
+            if (testType != null)
             {
-                result.Value = null;
-                result.IsAbnormal = false;
-            }
-            else if (testType != null)
-            {
-                var patient = order?.Patient;
+                var patient = order != null ? order.Patient : null;
                 result.IsAbnormal = EvaluateIsAbnormal(result.Value, testType, patient);
             }
 
@@ -61,13 +43,18 @@ namespace LabSystem.Services
             {
                 await _resultRepo.AddAsync(result, cancellationToken);
             }
-            catch (Exception ex) when (ex.ToString().Contains("FOREIGN KEY") || ex.ToString().Contains("constraint") || ex.ToString().Contains("Constraint"))
+            catch (Exception ex)
             {
-                throw new InvalidOperationException("Default staff record (ID=1) not found. Please ensure the database has been seeded correctly.", ex);
+                string exStr = ex.ToString();
+                if (exStr.Contains("FOREIGN KEY") || exStr.Contains("constraint") || exStr.Contains("Constraint"))
+                {
+                    throw new InvalidOperationException("Default staff record (ID=1) not found. Please ensure the database has been seeded correctly.", ex);
+                }
+                throw;
             }
         }
 
-        public async Task AmendResultAsync(int resultId, double? newValue, string valueText, string reason, int technicianId, CancellationToken cancellationToken = default)
+        public async Task AmendResultAsync(int resultId, double? newValue, string valueText, string reason, int technicianId, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(reason))
                 throw new ArgumentException("An amendment reason is required to modify a finalized result.");
@@ -87,7 +74,7 @@ namespace LabSystem.Services
             result.UpdatedAt = DateTime.UtcNow;
 
             var order = await _orderRepo.GetByIdAsync(result.OrderId, cancellationToken);
-            var patient = order?.Patient;
+            var patient = order != null ? order.Patient : null;
             result.IsAbnormal = EvaluateIsAbnormal(result.Value, testType, patient);
 
             await _resultRepo.UpdateAsync(result, cancellationToken);

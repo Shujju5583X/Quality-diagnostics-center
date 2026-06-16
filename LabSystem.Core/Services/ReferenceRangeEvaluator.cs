@@ -84,15 +84,15 @@ namespace LabSystem.Core.Services
             {
                 if (matchingRange.RangeLow.HasValue && matchingRange.RangeHigh.HasValue)
                 {
-                    return $"{matchingRange.RangeLow.Value} - {matchingRange.RangeHigh.Value}";
+                    return matchingRange.RangeLow.Value + " - " + matchingRange.RangeHigh.Value;
                 }
                 if (matchingRange.RangeLow.HasValue)
                 {
-                    return $">= {matchingRange.RangeLow.Value}";
+                    return ">= " + matchingRange.RangeLow.Value;
                 }
                 if (matchingRange.RangeHigh.HasValue)
                 {
-                    return $"<{matchingRange.RangeHigh.Value}";
+                    return "<" + matchingRange.RangeHigh.Value;
                 }
             }
 
@@ -119,15 +119,15 @@ namespace LabSystem.Core.Services
 
             if (tt.ReferenceRangeLow.HasValue && tt.ReferenceRangeHigh.HasValue)
             {
-                return $"{tt.ReferenceRangeLow.Value} - {tt.ReferenceRangeHigh.Value}";
+                return tt.ReferenceRangeLow.Value + " - " + tt.ReferenceRangeHigh.Value;
             }
             if (tt.ReferenceRangeLow.HasValue)
             {
-                return $">= {tt.ReferenceRangeLow.Value}";
+                return ">= " + tt.ReferenceRangeLow.Value;
             }
             if (tt.ReferenceRangeHigh.HasValue)
             {
-                return $"<{tt.ReferenceRangeHigh.Value}";
+                return "<" + tt.ReferenceRangeHigh.Value;
             }
             return "N/A";
         }

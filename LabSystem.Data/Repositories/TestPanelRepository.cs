@@ -10,14 +10,14 @@ namespace LabSystem.Data.Repositories
     {
         public TestPanelRepository(LabDbContext context) : base(context) { }
 
-        public override async Task<IEnumerable<TestPanel>> GetAllAsync(CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<TestPanel>> GetAllAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.AsNoTracking()
                          .Include(p => p.TestTypes)
                          .ToListAsync(cancellationToken);
         }
 
-        public override async Task<TestPanel> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public override async Task<TestPanel> GetByIdAsync(int id, CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet
                          .Include(p => p.TestTypes)

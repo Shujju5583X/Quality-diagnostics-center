@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Core.Services;
-using LabSystem.Core.Enums;
 using LabSystem.Core;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
@@ -66,7 +65,7 @@ namespace LabSystem.Services
             return candidates[0];
         }
 
-        public async Task<string> GenerateReportAsync(TestOrder order, bool includeLetterhead = true, CancellationToken cancellationToken = default)
+        public async Task<string> GenerateReportAsync(TestOrder order, bool includeLetterhead = true, CancellationToken cancellationToken = default(CancellationToken))
         {
             var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId, cancellationToken);
             bool isAmendedReport = results.Any(r => r.IsAmended);
@@ -148,8 +147,8 @@ namespace LabSystem.Services
             patientTable.AddColumn("0.4cm"); // Colon Right
             patientTable.AddColumn("4.2cm"); // Value Right
 
-            string patientName = order.Patient?.FullName ?? "Unknown Patient";
-            string gender = !string.IsNullOrWhiteSpace(order.Patient?.Gender) ? order.Patient.Gender : "Unknown";
+            string patientName = order.Patient != null ? order.Patient.FullName ?? "Unknown Patient" : "Unknown Patient";
+            string gender = (order.Patient != null && !string.IsNullOrWhiteSpace(order.Patient.Gender)) ? order.Patient.Gender : "Unknown";
             
             string ageStr = order.Patient != null ? order.Patient.Age.ToString() : "";
 
@@ -171,7 +170,7 @@ namespace LabSystem.Services
             pr2.Height = "0.5cm";
             pr2.Cells[0].AddParagraph("Age/Gender").Format.Font.Bold = true;
             pr2.Cells[1].AddParagraph(":");
-            pr2.Cells[2].AddParagraph($"{ageStr} (Year's) {gender}");
+            pr2.Cells[2].AddParagraph(ageStr + " (Year's) " + gender);
             pr2.Cells[3].AddParagraph("Reporting Date").Format.Font.Bold = true;
             pr2.Cells[4].AddParagraph(":");
             pr2.Cells[5].AddParagraph(reportingDateStr);
@@ -196,54 +195,6 @@ namespace LabSystem.Services
             separator.Format.Borders.Bottom.Color = Color.FromRgb(0, 115, 187); // Nice medical blue
             separator.Format.SpaceBefore = "0.4cm";
             separator.Format.SpaceAfter = "0.4cm";
-
-            // Specimen Details Section
-            if (order.Specimens != null && order.Specimens.Any())
-            {
-                var specimenTable = section.AddTable();
-                specimenTable.Borders.Width = 0.5;
-                specimenTable.Borders.Color = Colors.LightGray;
-                specimenTable.AddColumn("4.5cm");  // Barcode
-                specimenTable.AddColumn("3.5cm");  // Sample Type
-                specimenTable.AddColumn("5.0cm");  // Collection Time
-                specimenTable.AddColumn("5.0cm");  // Status / Reason
-
-                var specHeader = specimenTable.AddRow();
-                specHeader.Height = "0.5cm";
-                specHeader.VerticalAlignment = VerticalAlignment.Center;
-                specHeader.Cells[0].AddParagraph("Specimen Barcode").Format.Font.Bold = true;
-                specHeader.Cells[1].AddParagraph("Sample Type").Format.Font.Bold = true;
-                specHeader.Cells[2].AddParagraph("Collection Time").Format.Font.Bold = true;
-                specHeader.Cells[3].AddParagraph("Status").Format.Font.Bold = true;
-
-                foreach (var spec in order.Specimens)
-                {
-                    var specRow = specimenTable.AddRow();
-                    specRow.Height = "0.5cm";
-                    specRow.VerticalAlignment = VerticalAlignment.Center;
-                    specRow.Cells[0].AddParagraph(spec.Barcode ?? "");
-                    specRow.Cells[1].AddParagraph(spec.SampleType ?? "");
-                    specRow.Cells[2].AddParagraph(spec.CollectionTime.HasValue ? spec.CollectionTime.Value.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt") : "N/A");
-                    
-                    var statusCell = specRow.Cells[3];
-                    if (spec.StatusEnum == SpecimenStatus.Rejected)
-                    {
-                        var statusPara = statusCell.AddParagraph();
-                        var statusText = statusPara.AddFormattedText("REJECTED", TextFormat.Bold);
-                        statusText.Color = Colors.Red;
-                        if (!string.IsNullOrWhiteSpace(spec.RejectionReason))
-                        {
-                            statusPara.AddFormattedText($" ({spec.RejectionReason})");
-                        }
-                    }
-                    else
-                    {
-                        statusCell.AddParagraph(spec.Status ?? "");
-                    }
-                }
-
-                section.AddParagraph().Format.SpaceAfter = "0.4cm";
-            }
 
             // Group Results by Category first
             var categoryGroups = results
@@ -384,7 +335,7 @@ namespace LabSystem.Services
                             ? r.ValueText 
                             : FormatResultValue(r.Value, r.TestType);
                         string unitStr = r.TestType.Unit ?? "";
-                        string valTextStr = string.IsNullOrEmpty(unitStr) ? displayVal : $"{displayVal} {unitStr}";
+                        string valTextStr = string.IsNullOrEmpty(unitStr) ? displayVal : displayVal + " " + unitStr;
 
                         var valPara = row.Cells[2].AddParagraph();
                         var valText = valPara.AddFormattedText(valTextStr);
@@ -420,7 +371,7 @@ namespace LabSystem.Services
                         methodRow.Height = "0.6cm";
                         var methodCell = methodRow.Cells[0];
                         methodCell.MergeRight = 3;
-                        var methodPara = methodCell.AddParagraph($"(Method:- {method.ToUpper()})");
+                        var methodPara = methodCell.AddParagraph("(Method:- " + method.ToUpper() + ")");
                         methodPara.Format.Font.Size = 8.5;
                         methodPara.Format.Font.Italic = true;
                         methodPara.Format.Font.Color = Colors.DarkGray;
@@ -461,7 +412,7 @@ namespace LabSystem.Services
                 var amendments = results.Where(r => r.IsAmended).ToList();
                 foreach (var r in amendments)
                 {
-                    var reasonPara = section.AddParagraph($"* Amendment for {r.TestType.Name}: {r.AmendmentReason}");
+                    var reasonPara = section.AddParagraph("* Amendment for " + r.TestType.Name + ": " + r.AmendmentReason);
                     reasonPara.Format.Font.Size = 8;
                     reasonPara.Format.Font.Italic = true;
                     reasonPara.Format.Font.Color = Colors.Red;
@@ -495,7 +446,7 @@ namespace LabSystem.Services
             }
             safePatientName = safePatientName.Replace(' ', '_');
 
-            string filepath = Path.Combine(dir, $"{safePatientName}_Order{order.OrderId}_{dateStr}_{Guid.NewGuid().ToString().Substring(0,4)}.pdf");
+            string filepath = Path.Combine(dir, safePatientName + "_Order" + order.OrderId + "_" + dateStr + "_" + Guid.NewGuid().ToString().Substring(0, 4) + ".pdf");
             renderer.PdfDocument.Save(filepath);
             return filepath;
         }
@@ -537,7 +488,7 @@ namespace LabSystem.Services
             if (testType.Unit == "Titer")
             {
                 if (val <= 0) return "No Agglutination";
-                return $"Agglutination (1:{(int)val})";
+                return "Agglutination (1:" + (int)val + ")";
             }
             if (testType.Unit == "Index" || testType.Unit == "Ratio" || testType.Name.Contains("Antibody") || testType.Name.Contains("HBsAg") || testType.Name.Contains("HCV") || testType.Name.Contains("VDRL") || testType.Name.Contains("HIV"))
             {
@@ -557,7 +508,7 @@ namespace LabSystem.Services
             return ReferenceRangeEvaluator.FormatRange(tt, patient);
         }
 
-        public async Task<string> GenerateInvoicePdfAsync(Invoice invoice, CancellationToken cancellationToken = default)
+        public async Task<string> GenerateInvoicePdfAsync(Invoice invoice, CancellationToken cancellationToken = default(CancellationToken))
         {
             string dateStr = DateTime.Today.ToString("yyyy-MM-dd");
             
@@ -598,7 +549,7 @@ namespace LabSystem.Services
             infoTable.AddColumn("0.5cm");
             infoTable.AddColumn("3.0cm");
 
-            string patientName = invoice.Order?.Patient?.FullName ?? "Unknown Patient";
+            string patientName = invoice.Order != null && invoice.Order.Patient != null ? invoice.Order.Patient.FullName ?? "Unknown Patient" : "Unknown Patient";
             string invoiceId = invoice.InvoiceId.ToString();
             string orderId = invoice.OrderId.ToString();
             string createdDate = invoice.CreatedAt.ToLocalTime().ToString("dd-MMM-yyyy hh:mm tt");
@@ -609,10 +560,10 @@ namespace LabSystem.Services
             row1.Cells[2].AddParagraph(patientName);
             row1.Cells[3].AddParagraph("UHID").Format.Font.Bold = true;
             row1.Cells[4].AddParagraph(":");
-            row1.Cells[5].AddParagraph(invoice.Order?.Patient?.Uhid ?? "");
+            row1.Cells[5].AddParagraph(invoice.Order != null && invoice.Order.Patient != null ? invoice.Order.Patient.Uhid ?? "" : "");
 
             string invoiceReferredBy = "SELF";
-            if (!string.IsNullOrWhiteSpace(invoice.Order?.ReferredBy))
+            if (invoice.Order != null && !string.IsNullOrWhiteSpace(invoice.Order.ReferredBy))
             {
                 invoiceReferredBy = invoice.Order.ReferredBy;
             }
@@ -675,7 +626,7 @@ namespace LabSystem.Services
                             row.Height = "0.6cm";
                             row.VerticalAlignment = VerticalAlignment.Center;
                             row.Cells[0].AddParagraph(sno.ToString());
-                            row.Cells[1].AddParagraph($"{panel.Name} (Package)");
+                            row.Cells[1].AddParagraph(panel.Name + " (Package)");
                             row.Cells[2].AddParagraph(panel.Price.ToString("F2"));
                             
                             calculatedTotal += panel.Price;
@@ -791,7 +742,7 @@ namespace LabSystem.Services
             statusPara.Format.Font.Size = 12;
             if (invoice.IsPaid)
             {
-                statusPara.AddFormattedText($"Payment Status: PAID ({invoice.PaymentMethod})", TextFormat.Bold).Color = Colors.DarkGreen;
+                statusPara.AddFormattedText("Payment Status: PAID (" + invoice.PaymentMethod + ")", TextFormat.Bold).Color = Colors.DarkGreen;
             }
             else
             {
@@ -815,7 +766,7 @@ namespace LabSystem.Services
             }
             safePatientName = safePatientName.Replace(' ', '_');
 
-            string filepath = Path.Combine(dir, $"Invoice_{invoiceId}_{safePatientName}_{dateStr}_{Guid.NewGuid().ToString().Substring(0,4)}.pdf");
+            string filepath = Path.Combine(dir, "Invoice_" + invoiceId + "_" + safePatientName + "_" + dateStr + "_" + Guid.NewGuid().ToString().Substring(0, 4) + ".pdf");
             renderer.PdfDocument.Save(filepath);
             return filepath;
         }

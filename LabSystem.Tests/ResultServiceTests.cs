@@ -97,37 +97,6 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public async Task AddResult_ShouldSaveSentinelValue_WhenSpecimenIsRejected()
-        {
-            // Arrange
-            var patient = new Patient { Gender = "Male", Age = 30 };
-            var order = new TestOrder 
-            { 
-                OrderId = 10, 
-                Patient = patient,
-                Specimens = new System.Collections.Generic.List<Specimen>
-                {
-                    new Specimen { SampleType = "Blood", Status = "Rejected" }
-                }
-            };
-            
-            var testType = new TestType { TypeId = 1, SampleType = "Blood", ReferenceRangeLow = 10, ReferenceRangeHigh = 20 };
-
-            _mockOrderRepo.Setup(r => r.GetByIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(order);
-            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
-            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
-
-            var result = new Result { OrderId = 10, TypeId = 1, Value = 15 };
-
-            // Act
-            await _service.AddResultAsync(result);
-
-            // Assert
-            Assert.IsNull(result.Value);
-            Assert.IsFalse(result.IsAbnormal);
-        }
-
-        [Test]
         public void AmendResult_ShouldThrow_WhenReasonIsEmpty()
         {
             // Act & Assert

@@ -7,6 +7,6 @@ namespace LabSystem.Core.Interfaces
 {
     public interface IPaymentRepository : IRepository<Payment>
     {
-        Task<IEnumerable<Payment>> GetByInvoiceIdAsync(int invoiceId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<Payment>> GetByInvoiceIdAsync(int invoiceId, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

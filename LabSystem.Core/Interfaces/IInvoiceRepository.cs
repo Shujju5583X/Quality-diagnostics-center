@@ -7,7 +7,7 @@ namespace LabSystem.Core.Interfaces
 {
     public interface IInvoiceRepository : IRepository<Invoice>
     {
-        Task<Invoice> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<Invoice>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default);
+        Task<Invoice> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IEnumerable<Invoice>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

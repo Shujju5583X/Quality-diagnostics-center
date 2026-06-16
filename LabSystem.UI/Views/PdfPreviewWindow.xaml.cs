@@ -68,7 +68,7 @@ namespace LabSystem.UI.Views
             catch (Exception ex)
             {
                 Log.Error(ex, "Error updating PDF preview.");
-                MessageBox.Show($"Error loading preview: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error loading preview: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -77,12 +77,12 @@ namespace LabSystem.UI.Views
             try
             {
                 // The PDF is already saved in the Reports folder by GenerateReportAsync
-                MessageBox.Show($"PDF Report generated successfully!\nSaved to: {_tempPdfPath}", "Report Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("PDF Report generated successfully!\nSaved to: " + _tempPdfPath, "Report Saved", MessageBoxButton.OK, MessageBoxImage.Information);
                 Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving PDF: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error saving PDF: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -109,7 +109,7 @@ namespace LabSystem.UI.Views
             catch (Exception ex)
             {
                 Log.Error(ex, "Error printing PDF");
-                MessageBox.Show($"Error printing PDF: {ex.Message}\nMake sure a default PDF viewer is installed and configured for printing.", "Print Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error printing PDF: " + ex.Message + "\nMake sure a default PDF viewer is installed and configured for printing.", "Print Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

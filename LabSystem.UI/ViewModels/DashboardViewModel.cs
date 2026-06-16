@@ -8,8 +8,8 @@ using System.Windows.Input;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Core.Enums;
-using Serilog;
 using LabSystem.Services;
+using Serilog;
 
 namespace LabSystem.UI.ViewModels
 {
@@ -60,7 +60,7 @@ namespace LabSystem.UI.ViewModels
         private string _resultErrorMessage;
         public string ResultErrorMessage
         {
-            get => _resultErrorMessage;
+            get { return _resultErrorMessage; }
             set { _resultErrorMessage = value; OnPropertyChanged(); }
         }
 
@@ -69,6 +69,9 @@ namespace LabSystem.UI.ViewModels
         private int _pendingOrders;
         private int _completedOrders;
         private int _abnormalResultsFlagged;
+        private int _todayPatients;
+        private int _todayOrders;
+        private decimal _todayRevenue;
 
         // Billing fields - Discount/Tax amount (ruling out percent)
         private decimal _discountAmount;
@@ -97,7 +100,7 @@ namespace LabSystem.UI.ViewModels
         private bool _isSidebarPinned;
         public bool IsSidebarPinned
         {
-            get => _isSidebarPinned;
+            get { return _isSidebarPinned; }
             set
             {
                 _isSidebarPinned = value;
@@ -114,32 +117,62 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
+        private int _mainTabIndex;
+        public int MainTabIndex
+        {
+            get { return _mainTabIndex; }
+            set { _mainTabIndex = value; OnPropertyChanged(); }
+        }
+
+        private int _workQueueTabIndex;
+        public int WorkQueueTabIndex
+        {
+            get { return _workQueueTabIndex; }
+            set { _workQueueTabIndex = value; OnPropertyChanged(); }
+        }
+
+        private bool _isResultEditMode;
+        public bool IsResultEditMode
+        {
+            get { return _isResultEditMode; }
+            set
+            {
+                _isResultEditMode = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public IEnumerable<TestOrder> PendingOrdersFiltered
+        {
+            get { return Orders.Where(o => o.StatusEnum == OrderStatus.Pending); }
+        }
+
         // Settings Operator info fields
         private string _operatorName;
         public string OperatorName
         {
-            get => _operatorName;
+            get { return _operatorName; }
             set { _operatorName = value; OnPropertyChanged(); }
         }
 
         private string _operatorAddress;
         public string OperatorAddress
         {
-            get => _operatorAddress;
+            get { return _operatorAddress; }
             set { _operatorAddress = value; OnPropertyChanged(); }
         }
 
         private string _operatorPhone;
         public string OperatorPhone
         {
-            get => _operatorPhone;
+            get { return _operatorPhone; }
             set { _operatorPhone = value; OnPropertyChanged(); }
         }
 
         private string _lastBackupTime;
         public string LastBackupTime
         {
-            get => _lastBackupTime;
+            get { return _lastBackupTime; }
             set { _lastBackupTime = value; OnPropertyChanged(); }
         }
 
@@ -147,28 +180,28 @@ namespace LabSystem.UI.ViewModels
         private string _newDoctorName;
         public string NewDoctorName
         {
-            get => _newDoctorName;
+            get { return _newDoctorName; }
             set { _newDoctorName = value; OnPropertyChanged(); }
         }
 
         private string _newDoctorPhone;
         public string NewDoctorPhone
         {
-            get => _newDoctorPhone;
+            get { return _newDoctorPhone; }
             set { _newDoctorPhone = value; OnPropertyChanged(); }
         }
 
         private decimal _newDoctorCommission;
         public decimal NewDoctorCommission
         {
-            get => _newDoctorCommission;
+            get { return _newDoctorCommission; }
             set { _newDoctorCommission = value; OnPropertyChanged(); }
         }
 
         private Doctor _selectedDoctor;
         public Doctor SelectedDoctor
         {
-            get => _selectedDoctor;
+            get { return _selectedDoctor; }
             set
             {
                 _selectedDoctor = value;
@@ -192,75 +225,75 @@ namespace LabSystem.UI.ViewModels
         private string _newDepartmentName;
         public string NewDepartmentName
         {
-            get => _newDepartmentName;
+            get { return _newDepartmentName; }
             set { _newDepartmentName = value; OnPropertyChanged(); }
         }
 
         private Department _selectedDepartment;
         public Department SelectedDepartment
         {
-            get => _selectedDepartment;
+            get { return _selectedDepartment; }
             set
             {
                 _selectedDepartment = value;
                 OnPropertyChanged();
-                _ = LoadCatalogTestsForDepartmentAsync();
+                var unused = LoadCatalogTestsForDepartmentAsync();
             }
         }
 
-        public ObservableCollection<Patient> Patients { get; } = new ObservableCollection<Patient>();
-        public ObservableCollection<TestOrder> Orders { get; } = new ObservableCollection<TestOrder>();
-        public ObservableCollection<TestTypeSelection> TestTypes { get; } = new ObservableCollection<TestTypeSelection>();
+        public ObservableCollection<Patient> Patients { get; private set; }
+        public ObservableCollection<TestOrder> Orders { get; private set; }
+        public ObservableCollection<TestTypeSelection> TestTypes { get; private set; }
 
         // Items for entering results for the selected order
-        public ObservableCollection<ResultInput> SelectedOrderResults { get; } = new ObservableCollection<ResultInput>();
+        public ObservableCollection<ResultInput> SelectedOrderResults { get; private set; }
 
         // Catalog Management items
-        public ObservableCollection<TestType> CatalogTestTypes { get; } = new ObservableCollection<TestType>();
+        public ObservableCollection<TestType> CatalogTestTypes { get; private set; }
 
         // Billing Items
-        public ObservableCollection<Invoice> Invoices { get; } = new ObservableCollection<Invoice>();
+        public ObservableCollection<Invoice> Invoices { get; private set; }
 
         // New collections
-        public ObservableCollection<Doctor> Doctors { get; } = new ObservableCollection<Doctor>();
-        public ObservableCollection<Department> Departments { get; } = new ObservableCollection<Department>();
+        public ObservableCollection<Doctor> Doctors { get; private set; }
+        public ObservableCollection<Department> Departments { get; private set; }
 
         // Patient History
-        public ObservableCollection<PatientHistoryEntry> PatientHistory { get; } = new ObservableCollection<PatientHistoryEntry>();
+        public ObservableCollection<PatientHistoryEntry> PatientHistory { get; private set; }
         private string _patientHistoryName;
         public string PatientHistoryName
         {
-            get => _patientHistoryName;
+            get { return _patientHistoryName; }
             set { _patientHistoryName = value; OnPropertyChanged(); }
         }
         private int _patientHistoryCount;
         public int PatientHistoryCount
         {
-            get => _patientHistoryCount;
+            get { return _patientHistoryCount; }
             set { _patientHistoryCount = value; OnPropertyChanged(); }
         }
         public ICommand LoadPatientHistoryCommand { get; private set; }
 
         public Patient SelectedPatient
         {
-            get => _selectedPatient;
+            get { return _selectedPatient; }
             set { _selectedPatient = value; OnPropertyChanged(); }
         }
 
         public TestOrder SelectedOrder
         {
-            get => _selectedOrder;
+            get { return _selectedOrder; }
             set
             {
                 _selectedOrder = value;
                 OnPropertyChanged();
-                _ = LoadResultsForSelectedOrderSafeAsync();
+                var unused = LoadResultsForSelectedOrderSafeAsync();
             }
         }
 
         public Invoice SelectedInvoice
         {
-            get => _selectedInvoice;
+            get { return _selectedInvoice; }
             set
             {
                 _selectedInvoice = value;
@@ -277,96 +310,116 @@ namespace LabSystem.UI.ViewModels
         }
 
 
-        public QcViewModel QcVM { get; }
-        public AppointmentsViewModel AppointmentsVM { get; }
-        public StaffManagementViewModel StaffManagementVM { get; }
-
         public int TotalPatients
         {
-            get => _totalPatients;
+            get { return _totalPatients; }
             set { _totalPatients = value; OnPropertyChanged(); }
         }
 
         public int PendingOrders
         {
-            get => _pendingOrders;
+            get { return _pendingOrders; }
             set { _pendingOrders = value; OnPropertyChanged(); }
         }
 
         public int CompletedOrders
         {
-            get => _completedOrders;
+            get { return _completedOrders; }
             set { _completedOrders = value; OnPropertyChanged(); }
         }
 
         public int AbnormalResultsFlagged
         {
-            get => _abnormalResultsFlagged;
+            get { return _abnormalResultsFlagged; }
             set { _abnormalResultsFlagged = value; OnPropertyChanged(); }
+        }
+
+        public int TodayPatients
+        {
+            get { return _todayPatients; }
+            set { _todayPatients = value; OnPropertyChanged(); }
+        }
+
+        public int TodayOrders
+        {
+            get { return _todayOrders; }
+            set { _todayOrders = value; OnPropertyChanged(); }
+        }
+
+        public decimal TodayRevenue
+        {
+            get { return _todayRevenue; }
+            set { _todayRevenue = value; OnPropertyChanged(); }
         }
 
         // Billing properties - Discount/Tax amount (flat rupee amount)
         public decimal DiscountAmount
         {
-            get => _discountAmount;
+            get { return _discountAmount; }
             set { _discountAmount = value; OnPropertyChanged(); }
         }
 
         public decimal TaxAmount
         {
-            get => _taxAmount;
+            get { return _taxAmount; }
             set { _taxAmount = value; OnPropertyChanged(); }
         }
 
         public decimal PaymentAmount
         {
-            get => _paymentAmount;
+            get { return _paymentAmount; }
             set { _paymentAmount = value; OnPropertyChanged(); }
         }
 
         // Revenue report properties
         public RevenueReportStats RevenueStats
         {
-            get => _revenueStats;
+            get { return _revenueStats; }
             set { _revenueStats = value; OnPropertyChanged(); }
         }
 
         public DateTime ReportStartDate
         {
-            get => _reportStartDate;
+            get { return _reportStartDate; }
             set { _reportStartDate = value; OnPropertyChanged(); }
         }
 
         public DateTime ReportEndDate
         {
-            get => _reportEndDate;
+            get { return _reportEndDate; }
             set { _reportEndDate = value; OnPropertyChanged(); }
         }
 
         // Commands
-        public ICommand AddPatientCommand { get; }
-        public ICommand CreateOrderCommand { get; }
-        public ICommand BackupCommand { get; }
-        public ICommand RefreshCommand { get; }
-        public ICommand SaveCatalogTestCommand { get; }
-        public ICommand AddCatalogTestCommand { get; }
-        public ICommand PreviousPatientPageCommand { get; }
-        public ICommand NextPatientPageCommand { get; }
-        public ICommand AddPaymentCashCommand { get; }
-        public ICommand AddPaymentUpiCommand { get; }
-        public ICommand ApplyDiscountTaxCommand { get; }
-        public ICommand GenerateRevenueReportCommand { get; }
-        public ICommand SaveResultsCommand { get; }
-        public ICommand GenerateReportCommand { get; }
-        public ICommand GenerateBillCommand { get; }
+        public ICommand AddPatientCommand { get; private set; }
+        public ICommand CreateOrderCommand { get; private set; }
+        public ICommand BackupCommand { get; private set; }
+        public ICommand RefreshCommand { get; private set; }
+        public ICommand SaveCatalogTestCommand { get; private set; }
+        public ICommand AddCatalogTestCommand { get; private set; }
+        public ICommand PreviousPatientPageCommand { get; private set; }
+        public ICommand NextPatientPageCommand { get; private set; }
+        public ICommand AddPaymentCashCommand { get; private set; }
+        public ICommand AddPaymentUpiCommand { get; private set; }
+        public ICommand ApplyDiscountTaxCommand { get; private set; }
+        public ICommand GenerateRevenueReportCommand { get; private set; }
+        public ICommand RestoreBackupCommand { get; private set; }
+        public ICommand SaveResultsCommand { get; private set; }
+        public ICommand GenerateReportCommand { get; private set; }
+        public ICommand GenerateBillCommand { get; private set; }
 
         // New commands
-        public ICommand SaveSettingsCommand { get; }
-        public ICommand SaveDoctorCommand { get; }
-        public ICommand DeleteDoctorCommand { get; }
-        public ICommand AddDepartmentCommand { get; }
-        public ICommand DeleteDepartmentCommand { get; }
-        public ICommand DeleteCatalogTestCommand { get; }
+        public ICommand SaveSettingsCommand { get; private set; }
+        public ICommand SaveDoctorCommand { get; private set; }
+        public ICommand DeleteDoctorCommand { get; private set; }
+        public ICommand AddDepartmentCommand { get; private set; }
+        public ICommand DeleteDepartmentCommand { get; private set; }
+        public ICommand RenameDepartmentCommand { get; private set; }
+        public ICommand DeleteCatalogTestCommand { get; private set; }
+        public ICommand NavigateToReportCommand { get; private set; }
+        public ICommand EditResultsCommand { get; private set; }
+        public ICommand SaveAmendmentCommand { get; private set; }
+        public ICommand CancelEditCommand { get; private set; }
 
         public DashboardViewModel(
             IPatientRepository patientRepo,
@@ -381,10 +434,7 @@ namespace LabSystem.UI.ViewModels
             IBackupService backupService,
             IRepository<Doctor> doctorRepo,
             IRepository<Department> departmentRepo,
-            IRepository<Setting> settingRepo,
-            QcViewModel qcVM,
-            AppointmentsViewModel appointmentsVM,
-            StaffManagementViewModel staffManagementVM)
+            IRepository<Setting> settingRepo)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
@@ -403,9 +453,17 @@ namespace LabSystem.UI.ViewModels
             _departmentRepo = departmentRepo;
             _settingRepo = settingRepo;
 
-            QcVM = qcVM;
-            AppointmentsVM = appointmentsVM;
-            StaffManagementVM = staffManagementVM;
+            Patients = new ObservableCollection<Patient>();
+            Orders = new ObservableCollection<TestOrder>();
+            TestTypes = new ObservableCollection<TestTypeSelection>();
+            SelectedOrderResults = new ObservableCollection<ResultInput>();
+            CatalogTestTypes = new ObservableCollection<TestType>();
+            Invoices = new ObservableCollection<Invoice>();
+            Doctors = new ObservableCollection<Doctor>();
+            Departments = new ObservableCollection<Department>();
+            PatientHistory = new ObservableCollection<PatientHistoryEntry>();
+            TestPanels = new ObservableCollection<TestPanel>();
+            ReferredByHistory = new ObservableCollection<string>();
 
             // Load sidebar pin state
             try
@@ -435,13 +493,17 @@ namespace LabSystem.UI.ViewModels
             AddPaymentUpiCommand = new AsyncRelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
             ApplyDiscountTaxCommand = new AsyncRelayCommand(async o => await ExecuteApplyDiscountTaxAsync());
             GenerateRevenueReportCommand = new AsyncRelayCommand(async o => await ExecuteGenerateRevenueReportAsync());
+            RestoreBackupCommand = new AsyncRelayCommand(async o => await ExecuteRestoreBackupAsync());
 
             SaveSettingsCommand = new AsyncRelayCommand(async o => await ExecuteSaveSettingsAsync());
             SaveDoctorCommand = new AsyncRelayCommand(async o => await ExecuteSaveDoctorAsync());
             DeleteDoctorCommand = new AsyncRelayCommand(async o => await ExecuteDeleteDoctorAsync());
             AddDepartmentCommand = new AsyncRelayCommand(async o => await ExecuteAddDepartmentAsync());
             DeleteDepartmentCommand = new AsyncRelayCommand(async o => await ExecuteDeleteDepartmentAsync());
+            RenameDepartmentCommand = new AsyncRelayCommand(async o => await ExecuteRenameDepartmentAsync());
             DeleteCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteDeleteCatalogTestAsync());
+            
+            NavigateToReportCommand = new RelayCommand(ExecuteNavigateToReport);
 
             PreviousPatientPageCommand = new AsyncRelayCommand(async o =>
             {
@@ -461,11 +523,14 @@ namespace LabSystem.UI.ViewModels
                 }
             });
 
+            EditResultsCommand = new AsyncRelayCommand(async o => await ExecuteEditResultsAsync(o));
+            SaveAmendmentCommand = new AsyncRelayCommand(async o => await ExecuteSaveAmendmentAsync(o));
+            CancelEditCommand = new AsyncRelayCommand(async o => await CancelEditModeAsync());
             InitializeAmendResultCommand();
             LoadPatientHistoryCommand = new AsyncRelayCommand(async o => await ExecuteLoadPatientHistoryAsync());
             InitializeRework();
 
-            _ = InitializeAsync();
+            var unused2 = InitializeAsync();
         }
 
         private async Task InitializeAsync()
@@ -479,7 +544,7 @@ namespace LabSystem.UI.ViewModels
                 Log.Error(ex, "Failed to initialize dashboard.");
                 System.IO.File.AppendAllText(
                     System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} DASHBOARD INIT ERROR: {ex}\r\n");
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DASHBOARD INIT ERROR: " + ex + "\r\n");
             }
         }
 
@@ -489,10 +554,14 @@ namespace LabSystem.UI.ViewModels
             {
                 // Load Settings
                 var settingsList = await _settingRepo.GetAllAsync();
-                OperatorName = settingsList.FirstOrDefault(s => s.Key == "operator_name")?.Value ?? "";
-                OperatorAddress = settingsList.FirstOrDefault(s => s.Key == "operator_address")?.Value ?? "";
-                OperatorPhone = settingsList.FirstOrDefault(s => s.Key == "operator_phone")?.Value ?? "";
-                var lastBackup = settingsList.FirstOrDefault(s => s.Key == "last_backup")?.Value;
+                var opNameSetting = settingsList.FirstOrDefault(s => s.Key == "operator_name");
+                OperatorName = opNameSetting != null ? opNameSetting.Value ?? "" : "";
+                var opAddrSetting = settingsList.FirstOrDefault(s => s.Key == "operator_address");
+                OperatorAddress = opAddrSetting != null ? opAddrSetting.Value ?? "" : "";
+                var opPhoneSetting = settingsList.FirstOrDefault(s => s.Key == "operator_phone");
+                OperatorPhone = opPhoneSetting != null ? opPhoneSetting.Value ?? "" : "";
+                var lastBackupSetting = settingsList.FirstOrDefault(s => s.Key == "last_backup");
+                var lastBackup = lastBackupSetting != null ? lastBackupSetting.Value : null;
                 LastBackupTime = string.IsNullOrEmpty(lastBackup) ? "No backup has been created yet." : lastBackup;
 
                 // Load Doctors
@@ -553,6 +622,7 @@ namespace LabSystem.UI.ViewModels
                 {
                     Orders.Add(o);
                 }
+                OnPropertyChanged("PendingOrdersFiltered");
 
                 // Load Catalog Test Types
                 CatalogTestTypes.Clear();
@@ -637,19 +707,21 @@ namespace LabSystem.UI.ViewModels
 
                 if (PaymentAmount > SelectedInvoice.GrandTotal)
                 {
-                    MessageBox.Show($"Amount exceeds grand total of ₹{SelectedInvoice.GrandTotal:N2}.", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Amount exceeds grand total of \u20B9" + SelectedInvoice.GrandTotal.ToString("N2") + ".", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                await _billingService.AddPaymentAsync(SelectedInvoice.InvoiceId, PaymentAmount, paymentMethod);
-                MessageBox.Show($"Payment of ₹{PaymentAmount:N2} recorded via {paymentMethod}.", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                var invoiceId = SelectedInvoice.InvoiceId;
+                await _billingService.AddPaymentAsync(invoiceId, PaymentAmount, paymentMethod);
+                MessageBox.Show("Payment of \u20B9" + PaymentAmount.ToString("N2") + " recorded via " + paymentMethod + ".", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
                 PaymentAmount = 0;
                 await LoadInvoicesAsync();
+                SelectedInvoice = Invoices.FirstOrDefault(i => i.InvoiceId == invoiceId);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to process payment.");
-                MessageBox.Show($"Payment failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Payment failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -663,14 +735,16 @@ namespace LabSystem.UI.ViewModels
                     return;
                 }
 
-                await _billingService.UpdateInvoiceFinancialsAsync(SelectedInvoice.InvoiceId, DiscountAmount, TaxAmount);
+                var invoiceId = SelectedInvoice.InvoiceId;
+                await _billingService.UpdateInvoiceFinancialsAsync(invoiceId, DiscountAmount, TaxAmount);
                 MessageBox.Show("Discount/tax applied.", "Updated", MessageBoxButton.OK, MessageBoxImage.Information);
                 await LoadInvoicesAsync();
+                SelectedInvoice = Invoices.FirstOrDefault(i => i.InvoiceId == invoiceId);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to apply discount/tax.");
-                MessageBox.Show($"Failed to apply discount/tax: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Failed to apply discount/tax: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -683,7 +757,7 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to generate revenue report.");
-                MessageBox.Show($"Failed to generate revenue report: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Failed to generate revenue report: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -714,13 +788,13 @@ namespace LabSystem.UI.ViewModels
                         PatientHistory.Add(new PatientHistoryEntry
                         {
                             OrderDate = order.OrderedAt,
-                            TestName = result.TestType?.Name ?? "Unknown",
+                            TestName = result.TestType != null ? result.TestType.Name ?? "Unknown" : "Unknown",
                             Value = result.Value,
                             ValueText = result.ValueText,
-                            Unit = result.TestType?.Unit ?? "",
+                            Unit = result.TestType != null ? result.TestType.Unit ?? "" : "",
                             IsAbnormal = result.IsAbnormal,
-                            ReferenceLow = result.TestType?.ReferenceRangeLow,
-                            ReferenceHigh = result.TestType?.ReferenceRangeHigh
+                            ReferenceLow = result.TestType != null ? result.TestType.ReferenceRangeLow : null,
+                            ReferenceHigh = result.TestType != null ? result.TestType.ReferenceRangeHigh : null
                         });
                     }
                 }
@@ -734,7 +808,7 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to load patient history.");
-                MessageBox.Show($"Failed to load patient history: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Failed to load patient history: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -747,6 +821,14 @@ namespace LabSystem.UI.ViewModels
                 CompletedOrders = Orders.Count(o => o.StatusEnum == OrderStatus.Complete);
 
                 AbnormalResultsFlagged = await _resultRepo.CountAbnormalAsync();
+
+                // Today's aggregates
+                DateTime todayStart = DateTime.Today;
+                TodayPatients = Patients.Count(p => p.CreatedAt >= todayStart);
+                TodayOrders = Orders.Count(o => o.OrderedAt >= todayStart);
+
+                var todayInvoices = Invoices.Where(i => i.CreatedAt >= todayStart);
+                TodayRevenue = todayInvoices.Sum(i => (decimal)i.AmountPaid);
             }
             catch (Exception ex)
             {
@@ -763,6 +845,18 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to load results for selected order.");
+            }
+        }
+
+        private void ExecuteNavigateToReport(object obj)
+        {
+            var order = obj as TestOrder;
+            if (order != null)
+            {
+                // Tab Index 4 is the REPORT GENERATION tab
+                MainTabIndex = 4;
+                ReportSearchQuery = order.OrderId.ToString();
+                SelectedReportOrder = CompleteOrders.FirstOrDefault(o => o.OrderId == order.OrderId) ?? order;
             }
         }
     }

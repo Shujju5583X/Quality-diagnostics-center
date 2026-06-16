@@ -15,14 +15,14 @@ namespace LabSystem.UI.ViewModels
     {
         public string OrderNotes
         {
-            get => _orderNotes;
+            get { return _orderNotes; }
             set { _orderNotes = value; OnPropertyChanged(); }
         }
 
         // Free-text referral field with autocomplete from ReferredByHistory
         public string OrderReferredBy
         {
-            get => _orderReferredBy;
+            get { return _orderReferredBy; }
             set { _orderReferredBy = value; OnPropertyChanged(); }
         }
 
@@ -45,12 +45,23 @@ namespace LabSystem.UI.ViewModels
             {
                 var testIds = selectedTests.Select(t => t.TypeId).ToList();
 
+                // Sync doctor selection to ReferredBy field
+                string referredBy = "SELF";
+                if (SelectedDoctorForOrder != null && SelectedDoctorForOrder.DoctorId > 0)
+                {
+                    referredBy = SelectedDoctorForOrder.FullName;
+                }
+                else if (!string.IsNullOrWhiteSpace(OrderReferredBy))
+                {
+                    referredBy = OrderReferredBy.Trim();
+                }
+
                 var order = new TestOrder
                 {
                     PatientId = SelectedPatient.PatientId,
                     StatusEnum = OrderStatus.Pending,
                     Notes = OrderNotes ?? "",
-                    ReferredBy = string.IsNullOrWhiteSpace(OrderReferredBy) ? "SELF" : OrderReferredBy.Trim(),
+                    ReferredBy = referredBy,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -70,6 +81,7 @@ namespace LabSystem.UI.ViewModels
                 OrderReferredBy = "SELF";
                 OrderNotes = string.Empty;
                 SelectedTestPanel = null;
+                SelectedDoctorForOrder = DoctorsForOrder != null ? DoctorsForOrder.FirstOrDefault() : null;
 
                 await LoadDataAsync();
                 MessageBox.Show("Test order created successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -97,16 +109,6 @@ namespace LabSystem.UI.ViewModels
                     {
                         foreach (var testType in SelectedOrder.TestTypes)
                         {
-                            bool isRejected = false;
-                            if (SelectedOrder.Specimens != null)
-                            {
-                                var spec = SelectedOrder.Specimens.FirstOrDefault(s => string.Equals(s.SampleType, testType.SampleType, StringComparison.OrdinalIgnoreCase));
-                                if (spec != null && spec.StatusEnum == SpecimenStatus.Rejected)
-                                {
-                                    isRejected = true;
-                                }
-                            }
-
                             var ri = new ResultInput
                             {
                                 TypeId = testType.TypeId,
@@ -114,8 +116,8 @@ namespace LabSystem.UI.ViewModels
                                 TestName = testType.Name,
                                 Unit = testType.Unit,
                                 IsAbnormal = false,
-                                IsReadOnly = isRejected,
-                                ValueText = isRejected ? "Sample Rejected" : string.Empty
+                                IsReadOnly = false,
+                                ValueText = string.Empty
                             };
                             EvaluatePatientReferenceRange(ri, testType, SelectedOrder.Patient);
                             PopulateOptions(ri);
@@ -137,9 +139,10 @@ namespace LabSystem.UI.ViewModels
                         var ri = new ResultInput
                         {
                             TypeId = r.TypeId,
-                            InputType = r.TestType?.InputType ?? ResultInputType.Numeric,
-                            TestName = r.TestType?.Name ?? "Unknown Test",
-                            Unit = r.TestType?.Unit ?? "",
+                            ResultId = r.ResultId,
+                            InputType = r.TestType != null ? r.TestType.InputType : ResultInputType.Numeric,
+                            TestName = r.TestType != null ? r.TestType.Name ?? "Unknown Test" : "Unknown Test",
+                            Unit = r.TestType != null ? r.TestType.Unit ?? "" : "",
                             ValueText = r.Value == null ? "Sample Rejected" : r.Value.ToString(),
                             IsAbnormal = r.IsAbnormal,
                             IsReadOnly = true
@@ -194,7 +197,11 @@ namespace LabSystem.UI.ViewModels
 
             if (ri.HasOptions && !string.IsNullOrEmpty(ri.ValueText))
             {
-                ri.SelectedOption = ri.Options.FirstOrDefault(o => o.Value == ri.ValueText || Math.Abs((double.TryParse(o.Value, out var v1) ? v1 : -1) - (double.TryParse(ri.ValueText, out var v2) ? v2 : -2)) < 0.001);
+                double parsedOVal;
+                double parsedRVal;
+                ri.SelectedOption = ri.Options.FirstOrDefault(o =>
+                    o.Value == ri.ValueText ||
+                    (double.TryParse(o.Value, out parsedOVal) && double.TryParse(ri.ValueText, out parsedRVal) && Math.Abs(parsedOVal - parsedRVal) < 0.001));
             }
         }
 
@@ -207,7 +214,8 @@ namespace LabSystem.UI.ViewModels
 
         private async Task ExecuteAmendResultAsync(object parameter)
         {
-            if (parameter is not ResultInput ri) return;
+            var ri = parameter as ResultInput;
+            if (ri == null) return;
 
             var reasonDialog = new Views.AmendmentReasonDialog();
             if (reasonDialog.ShowDialog() != true) return;
@@ -221,19 +229,20 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
-                double? newValue = double.TryParse(ri.ValueText, out var v) ? v : (double?)null;
-                await _resultService.AmendResultAsync(ri.TypeId, newValue, ri.ValueText, reason, App.AuthenticatedStaffId);
+                double parsedVal;
+                double? newValue = double.TryParse(ri.ValueText, out parsedVal) ? (double?)parsedVal : null;
+                await _resultService.AmendResultAsync(ri.ResultId, newValue, ri.ValueText, reason, App.AuthenticatedStaffId);
 
                 ri.IsAmendmentMode = false;
                 ri.IsAbnormal = ReferenceRangeEvaluator.IsAbnormal(newValue,
-                    await _testTypeRepo.GetByIdAsync(ri.TypeId), SelectedOrder?.Patient);
+                    await _testTypeRepo.GetByIdAsync(ri.TypeId), SelectedOrder != null ? SelectedOrder.Patient : null);
 
                 MessageBox.Show("Result amended successfully.", "Amended", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to amend result.");
-                MessageBox.Show($"Amendment failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Amendment failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

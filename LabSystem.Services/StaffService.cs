@@ -17,7 +17,7 @@ namespace LabSystem.Services
             _staffRepo = staffRepo;
         }
 
-        public async Task<Staff> CreateStaffAsync(string fullName, string role, string pin, CancellationToken cancellationToken = default)
+        public async Task<Staff> CreateStaffAsync(string fullName, string role, string pin, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new ArgumentException("Staff name is required.");
@@ -37,14 +37,14 @@ namespace LabSystem.Services
             return staff;
         }
 
-        public async Task UpdateStaffAsync(Staff staff, CancellationToken cancellationToken = default)
+        public async Task UpdateStaffAsync(Staff staff, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (staff == null)
-                throw new ArgumentNullException(nameof(staff));
+                throw new ArgumentNullException("staff");
             await _staffRepo.UpdateAsync(staff, cancellationToken);
         }
 
-        public async Task ResetPinAsync(int staffId, string newPin, CancellationToken cancellationToken = default)
+        public async Task ResetPinAsync(int staffId, string newPin, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(newPin) || newPin.Length < 4)
                 throw new ArgumentException("PIN must be at least 4 digits.");
@@ -57,7 +57,7 @@ namespace LabSystem.Services
             await _staffRepo.UpdateAsync(staff, cancellationToken);
         }
 
-        public async Task ToggleLockoutAsync(int staffId, bool lockout, CancellationToken cancellationToken = default)
+        public async Task ToggleLockoutAsync(int staffId, bool lockout, CancellationToken cancellationToken = default(CancellationToken))
         {
             var staff = await _staffRepo.GetByIdAsync(staffId, cancellationToken);
             if (staff == null)
@@ -68,7 +68,7 @@ namespace LabSystem.Services
             await _staffRepo.UpdateAsync(staff, cancellationToken);
         }
 
-        public async Task<IEnumerable<Staff>> GetAllStaffAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Staff>> GetAllStaffAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _staffRepo.GetAllAsync(cancellationToken);
         }

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
@@ -62,7 +63,7 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 1, FullName = "John Doe" }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(1, default))
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(1, default(CancellationToken)))
                            .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 1, Value = 15, TestType = new TestType { Name = "Glucose", Unit = "mg/dL", ReferenceRangeLow = 70, ReferenceRangeHigh = 100 } }
@@ -93,7 +94,7 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 2, FullName = "Jane Smith" }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(2, default))
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(2, default(CancellationToken)))
                            .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 2, Value = 12, TestType = new TestType { Name = "Hemoglobin", Unit = "g/dL", ReferenceRangeLow = 12, ReferenceRangeHigh = 16 } }
@@ -123,7 +124,7 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 3, FullName = "Abnormal Patient", Age = 30 }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(3, default))
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(3, default(CancellationToken)))
                            .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 3, Value = 150, IsAbnormal = true, TestType = new TestType { Name = "Glucose", Unit = "mg/dL", ReferenceRangeLow = 70, ReferenceRangeHigh = 100 } }
@@ -145,7 +146,7 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 4, FullName = "Amended Patient", Age = 40 }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(4, default))
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(4, default(CancellationToken)))
                            .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 4, Value = 14, IsAmended = true, AmendmentReason = "Typo correction", AmendedAt = DateTime.Now, TestType = new TestType { Name = "Hemoglobin", Unit = "g/dL", ReferenceRangeLow = 12, ReferenceRangeHigh = 16 } }
@@ -167,7 +168,7 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 5, FullName = "Empty Patient", Age = 20 }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(5, default))
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(5, default(CancellationToken)))
                            .ReturnsAsync(new List<Result>()); // Empty result list
 
             string filepath = await _service.GenerateReportAsync(order);
@@ -186,7 +187,7 @@ namespace LabSystem.Tests
                 Patient = new Patient { PatientId = 6, FullName = "Null DOB Patient", Age = 0 }
             };
 
-            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(6, default))
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(6, default(CancellationToken)))
                            .ReturnsAsync(new List<Result>
                            {
                                new Result { ResultId = 6, Value = 5.0, TestType = new TestType { Name = "Potassium", Unit = "mEq/L", ReferenceRangeLow = 3.5, ReferenceRangeHigh = 5.1 } }
@@ -248,17 +249,6 @@ namespace LabSystem.Tests
             {
                 string str = status.ToString();
                 OrderStatus parsed = (OrderStatus)Enum.Parse(typeof(OrderStatus), str);
-                Assert.AreEqual(status, parsed);
-            }
-        }
-
-        [Test]
-        public void SpecimenStatus_Enum_Serialization_RoundTrip()
-        {
-            foreach (SpecimenStatus status in Enum.GetValues(typeof(SpecimenStatus)))
-            {
-                string str = status.ToString();
-                SpecimenStatus parsed = (SpecimenStatus)Enum.Parse(typeof(SpecimenStatus), str);
                 Assert.AreEqual(status, parsed);
             }
         }

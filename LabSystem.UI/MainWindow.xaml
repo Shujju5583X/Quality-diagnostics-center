@@ -25,11 +25,11 @@
             <DockPanel>
                 <StackPanel Orientation="Horizontal" Margin="16 0 0 0" VerticalAlignment="Center">
                     <Image Source="logo.png" Width="28" Height="28" Margin="0 0 8 0" VerticalAlignment="Center" />
-                    <TextBlock VerticalAlignment="Center" Style="{StaticResource MaterialDesignHeadline6TextBlock}">Quality Diagnostic Center</TextBlock>
+                    <TextBlock VerticalAlignment="Center" Style="{StaticResource MaterialDesignTitleTextBlock}">Quality Diagnostic Center</TextBlock>
                 </StackPanel>
                 <Button Command="{Binding BackupCommand}" HorizontalAlignment="Right" DockPanel.Dock="Right" Style="{StaticResource MaterialDesignFlatButton}">
                     <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="DatabaseSync" Margin="0 0 8 0" VerticalAlignment="Center" />
+                        <materialDesign:PackIcon Kind="Database" Margin="0 0 8 0" VerticalAlignment="Center" />
                         <TextBlock Text="BACKUP NOW" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
@@ -38,7 +38,12 @@
 
         <ContentControl Grid.Row="1" Content="{Binding CurrentViewModel}">
             <ContentControl.Resources>
-                <!-- Single-operator: Dashboard is the only view -->
+                <DataTemplate DataType="{x:Type viewmodels:LoginViewModel}">
+                    <Grid>
+                        <views:LoginView HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Width="380" Height="420" />
+                    </Grid>
+                </DataTemplate>
                 <DataTemplate DataType="{x:Type viewmodels:DashboardViewModel}">
                     <views:DashboardView />
                 </DataTemplate>

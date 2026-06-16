@@ -13,56 +13,59 @@ namespace LabSystem.UI.ViewModels
         private readonly IStaffService _staffService;
         private readonly IStaffRepository _staffRepo;
 
-        public ObservableCollection<Staff> StaffMembers { get; } = new ObservableCollection<Staff>();
+        public ObservableCollection<Staff> StaffMembers { get; private set; }
 
         private string _newStaffName;
         public string NewStaffName
         {
-            get => _newStaffName;
+            get { return _newStaffName; }
             set { _newStaffName = value; OnPropertyChanged(); }
         }
 
         private string _newStaffRole = "Technician";
         public string NewStaffRole
         {
-            get => _newStaffRole;
+            get { return _newStaffRole; }
             set { _newStaffRole = value; OnPropertyChanged(); }
         }
 
         private string _newStaffPin;
         public string NewStaffPin
         {
-            get => _newStaffPin;
+            get { return _newStaffPin; }
             set { _newStaffPin = value; OnPropertyChanged(); }
         }
 
         private Staff _selectedStaff;
         public Staff SelectedStaff
         {
-            get => _selectedStaff;
-            set { _selectedStaff = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsStaffSelected)); }
+            get { return _selectedStaff; }
+            set { _selectedStaff = value; OnPropertyChanged(); OnPropertyChanged("IsStaffSelected"); }
         }
 
-        public bool IsStaffSelected => SelectedStaff != null;
+        public bool IsStaffSelected
+        {
+            get { return SelectedStaff != null; }
+        }
 
         private string _resetPinValue;
         public string ResetPinValue
         {
-            get => _resetPinValue;
+            get { return _resetPinValue; }
             set { _resetPinValue = value; OnPropertyChanged(); }
         }
 
         private string _statusMessage;
         public string StatusMessage
         {
-            get => _statusMessage;
+            get { return _statusMessage; }
             set { _statusMessage = value; OnPropertyChanged(); }
         }
 
-        public ICommand LoadStaffCommand { get; }
-        public ICommand AddStaffCommand { get; }
-        public ICommand ResetPinCommand { get; }
-        public ICommand ToggleLockoutCommand { get; }
+        public ICommand LoadStaffCommand { get; private set; }
+        public ICommand AddStaffCommand { get; private set; }
+        public ICommand ResetPinCommand { get; private set; }
+        public ICommand ToggleLockoutCommand { get; private set; }
 
         public string PendingStaffPin { get; set; }
         public string PendingResetPin { get; set; }
@@ -71,13 +74,14 @@ namespace LabSystem.UI.ViewModels
         {
             _staffService = staffService;
             _staffRepo = staffRepo;
+            StaffMembers = new ObservableCollection<Staff>();
 
             LoadStaffCommand = new AsyncRelayCommand(async o => await LoadStaffAsync());
             AddStaffCommand = new AsyncRelayCommand(async o => await ExecuteAddStaffAsync());
             ResetPinCommand = new AsyncRelayCommand(async o => await ExecuteResetPinAsync());
             ToggleLockoutCommand = new AsyncRelayCommand(async o => await ExecuteToggleLockoutAsync(o));
 
-            _ = LoadStaffAsync();
+            var unused = LoadStaffAsync();
         }
 
         public async Task LoadStaffAsync()
@@ -91,7 +95,7 @@ namespace LabSystem.UI.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error loading staff: {ex.Message}";
+                StatusMessage = "Error loading staff: " + ex.Message;
             }
         }
 
@@ -100,7 +104,7 @@ namespace LabSystem.UI.ViewModels
             try
             {
                 await _staffService.CreateStaffAsync(NewStaffName, NewStaffRole, PendingStaffPin ?? NewStaffPin);
-                StatusMessage = $"Staff '{NewStaffName}' added successfully.";
+                StatusMessage = "Staff '" + NewStaffName + "' added successfully.";
                 NewStaffName = "";
                 PendingStaffPin = "";
                 NewStaffPin = "";
@@ -109,7 +113,7 @@ namespace LabSystem.UI.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error: {ex.Message}";
+                StatusMessage = "Error: " + ex.Message;
             }
         }
 
@@ -126,13 +130,14 @@ namespace LabSystem.UI.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error: {ex.Message}";
+                StatusMessage = "Error: " + ex.Message;
             }
         }
 
         private async Task ExecuteToggleLockoutAsync(object parameter)
         {
-            if (parameter is Staff staff)
+            var staff = parameter as Staff;
+            if (staff != null)
             {
                 try
                 {
@@ -143,7 +148,7 @@ namespace LabSystem.UI.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    StatusMessage = $"Error: {ex.Message}";
+                    StatusMessage = "Error: " + ex.Message;
                 }
             }
         }

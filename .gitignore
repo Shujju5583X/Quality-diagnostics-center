@@ -11,7 +11,7 @@
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-publish/
+[Pp]ublish/
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
@@ -76,5 +76,13 @@ appsettings.json
 appsettings.*.json
 !appsettings.example.json
 
-# Local AI prompt/history files
+# Tools and debug artifacts
+tools/
+*.exe
+*.dll.bak
+*.pdb
+
+# Local project notes / temp files
 initial_prompt.txt
+Project-Progress.txt
+Step-by-Step Implementatio.txt

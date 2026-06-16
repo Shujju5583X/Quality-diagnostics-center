@@ -1,23 +1,16 @@
-<Window x:Class="LabSystem.UI.Views.LoginView"
+<UserControl x:Class="LabSystem.UI.Views.LoginView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:LabSystem.UI.Views"
-        Title="Technician Authentication - Quality Diagnostics Center" 
-        Height="420" Width="380" 
-        WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
-        WindowStyle="None"
-        AllowsTransparency="True"
-        Background="Transparent"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
         TextElement.FontSize="14"
         FontFamily="{DynamicResource MaterialDesignFont}">
     
-    <Window.Resources>
+    <UserControl.Resources>
         <local:StringVisibilityConverter x:Key="StringVisibilityConverter" />
-    </Window.Resources>
+    </UserControl.Resources>
     <Border CornerRadius="12" Background="{DynamicResource MaterialDesignPaper}" BorderBrush="{DynamicResource PrimaryHueMidBrush}" BorderThickness="1.5">
         <Grid>
             <Grid.RowDefinitions>
@@ -97,4 +90,4 @@
             </Grid>
         </Grid>
     </Border>
-</Window>
+</UserControl>

@@ -12,21 +12,21 @@ namespace LabSystem.Data.Repositories
     {
         public TestTypeRepository(LabDbContext context) : base(context) { }
 
-        public override async Task<TestType> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public override async Task<TestType> GetByIdAsync(int id, CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet
                          .Include(t => t.ReferenceRanges)
                          .FirstOrDefaultAsync(t => t.TypeId == id, cancellationToken);
         }
 
-        public override async Task<IEnumerable<TestType>> GetAllAsync(CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<TestType>> GetAllAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.AsNoTracking()
                          .Include(t => t.ReferenceRanges)
                          .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<TestType>> GetActiveAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<TestType>> GetActiveAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.AsNoTracking()
                          .Include(t => t.ReferenceRanges)
@@ -34,7 +34,7 @@ namespace LabSystem.Data.Repositories
                          .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<TestType>> GetByCategoryAsync(string category, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<TestType>> GetByCategoryAsync(string category, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(category))
                 return await GetAllAsync(cancellationToken);
@@ -45,7 +45,7 @@ namespace LabSystem.Data.Repositories
                          .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<TestType>> GetByGroupNameAsync(string groupName, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<TestType>> GetByGroupNameAsync(string groupName, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(groupName))
                 return await GetAllAsync(cancellationToken);

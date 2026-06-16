@@ -12,7 +12,7 @@ namespace LabSystem.Data.Repositories
     {
         public InvoiceRepository(LabDbContext context) : base(context) { }
 
-        public async Task<Invoice> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken = default)
+        public async Task<Invoice> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.AsNoTracking()
                          .Include(i => i.Order)
@@ -21,7 +21,7 @@ namespace LabSystem.Data.Repositories
                          .FirstOrDefaultAsync(i => i.OrderId == orderId, cancellationToken);
         }
 
-        public async Task<IEnumerable<Invoice>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Invoice>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.AsNoTracking()
                          .Include(i => i.Order)

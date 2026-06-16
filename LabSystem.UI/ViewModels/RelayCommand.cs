@@ -10,7 +10,8 @@ namespace LabSystem.UI.ViewModels
 
         public RelayCommand(Action<object> execute, Func<object, bool> canExecute = null)
         {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            if (execute == null) throw new ArgumentNullException("execute");
+            _execute = execute;
             _canExecute = canExecute;
         }
 
@@ -20,8 +21,14 @@ namespace LabSystem.UI.ViewModels
             remove { CommandManager.RequerySuggested -= value; }
         }
 
-        public bool CanExecute(object parameter) => _canExecute == null || _canExecute(parameter);
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute == null || _canExecute(parameter);
+        }
 
-        public void Execute(object parameter) => _execute(parameter);
+        public void Execute(object parameter)
+        {
+            _execute(parameter);
+        }
     }
 }

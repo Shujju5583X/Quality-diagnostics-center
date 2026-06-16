@@ -11,7 +11,7 @@ namespace LabSystem.UI.ViewModels
     {
         public TestType SelectedCatalogTest
         {
-            get => _selectedCatalogTest;
+            get { return _selectedCatalogTest; }
             set
             {
                 _selectedCatalogTest = value;
@@ -22,68 +22,68 @@ namespace LabSystem.UI.ViewModels
 
         public string CatalogTestName
         {
-            get => _catalogTestName;
+            get { return _catalogTestName; }
             set { _catalogTestName = value; OnPropertyChanged(); }
         }
 
         public string CatalogTestUnit
         {
-            get => _catalogTestUnit;
+            get { return _catalogTestUnit; }
             set { _catalogTestUnit = value; OnPropertyChanged(); }
         }
 
         public double? CatalogTestLow
         {
-            get => _catalogTestLow;
+            get { return _catalogTestLow; }
             set { _catalogTestLow = value; OnPropertyChanged(); }
         }
 
         public double? CatalogTestHigh
         {
-            get => _catalogTestHigh;
+            get { return _catalogTestHigh; }
             set { _catalogTestHigh = value; OnPropertyChanged(); }
         }
 
         public bool CatalogTestIsActive
         {
-            get => _catalogTestIsActive;
+            get { return _catalogTestIsActive; }
             set { _catalogTestIsActive = value; OnPropertyChanged(); }
         }
 
         public string CatalogTestCategory
         {
-            get => _catalogTestCategory;
+            get { return _catalogTestCategory; }
             set { _catalogTestCategory = value; OnPropertyChanged(); }
         }
 
         public string CatalogTestGroupName
         {
-            get => _catalogTestGroupName;
+            get { return _catalogTestGroupName; }
             set { _catalogTestGroupName = value; OnPropertyChanged(); }
         }
 
         public string CatalogTestMethod
         {
-            get => _catalogTestMethod;
+            get { return _catalogTestMethod; }
             set { _catalogTestMethod = value; OnPropertyChanged(); }
         }
 
         public string CatalogTestInterpretation
         {
-            get => _catalogTestInterpretation;
+            get { return _catalogTestInterpretation; }
             set { _catalogTestInterpretation = value; OnPropertyChanged(); }
         }
 
         public int CatalogTestSortOrder
         {
-            get => _catalogTestSortOrder;
+            get { return _catalogTestSortOrder; }
             set { _catalogTestSortOrder = value; OnPropertyChanged(); }
         }
 
         private decimal _catalogTestPrice;
         public decimal CatalogTestPrice
         {
-            get => _catalogTestPrice;
+            get { return _catalogTestPrice; }
             set { _catalogTestPrice = value; OnPropertyChanged(); }
         }
 

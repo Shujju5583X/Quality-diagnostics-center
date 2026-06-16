@@ -33,14 +33,22 @@ namespace LabSystem.Tests
             var paymentRepo = new PaymentRepository(_context);
             var orderRepo = new TestOrderRepository(_context);
             var panelRepo = new TestPanelRepository(_context);
-            _service = new BillingService(invoiceRepo, paymentRepo, orderRepo, panelRepo);
+            var commissionRepo = new Repository<DoctorCommission>(_context);
+            var doctorRepo = new Repository<Doctor>(_context);
+            _service = new BillingService(invoiceRepo, paymentRepo, orderRepo, panelRepo, commissionRepo, doctorRepo);
         }
 
         [TearDown]
         public void TearDown()
         {
-            _context?.Dispose();
-            _connection?.Dispose();
+            if (_context != null)
+            {
+                _context.Dispose();
+            }
+            if (_connection != null)
+            {
+                _connection.Dispose();
+            }
         }
 
         [Test]

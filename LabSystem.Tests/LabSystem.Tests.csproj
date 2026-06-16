@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net462</TargetFramework>
-    <LangVersion>10.0</LangVersion>
+    <TargetFramework>net451</TargetFramework>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageReference Include="Moq" Version="4.16.1" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.112.2" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.105.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LabSystem.Core\LabSystem.Core.csproj" />

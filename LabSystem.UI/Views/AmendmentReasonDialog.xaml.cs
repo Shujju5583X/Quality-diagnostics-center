@@ -4,7 +4,7 @@ namespace LabSystem.UI.Views
 {
     public partial class AmendmentReasonDialog : Window
     {
-        public string Reason => ReasonTextBox.Text;
+        public string Reason { get { return ReasonTextBox.Text; } }
 
         public AmendmentReasonDialog()
         {

@@ -1,8 +1,8 @@
 # Quality Diagnostics Center - Laboratory System
 
-A comprehensive, enterprise-grade **Medical Laboratory Management System** designed to streamline clinical workflows, client directories, and laboratory diagnostics, built with a modern **.NET C# (WPF)** desktop architecture.
+A comprehensive, enterprise-grade **Medical Laboratory Management System** designed to streamline clinical workflows, client directories, and laboratory diagnostics, built with a **.NET Framework (WPF)** desktop architecture.
 
-This WPF application handles complete day-to-day laboratory operations including patient registration, referral doctor commission mapping, active panel/test type catalog navigation, specimen lifecycle tracking, keyboard-optimized clinical result entries, dynamic demographic reference ranges, professional PDF report generation, billing adjustments, and automated multi-format backups.
+This WPF application handles complete day-to-day laboratory operations including patient registration, referral doctor commission mapping, active panel/test type catalog navigation, keyboard-optimized clinical result entries, dynamic demographic reference ranges, professional PDF report generation, billing adjustments, and automated multi-format backups.
 
 ---
 
@@ -15,18 +15,13 @@ This WPF application handles complete day-to-day laboratory operations including
 
 ### 🩺 Doctor & Referral Management
 *   **Referral Tracking:** Link orders to referring doctors using a drop-down menu in the ordering process (defaults to "Self" if none selected).
-*   **Commission Tracking:** Manage commissions for reference doctors.
+*   **Commission Tracking:** Manage commissions for reference doctors. Track unpaid/paid commissions per invoice via the `DoctorCommission` model.
 *   **Doctor Directory Tabs:** Complete CRUD operations (Add, Update, Delete, View) for reference doctors, their contact info, and commission percentages.
 
 ### 🧪 Test Ordering & Catalog Management
 *   **Test Catalog & Departments:** Tests are categorized dynamically under clinical departments (e.g., Biochemistry, Hematology, Microbiology).
 *   **Grouped Panel Ordering:** Quickly order entire panels (such as Lipid Panel, CBC Panel, CMP Panel). Selecting a panel automatically selects and prices all constituent test types.
 *   **Dynamic Price Calculations:** Displays running totals for selected tests and packages.
-
-### 📦 Specimen Lifecycle & Barcode Tracking
-*   **Unique Specimen Barcodes:** Automatically provisions unique barcodes for tracking specimens.
-*   **State Machine Workflow:** Track specimens across states: `Pending`, `Collected`, `Processed`, and `Rejected`.
-*   **Audit Trail Logs:** Prompts a modular dialog to log collection timestamps and detailed rejection reasons (e.g., Clotted, Hemolyzed).
 
 ### ⌨️ Keyboard-Friendly Result Entry
 *   **Optimized Grid Navigation:** Use arrow keys and the Enter key to move quickly between parameters, enabling high-speed results data entry.
@@ -89,14 +84,14 @@ graph TD
 
 ## 🛠️ Technology Stack
 
-*   **Language & Runtime:** C# 10.0 / .NET Framework 4.6.2 (utilizing modern SDK-style `.csproj` templates)
-*   **User Interface:** WPF (Windows Presentation Foundation) with MaterialDesignThemes (v4.9.0)
-*   **Database & ORM:** SQLite and Entity Framework 6 (v6.4.4)
-*   **Spreadsheet Engine:** ClosedXML (v0.102.2)
-*   **PDF Engine:** PDFsharp & MigraDoc (v6.2.4)
-*   **Dependency Injection:** SimpleInjector (v5.4.1)
-*   **Logging:** Serilog (v3.1.1) with rolling daily file sinks
-*   **Testing:** NUnit (v3.14.0) and Moq (v4.18.4)
+*   **Language & Runtime:** C# 5.0 / .NET Framework 4.5.1
+*   **User Interface:** WPF (Windows Presentation Foundation) with MaterialDesignThemes (v2.6.0)
+*   **Database & ORM:** SQLite and Entity Framework 6 (v6.1.3)
+*   **Spreadsheet Engine:** ClosedXML (v0.95.4)
+*   **PDF Engine:** PDFsharp & MigraDoc (v1.50.5147)
+*   **Dependency Injection:** SimpleInjector (v4.10.0)
+*   **Logging:** Serilog (v2.10.0) with rolling daily file sinks
+*   **Testing:** NUnit (v3.14.0) and Moq (v4.16.1)
 
 ---
 
@@ -113,7 +108,9 @@ Quality diagnostics center/
 ├── LabSystem.Data/                # DB context, repository implementations, and EF setups
 ├── LabSystem.Services/            # PDF rendering, backup, and billing services
 ├── LabSystem.UI/                  # WPF Views, ViewModels, Converters, and App config
-└── LabSystem.Tests/               # Unit testing suites (NUnit + Moq)
+├── LabSystem.Tests/               # Unit testing suites (NUnit + Moq)
+├── implementation-plans/          # Architecture and feature planning documents
+└── Sample reports/                # Sample clinical report PDFs and letterhead assets
 ```
 
 ---
@@ -125,11 +122,9 @@ Quality diagnostics center/
 2.  **Powershell 5.1+** (for setup automation).
 
 ### Setup and Database Bootstrapping
-Before building for the first time, run the automated setup script in an Administrator PowerShell console to provision directories and compile initial NuGet package assets:
-```powershell
-.\setup.ps1
-```
-*Note: The application automatically provisions a local SQLite database (`lab.db`) on startup if it is not found in the output directory, applying migration scripts and populating seed values.*
+> **Warning:** `setup.ps1` is a project scaffolding script that **destroys and recreates** the project structure from scratch. Do not run it on an existing cloned repository — it will delete all source code.
+
+The application automatically provisions a local SQLite database (`lab.db`) on startup if it is not found in the output directory, applying migration scripts and populating seed values.
 
 ### Building and Running the Application
 To restore packages, build the solution, and run the WPF application using the dotnet CLI:

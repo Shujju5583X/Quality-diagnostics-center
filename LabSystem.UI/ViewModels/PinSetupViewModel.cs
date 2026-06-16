@@ -16,29 +16,29 @@ namespace LabSystem.UI.ViewModels
 
         public Staff Staff
         {
-            get => _staff;
+            get { return _staff; }
             set { _staff = value; OnPropertyChanged(); }
         }
 
         public string NewPin
         {
-            get => _newPin;
+            get { return _newPin; }
             set { _newPin = value; OnPropertyChanged(); ErrorMessage = string.Empty; }
         }
 
         public string ConfirmPin
         {
-            get => _confirmPin;
+            get { return _confirmPin; }
             set { _confirmPin = value; OnPropertyChanged(); ErrorMessage = string.Empty; }
         }
 
         public string ErrorMessage
         {
-            get => _errorMessage;
+            get { return _errorMessage; }
             set { _errorMessage = value; OnPropertyChanged(); }
         }
 
-        public ICommand SavePinCommand { get; }
+        public ICommand SavePinCommand { get; private set; }
         public Action CloseAction { get; set; }
         public bool IsSuccess { get; private set; }
 
@@ -72,11 +72,14 @@ namespace LabSystem.UI.ViewModels
                 await _staffService.ResetPinAsync(Staff.StaffId, NewPin);
                 Staff.PinHash = BCrypt.Net.BCrypt.HashPassword(NewPin); // update local model just in case
                 IsSuccess = true;
-                CloseAction?.Invoke();
+                if (CloseAction != null)
+                {
+                    CloseAction();
+                }
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Error saving PIN: {ex.Message}";
+                ErrorMessage = "Error saving PIN: " + ex.Message;
             }
         }
     }

@@ -28,17 +28,12 @@ namespace LabSystem.Data
         public DbSet<Report> Reports { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Payment> Payments { get; set; }
-        public DbSet<Specimen> Specimens { get; set; }
         public DbSet<ReferenceRange> ReferenceRanges { get; set; }
         public DbSet<TestPanel> TestPanels { get; set; }
-        public DbSet<QcRun> QcRuns { get; set; }
-        public DbSet<QcLot> QcLots { get; set; }
-        public DbSet<Appointment> Appointments { get; set; }
-        public DbSet<Branch> Branches { get; set; }
         public DbSet<Doctor> Doctors { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<Setting> Settings { get; set; }
-
+        public DbSet<DoctorCommission> DoctorCommissions { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -54,39 +49,30 @@ namespace LabSystem.Data
             modelBuilder.Entity<Report>().ToTable("Reports");
             modelBuilder.Entity<Invoice>().ToTable("Invoices");
             modelBuilder.Entity<Payment>().ToTable("Payments");
-            modelBuilder.Entity<Specimen>().ToTable("Specimens");
             modelBuilder.Entity<ReferenceRange>().ToTable("ReferenceRanges");
             modelBuilder.Entity<TestPanel>().ToTable("TestPanels");
-            modelBuilder.Entity<QcRun>().ToTable("QcRuns");
-            modelBuilder.Entity<QcLot>().ToTable("QcLots");
             modelBuilder.Entity<Doctor>().ToTable("Doctors");
             modelBuilder.Entity<Department>().ToTable("Departments");
             modelBuilder.Entity<Setting>().ToTable("Settings");
+            modelBuilder.Entity<DoctorCommission>().ToTable("DoctorCommissions");
 
             // SQLite explicit configurations
             modelBuilder.Entity<TestOrder>().HasKey(o => o.OrderId);
             modelBuilder.Entity<TestType>().HasKey(t => t.TypeId);
             modelBuilder.Entity<Invoice>().HasKey(i => i.InvoiceId);
             modelBuilder.Entity<Payment>().HasKey(p => p.PaymentId);
-            modelBuilder.Entity<Specimen>().HasKey(s => s.SpecimenId);
             modelBuilder.Entity<ReferenceRange>().HasKey(r => r.ReferenceRangeId);
             modelBuilder.Entity<TestPanel>().HasKey(p => p.PanelId);
-            modelBuilder.Entity<QcRun>().HasKey(q => q.QcRunId);
-            modelBuilder.Entity<QcLot>().HasKey(q => q.QcLotId);
             modelBuilder.Entity<Doctor>().HasKey(d => d.DoctorId);
             modelBuilder.Entity<Department>().HasKey(d => d.DepartmentId);
             modelBuilder.Entity<Setting>().HasKey(s => s.Key);
+            modelBuilder.Entity<DoctorCommission>().HasKey(c => c.CommissionId);
 
             // Configure foreign key relations
             modelBuilder.Entity<TestOrder>()
                 .HasRequired(o => o.Patient)
                 .WithMany()
                 .HasForeignKey(o => o.PatientId);
-
-            modelBuilder.Entity<Specimen>()
-                .HasRequired(s => s.Order)
-                .WithMany(o => o.Specimens)
-                .HasForeignKey(s => s.OrderId);
 
             modelBuilder.Entity<ReferenceRange>()
                 .HasRequired(r => r.TestType)
@@ -143,6 +129,16 @@ namespace LabSystem.Data
                     m.MapRightKey("TypeId");
                 });
 
+            modelBuilder.Entity<DoctorCommission>()
+                .HasRequired(c => c.Doctor)
+                .WithMany()
+                .HasForeignKey(c => c.DoctorId);
+
+            modelBuilder.Entity<DoctorCommission>()
+                .HasRequired(c => c.Invoice)
+                .WithMany()
+                .HasForeignKey(c => c.InvoiceId);
+
             modelBuilder.Entity<TestPanel>()
                 .HasMany(p => p.TestTypes)
                 .WithMany()
@@ -152,32 +148,6 @@ namespace LabSystem.Data
                     m.MapLeftKey("PanelId");
                     m.MapRightKey("TypeId");
                 });
-
-            modelBuilder.Entity<QcRun>()
-                .HasRequired(q => q.TestType)
-                .WithMany()
-                .HasForeignKey(q => q.TestTypeId);
-
-            modelBuilder.Entity<QcLot>()
-                .HasRequired(q => q.TestType)
-                .WithMany()
-                .HasForeignKey(q => q.TestTypeId);
-
-            modelBuilder.Entity<Appointment>().ToTable("Appointments");
-            modelBuilder.Entity<Appointment>().HasKey(a => a.AppointmentId);
-            modelBuilder.Entity<Appointment>()
-                .HasRequired(a => a.Patient)
-                .WithMany()
-                .HasForeignKey(a => a.PatientId);
-
-            modelBuilder.Entity<Appointment>()
-                .Property(a => a.AppointmentDate)
-                .HasColumnAnnotation(
-                    IndexAnnotation.AnnotationName,
-                    new IndexAnnotation(new IndexAttribute("IX_Appointments_AppointmentDate")));
-
-            modelBuilder.Entity<Branch>().ToTable("Branches");
-            modelBuilder.Entity<Branch>().HasKey(b => b.BranchId);
 
             // Index configurations
             modelBuilder.Entity<TestOrder>()
@@ -203,12 +173,6 @@ namespace LabSystem.Data
                 .HasColumnAnnotation(
                     IndexAnnotation.AnnotationName,
                     new IndexAnnotation(new IndexAttribute("IX_Invoices_OrderId")));
-
-            modelBuilder.Entity<Specimen>()
-                .Property(s => s.OrderId)
-                .HasColumnAnnotation(
-                    IndexAnnotation.AnnotationName,
-                    new IndexAnnotation(new IndexAttribute("IX_Specimens_OrderId")));
 
             modelBuilder.Entity<ReferenceRange>()
                 .Property(r => r.TestTypeId)

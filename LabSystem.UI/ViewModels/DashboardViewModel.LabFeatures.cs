@@ -6,31 +6,19 @@ using System.Threading.Tasks;
 using System.Windows;
 using LabSystem.Core.Models;
 using LabSystem.Core.Services;
-using LabSystem.Core.Enums;
 using Serilog;
 
 namespace LabSystem.UI.ViewModels
 {
     public partial class DashboardViewModel
     {
-        // Specimen rejection check for the selected order
-        public bool IsSelectedOrderSpecimenRejected
-        {
-            get
-            {
-                if (SelectedOrder == null || SelectedOrder.Specimens == null)
-                    return false;
-                return SelectedOrder.Specimens.Any(s => s.StatusEnum == SpecimenStatus.Rejected);
-            }
-        }
-
         // Test Panel selection
         private TestPanel _selectedTestPanel;
-        public ObservableCollection<TestPanel> TestPanels { get; } = new ObservableCollection<TestPanel>();
+        public ObservableCollection<TestPanel> TestPanels { get; private set; }
 
         public TestPanel SelectedTestPanel
         {
-            get => _selectedTestPanel;
+            get { return _selectedTestPanel; }
             set
             {
                 _selectedTestPanel = value;
@@ -40,7 +28,7 @@ namespace LabSystem.UI.ViewModels
         }
 
         // ReferredBy autocomplete — populated from distinct historical values in the DB
-        public ObservableCollection<string> ReferredByHistory { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> ReferredByHistory { get; private set; }
 
         private async Task LoadReferredByHistoryAsync()
         {
@@ -101,9 +89,41 @@ namespace LabSystem.UI.ViewModels
             }
             else
             {
-                ri.Low = testType?.ReferenceRangeLow;
-                ri.High = testType?.ReferenceRangeHigh;
+                ri.Low = testType != null ? testType.ReferenceRangeLow : null;
+                ri.High = testType != null ? testType.ReferenceRangeHigh : null;
             }
+
+            // Set gender-specific reference ranges for display
+            if (testType != null && testType.ReferenceRanges != null)
+            {
+                var maleRange = testType.ReferenceRanges.FirstOrDefault(r =>
+                    string.Equals(r.Gender, "Male", StringComparison.OrdinalIgnoreCase) && r.AgeMin == 0 && r.AgeMax >= 120);
+                if (maleRange == null)
+                {
+                    maleRange = testType.ReferenceRanges.FirstOrDefault(r =>
+                        string.Equals(r.Gender, "Male", StringComparison.OrdinalIgnoreCase));
+                }
+                if (maleRange != null)
+                {
+                    ri.LowMale = maleRange.RangeLow;
+                    ri.HighMale = maleRange.RangeHigh;
+                }
+
+                var femaleRange = testType.ReferenceRanges.FirstOrDefault(r =>
+                    string.Equals(r.Gender, "Female", StringComparison.OrdinalIgnoreCase) && r.AgeMin == 0 && r.AgeMax >= 120);
+                if (femaleRange == null)
+                {
+                    femaleRange = testType.ReferenceRanges.FirstOrDefault(r =>
+                        string.Equals(r.Gender, "Female", StringComparison.OrdinalIgnoreCase));
+                }
+                if (femaleRange != null)
+                {
+                    ri.LowFemale = femaleRange.RangeLow;
+                    ri.HighFemale = femaleRange.RangeHigh;
+                }
+            }
+
+            ri.NotifyRefRangeChanged();
         }
     }
 }

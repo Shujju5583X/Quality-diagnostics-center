@@ -8,18 +8,18 @@ namespace LabSystem.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b)
+            if (value is bool)
             {
-                return !b;
+                return !(bool)value;
             }
             return value;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b)
+            if (value is bool)
             {
-                return !b;
+                return !(bool)value;
             }
             return value;
         }

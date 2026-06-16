@@ -21,7 +21,7 @@ namespace LabSystem.UI
     public partial class App : Application
     {
         public static Container Container { get; private set; }
-        public static int AuthenticatedStaffId { get; set; } = 1;
+        public static int AuthenticatedStaffId { get; set; }
 
         // Hold a reference so we can trigger backup on exit
         private IBackupService _backupServiceForExit;
@@ -30,6 +30,9 @@ namespace LabSystem.UI
         {
             // Set SQLite database folder path to output directory
             AppDomain.CurrentDomain.SetData("DataDirectory", AppDomain.CurrentDomain.BaseDirectory);
+
+            // Single-operator mode: default staff ID is 1
+            AuthenticatedStaffId = 1;
 
             base.OnStartup(e);
 
@@ -48,9 +51,10 @@ namespace LabSystem.UI
             DispatcherUnhandledException += (s, args) =>
             {
                 var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} DISPATCHER ERROR: {args.Exception}\r\n");
+                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DISPATCHER ERROR: " + args.Exception + "\r\n");
                 Log.Fatal(args.Exception, "Dispatcher unhandled exception.");
-                MessageBox.Show($"Dispatcher error: {args.Exception.Message}\n\n{args.Exception.InnerException?.Message}",
+                string innerMessage = args.Exception.InnerException != null ? args.Exception.InnerException.Message : "";
+                MessageBox.Show("Dispatcher error: " + args.Exception.Message + "\n\n" + innerMessage,
                     "Dispatcher Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 args.Handled = true;
             };
@@ -58,7 +62,7 @@ namespace LabSystem.UI
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
             {
                 var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} APPDOMAIN ERROR: {args.ExceptionObject}\r\n");
+                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " APPDOMAIN ERROR: " + args.ExceptionObject + "\r\n");
                 Log.Fatal(args.ExceptionObject as Exception, "Unhandled exception occurred.");
                 MessageBox.Show("A critical error occurred. Please check the logs.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             };
@@ -66,7 +70,7 @@ namespace LabSystem.UI
             TaskScheduler.UnobservedTaskException += (s, args) =>
             {
                 var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} UNOBSERVED TASK ERROR: {args.Exception}\r\n");
+                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " UNOBSERVED TASK ERROR: " + args.Exception + "\r\n");
                 Log.Fatal(args.Exception, "Unobserved task exception.");
                 args.SetObserved();
             };
@@ -78,7 +82,7 @@ namespace LabSystem.UI
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Failed to initialize database.");
-                MessageBox.Show($"Database Init Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Database Init Error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
 
@@ -100,9 +104,6 @@ namespace LabSystem.UI
             Container.Register<IInvoiceRepository, InvoiceRepository>(Lifestyle.Transient);
             Container.Register<IPaymentRepository, PaymentRepository>(Lifestyle.Transient);
             Container.Register<IReportRepository, ReportRepository>(Lifestyle.Transient);
-            Container.Register<IQcRepository, QcRepository>(Lifestyle.Transient);
-            Container.Register<IAppointmentRepository, AppointmentRepository>(Lifestyle.Transient);
-            
             // Fallback for any other IRepository<T>
             Container.RegisterConditional(typeof(IRepository<>), typeof(Repository<>), Lifestyle.Transient, c => !c.Handled);
 
@@ -117,16 +118,12 @@ namespace LabSystem.UI
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
             Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
             Container.Register<IStaffService, StaffService>(Lifestyle.Transient);
-            Container.Register<QcService>(Lifestyle.Transient);
-            Container.Register<IAppointmentService, AppointmentService>(Lifestyle.Transient);
 
             // Register ViewModels
             Container.Register<ViewModels.MainViewModel>();
             Container.Register<ViewModels.DashboardViewModel>();
             Container.Register<ViewModels.LoginViewModel>();
             Container.Register<ViewModels.PinSetupViewModel>(Lifestyle.Transient);
-            Container.Register<ViewModels.QcViewModel>();
-            Container.Register<ViewModels.AppointmentsViewModel>();
             Container.Register<ViewModels.StaffManagementViewModel>();
 
             try
@@ -134,31 +131,20 @@ namespace LabSystem.UI
                 // Hold a backup service reference for auto-backup on exit
                 _backupServiceForExit = Container.GetInstance<IBackupService>();
 
-                // Display PIN Login modal before opening dashboard
-                Log.Information("Resolving LoginViewModel...");
-                var loginViewModel = Container.GetInstance<ViewModels.LoginViewModel>();
-                Log.Information("Calling loginViewModel.InitializeAsync()...");
-                loginViewModel.InitializeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                Log.Information("LoginViewModel initialized. Showing login dialog...");
-
-                var loginView = new Views.LoginView();
-                loginView.DataContext = loginViewModel;
-                loginViewModel.CloseAction = () => loginView.DialogResult = true;
-
-                bool? loginResult = loginView.ShowDialog();
-                Log.Information("Login dialog returned: {Result}, IsLoginSuccess: {Success}", loginResult, loginViewModel?.IsLoginSuccess);
-                if (loginResult != true || !loginViewModel.IsLoginSuccess)
-                {
-                    Shutdown();
-                    return;
-                }
-
+                // Create MainWindow and assign as Application.MainWindow
                 Log.Information("Creating MainWindow...");
                 var mainWindow = new MainWindow();
+                this.MainWindow = mainWindow;
+                Log.Information("MainWindow created and assigned as Application.MainWindow.");
+
+                // Resolve MainViewModel and set as DataContext.
+                // MainViewModel starts on the login screen (inside the main window)
+                // and switches to DashboardViewModel after successful PIN entry.
                 Log.Information("Resolving MainViewModel...");
                 mainWindow.DataContext = Container.GetInstance<ViewModels.MainViewModel>();
+                Log.Information("MainViewModel resolved and assigned.");
+
                 Log.Information("Calling mainWindow.Show()...");
-                this.MainWindow = mainWindow;
                 mainWindow.Show();
                 Log.Information("mainWindow.Show() completed.");
             }
@@ -166,8 +152,9 @@ namespace LabSystem.UI
             {
                 Log.Fatal(ex, "Failed to start MainWindow after login.");
                 var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} STARTUP CRASH: {ex}\r\n");
-                MessageBox.Show($"Startup crash: {ex.Message}\n\n{ex.InnerException?.Message}",
+                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " STARTUP CRASH: " + ex + "\r\n");
+                string startupInnerMessage = ex.InnerException != null ? ex.InnerException.Message : "";
+                MessageBox.Show("Startup crash: " + ex.Message + "\n\n" + startupInnerMessage,
                     "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
             }
@@ -175,14 +162,23 @@ namespace LabSystem.UI
 
         protected override void OnExit(ExitEventArgs e)
         {
-            // Auto-backup on application close — fire-and-forget with 15s timeout
             try
             {
                 Log.Information("Application closing — triggering automatic backup.");
-                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
+                if (_backupServiceForExit != null)
                 {
-                    _backupServiceForExit?.BackupNowAsync(cts.Token).ConfigureAwait(false).GetAwaiter().GetResult();
-                    Log.Information("Auto-backup on exit completed successfully.");
+                    var backupTask = Task.Run(() => _backupServiceForExit.BackupNowAsync(CancellationToken.None));
+                    if (backupTask.Wait(TimeSpan.FromSeconds(30)))
+                    {
+                        if (backupTask.IsFaulted)
+                            Log.Warning(backupTask.Exception, "Auto-backup on exit failed.");
+                        else
+                            Log.Information("Auto-backup on exit completed successfully.");
+                    }
+                    else
+                    {
+                        Log.Warning("Auto-backup on exit timed out after 30 seconds.");
+                    }
                 }
             }
             catch (Exception ex)

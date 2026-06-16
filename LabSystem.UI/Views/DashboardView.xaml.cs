@@ -25,7 +25,7 @@ namespace LabSystem.UI.Views
             catch (Exception ex)
             {
                 var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} DASHBOARDVIEW XAML PARSE ERROR: {ex}\r\n");
+                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DASHBOARDVIEW XAML PARSE ERROR: " + ex + "\r\n");
                 Log.Fatal(ex, "Failed to parse DashboardView XAML.");
                 throw;
             }
@@ -33,7 +33,8 @@ namespace LabSystem.UI.Views
 
         private void DashboardView_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            if (DataContext is ViewModels.DashboardViewModel vm)
+            var vm = DataContext as ViewModels.DashboardViewModel;
+            if (vm != null)
             {
                 SidebarBorder.Width = vm.IsSidebarPinned ? 220 : 60;
             }
@@ -41,21 +42,24 @@ namespace LabSystem.UI.Views
 
         private void SidebarBorder_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (DataContext is ViewModels.DashboardViewModel vm && vm.IsSidebarPinned)
+            var vm = DataContext as ViewModels.DashboardViewModel;
+            if (vm != null && vm.IsSidebarPinned)
                 return;
             AnimateSidebarWidth(220);
         }
 
         private void SidebarBorder_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (DataContext is ViewModels.DashboardViewModel vm && vm.IsSidebarPinned)
+            var vm = DataContext as ViewModels.DashboardViewModel;
+            if (vm != null && vm.IsSidebarPinned)
                 return;
             AnimateSidebarWidth(60);
         }
 
         private void PinButton_Click(object sender, System.Windows.RoutedEventArgs e)
         {
-            if (DataContext is ViewModels.DashboardViewModel vm)
+            var vm = DataContext as ViewModels.DashboardViewModel;
+            if (vm != null)
             {
                 vm.IsSidebarPinned = !vm.IsSidebarPinned;
                 if (vm.IsSidebarPinned)
@@ -104,7 +108,8 @@ namespace LabSystem.UI.Views
             {
                 cv.Filter = obj =>
                 {
-                    if (obj is TestType testType)
+                    var testType = obj as TestType;
+                    if (testType != null)
                     {
                         return (testType.Name != null && testType.Name.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
                                (testType.Category != null && testType.Category.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
@@ -145,7 +150,7 @@ namespace LabSystem.UI.Views
             var currentTextBox = e.OriginalSource as TextBox;
             if (currentTextBox == null) return;
 
-            if (e.Key != Key.Enter && e.Key != Key.Up && e.Key != Key.Down)
+            if (e.Key != Key.Enter && e.Key != Key.Up && e.Key != Key.Down && e.Key != Key.Tab)
                 return;
 
             var row = FindVisualParent<DataGridRow>(currentTextBox);
@@ -161,6 +166,49 @@ namespace LabSystem.UI.Views
             else if (e.Key == Key.Up)
             {
                 nextRowIndex--;
+            }
+            else if (e.Key == Key.Tab)
+            {
+                if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+                {
+                    // Shift+Tab: move to previous cell
+                    var cell = FindVisualParent<DataGridCell>(currentTextBox);
+                    if (cell != null)
+                    {
+                        e.Handled = true;
+                        var columnIndex = cell.Column.DisplayIndex;
+                        if (columnIndex > 0)
+                        {
+                            var cellInfo = new DataGridCellInfo(grid.Items[rowIndex], grid.Columns[columnIndex - 1]);
+                            grid.CurrentCell = cellInfo;
+                            grid.BeginEdit();
+                        }
+                        return;
+                    }
+                }
+                else
+                {
+                    // Tab: move to next cell
+                    var cell = FindVisualParent<DataGridCell>(currentTextBox);
+                    if (cell != null)
+                    {
+                        e.Handled = true;
+                        var columnIndex = cell.Column.DisplayIndex;
+                        if (columnIndex < grid.Columns.Count - 1)
+                        {
+                            var cellInfo = new DataGridCellInfo(grid.Items[rowIndex], grid.Columns[columnIndex + 1]);
+                            grid.CurrentCell = cellInfo;
+                            grid.BeginEdit();
+                        }
+                        else if (rowIndex < grid.Items.Count - 1)
+                        {
+                            var cellInfo = new DataGridCellInfo(grid.Items[rowIndex + 1], grid.Columns[1]);
+                            grid.CurrentCell = cellInfo;
+                            grid.BeginEdit();
+                        }
+                        return;
+                    }
+                }
             }
 
             if (nextRowIndex >= 0 && nextRowIndex < grid.Items.Count)
@@ -195,14 +243,15 @@ namespace LabSystem.UI.Views
 
         private async Task UpdateReportPreviewAsync()
         {
-            if (DataContext is ViewModels.DashboardViewModel vm && vm.SelectedReportOrder != null)
+            var vm = DataContext as ViewModels.DashboardViewModel;
+            if (vm != null && vm.SelectedReportOrder != null)
             {
                 try
                 {
                     bool includeLetterhead = (ReportLetterheadComboBox.SelectedIndex == 0); // 0 = With, 1 = Without
                     string oldPath = _tempDashboardPdfPath;
 
-                    _tempDashboardPdfPath = await vm.ReportService.GenerateReportAsync(vm.SelectedReportOrder, includeLetterhead: includeLetterhead);
+                    _tempDashboardPdfPath = await vm.ReportService.GenerateReportAsync(vm.SelectedReportOrder, includeLetterhead);
 
                     if (oldPath != null && oldPath != _tempDashboardPdfPath && File.Exists(oldPath))
                     {
@@ -227,14 +276,15 @@ namespace LabSystem.UI.Views
 
         private void SaveReportPdf_Click(object sender, RoutedEventArgs e)
         {
-            if (DataContext is ViewModels.DashboardViewModel vm && vm.SelectedReportOrder != null)
+            var vm = DataContext as ViewModels.DashboardViewModel;
+            if (vm != null && vm.SelectedReportOrder != null)
             {
                 try
                 {
                     var sfd = new Microsoft.Win32.SaveFileDialog
                     {
                         Filter = "PDF Documents (*.pdf)|*.pdf",
-                        FileName = $"Report_{vm.SelectedReportOrder.OrderId}.pdf"
+                        FileName = "Report_" + vm.SelectedReportOrder.OrderId + ".pdf"
                     };
                     if (sfd.ShowDialog() == true)
                     {
@@ -244,7 +294,7 @@ namespace LabSystem.UI.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error saving PDF: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error saving PDF: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -269,7 +319,7 @@ namespace LabSystem.UI.Views
             catch (Exception ex)
             {
                 Log.Error(ex, "Error printing report PDF");
-                MessageBox.Show($"Error printing report: {ex.Message}", "Print Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error printing report: " + ex.Message, "Print Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -278,6 +328,15 @@ namespace LabSystem.UI.Views
             if (DoctorsTabControl != null)
             {
                 DoctorsTabControl.SelectedIndex = 0; // Details tab
+            }
+        }
+
+        private void PendingTestsList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var vm = DataContext as ViewModels.DashboardViewModel;
+            if (vm != null && vm.SelectedOrder != null)
+            {
+                vm.WorkQueueTabIndex = 1;
             }
         }
     }

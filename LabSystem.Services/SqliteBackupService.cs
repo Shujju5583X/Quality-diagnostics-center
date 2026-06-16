@@ -36,7 +36,7 @@ namespace LabSystem.Services
             _invoiceRepo = invoiceRepo;
         }
 
-        public async Task BackupNowAsync(CancellationToken cancellationToken = default)
+        public async Task BackupNowAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             string dbBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Database");
             string excelBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Excel");
@@ -52,20 +52,27 @@ namespace LabSystem.Services
             string sourceFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lab.db");
             if (File.Exists(sourceFile))
             {
-                string dbDestFile = Path.Combine(dbBackupsDir, $"lab_backup_{timestamp}.db");
-                File.Copy(sourceFile, dbDestFile, true);
+                try
+                {
+                    string dbDestFile = Path.Combine(dbBackupsDir, "lab_backup_" + timestamp + ".db");
+                    File.Copy(sourceFile, dbDestFile, true);
+                }
+                catch (Exception ex)
+                {
+                    Serilog.Log.Warning(ex, "Database file copy failed during backup (file may be locked). Continuing with Excel/CSV export.");
+                }
             }
 
             // 2. Human-Readable Excel Spreadsheet Backup (for Lab Technicians)
-            string excelDestFile = Path.Combine(excelBackupsDir, $"lab_backup_{timestamp}.xlsx");
+            string excelDestFile = Path.Combine(excelBackupsDir, "lab_backup_" + timestamp + ".xlsx");
             await GenerateExcelBackupAsync(excelDestFile, cancellationToken);
 
             // 3. Raw CSV Backup
-            string csvDestFolder = Path.Combine(csvBackupsDir, $"csv_backup_{timestamp}");
+            string csvDestFolder = Path.Combine(csvBackupsDir, "csv_backup_" + timestamp);
             await GenerateCsvBackupAsync(csvDestFolder, cancellationToken);
         }
 
-        private async Task GenerateExcelBackupAsync(string filePath, CancellationToken cancellationToken = default)
+        private async Task GenerateExcelBackupAsync(string filePath, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Load all data into memory dictionaries for fast mapping and lookup
             var patientsDict = (await _patientRepo.GetAllAsync(cancellationToken)).ToDictionary(p => p.PatientId);
@@ -137,9 +144,10 @@ namespace LabSystem.Services
                 int oRow = 4;
                 foreach (var o in ordersDict.Values.OrderBy(x => x.OrderId))
                 {
+                    Patient pLookup;
                     wsOrders.Cell(oRow, 1).Value = o.OrderId;
                     wsOrders.Cell(oRow, 2).Value = o.PatientId;
-                    wsOrders.Cell(oRow, 3).Value = patientsDict.TryGetValue(o.PatientId, out var p) ? p.FullName : "Unknown Patient";
+                    wsOrders.Cell(oRow, 3).Value = patientsDict.TryGetValue(o.PatientId, out pLookup) ? pLookup.FullName : "Unknown Patient";
                     wsOrders.Cell(oRow, 4).Value = o.OrderedAt.ToString("yyyy-MM-dd HH:mm:ss");
                     wsOrders.Cell(oRow, 5).Value = o.ReferredBy;
                     wsOrders.Cell(oRow, 6).Value = o.Status;
@@ -189,12 +197,15 @@ namespace LabSystem.Services
                 int resRow = 4;
                 foreach (var r in resultsList.OrderBy(x => x.ResultId))
                 {
-                    var order = ordersDict.TryGetValue(r.OrderId, out var o) ? o : null;
-                    var patientName = (order != null && patientsDict.TryGetValue(order.PatientId, out var pat)) ? pat.FullName : "Unknown Patient";
-                    var testType = testTypesDict.TryGetValue(r.TypeId, out var tt) ? tt : null;
+                    TestOrder oLookup;
+                    Patient patLookup;
+                    var order = ordersDict.TryGetValue(r.OrderId, out oLookup) ? oLookup : null;
+                    var patientName = (order != null && patientsDict.TryGetValue(order.PatientId, out patLookup)) ? patLookup.FullName : "Unknown Patient";
+                    TestType ttLookup;
+                    var testType = testTypesDict.TryGetValue(r.TypeId, out ttLookup) ? ttLookup : null;
 
-                    string testName = testType?.Name ?? "Unknown Test";
-                    string unit = testType?.Unit ?? "";
+                    string testName = testType != null ? testType.Name ?? "Unknown Test" : "Unknown Test";
+                    string unit = testType != null ? testType.Unit ?? "" : "";
                     string normalRange = FormatReferenceRange(testType);
 
                     wsResults.Cell(resRow, 1).Value = r.ResultId;
@@ -206,7 +217,8 @@ namespace LabSystem.Services
                     wsResults.Cell(resRow, 7).Value = unit;
                     wsResults.Cell(resRow, 8).Value = r.IsAbnormal ? "ABNORMAL" : "Normal";
                     wsResults.Cell(resRow, 9).Value = r.RecordedAt.ToString("yyyy-MM-dd HH:mm:ss");
-                    wsResults.Cell(resRow, 10).Value = staffDict.TryGetValue(r.TechnicianId, out var tech) ? tech.FullName : "System";
+                    Staff techLookup;
+                    wsResults.Cell(resRow, 10).Value = staffDict.TryGetValue(r.TechnicianId, out techLookup) ? techLookup.FullName : "System";
 
                     StyleDataRow(wsResults, resRow, 10);
 
@@ -255,8 +267,8 @@ namespace LabSystem.Services
                     wsTestTypes.Cell(tRow, 1).Value = tt.TypeId;
                     wsTestTypes.Cell(tRow, 2).Value = tt.Name;
                     wsTestTypes.Cell(tRow, 3).Value = tt.Unit;
-                    wsTestTypes.Cell(tRow, 4).Value = tt.ReferenceRangeLow.HasValue ? tt.ReferenceRangeLow.Value : "";
-                    wsTestTypes.Cell(tRow, 5).Value = tt.ReferenceRangeHigh.HasValue ? tt.ReferenceRangeHigh.Value : "";
+                    wsTestTypes.Cell(tRow, 4).Value = tt.ReferenceRangeLow.HasValue ? (object)tt.ReferenceRangeLow.Value : "";
+                    wsTestTypes.Cell(tRow, 5).Value = tt.ReferenceRangeHigh.HasValue ? (object)tt.ReferenceRangeHigh.Value : "";
                     wsTestTypes.Cell(tRow, 6).Value = tt.IsActive ? "Active" : "Inactive";
 
                     StyleDataRow(wsTestTypes, tRow, 6);
@@ -378,7 +390,9 @@ namespace LabSystem.Services
             var ids = notes.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var idStr in ids)
             {
-                if (int.TryParse(idStr, out int id) && testTypesDict.TryGetValue(id, out var tt))
+                int id;
+                TestType tt;
+                if (int.TryParse(idStr, out id) && testTypesDict.TryGetValue(id, out tt))
                 {
                     names.Add(tt.Name);
                 }
@@ -392,20 +406,20 @@ namespace LabSystem.Services
             
             if (tt.ReferenceRangeLow.HasValue && tt.ReferenceRangeHigh.HasValue)
             {
-                return $"{tt.ReferenceRangeLow.Value} - {tt.ReferenceRangeHigh.Value}";
+                return tt.ReferenceRangeLow.Value + " - " + tt.ReferenceRangeHigh.Value;
             }
             if (tt.ReferenceRangeLow.HasValue)
             {
-                return $">= {tt.ReferenceRangeLow.Value}";
+                return ">= " + tt.ReferenceRangeLow.Value;
             }
             if (tt.ReferenceRangeHigh.HasValue)
             {
-                return $"<= {tt.ReferenceRangeHigh.Value}";
+                return "<= " + tt.ReferenceRangeHigh.Value;
             }
             return "N/A";
         }
 
-        private async Task GenerateCsvBackupAsync(string outputDirectory, CancellationToken cancellationToken = default)
+        private async Task GenerateCsvBackupAsync(string outputDirectory, CancellationToken cancellationToken = default(CancellationToken))
         {
             Directory.CreateDirectory(outputDirectory);
 
@@ -417,10 +431,10 @@ namespace LabSystem.Services
             var invoices = await _invoiceRepo.GetAllAsync(cancellationToken);
 
             WriteCsv(Path.Combine(outputDirectory, "patients.csv"),
-                patients.Select(p => new { p.PatientId, p.Uhid, p.FullName, p.Gender, p.Age, p.ContactPhone, p.ContactEmail, p.CreatedAt, p.BranchId }));
+                patients.Select(p => new { p.PatientId, p.Uhid, p.FullName, p.Gender, p.Age, p.ContactPhone, p.ContactEmail, p.CreatedAt }));
 
             WriteCsv(Path.Combine(outputDirectory, "orders.csv"),
-                orders.Select(o => new { o.OrderId, o.PatientId, o.OrderedAt, o.Status, o.ReferredBy, o.CreatedAt, o.UpdatedAt, o.BranchId }));
+                orders.Select(o => new { o.OrderId, o.PatientId, o.OrderedAt, o.Status, o.ReferredBy, o.CreatedAt, o.UpdatedAt }));
 
             WriteCsv(Path.Combine(outputDirectory, "results.csv"),
                 results.Select(r => new { r.ResultId, r.OrderId, r.TypeId, r.Value, r.ValueText, r.IsAbnormal, r.IsAmended, r.RecordedAt, r.TechnicianId, r.CreatedAt }));
@@ -429,10 +443,10 @@ namespace LabSystem.Services
                 testTypes.Select(t => new { t.TypeId, t.Name, t.Unit, t.ReferenceRangeLow, t.ReferenceRangeHigh, t.Category, t.Price, t.SampleType, t.InputType }));
 
             WriteCsv(Path.Combine(outputDirectory, "staff.csv"),
-                staff.Select(s => new { s.StaffId, s.FullName, s.Role, s.CreatedAt, s.BranchId }));
+                staff.Select(s => new { s.StaffId, s.FullName, s.Role, s.CreatedAt }));
 
             WriteCsv(Path.Combine(outputDirectory, "invoices.csv"),
-                invoices.Select(i => new { i.InvoiceId, i.OrderId, i.TotalAmount, i.DiscountPercent, i.TaxPercent, i.IsPaid, i.PaidAt, i.PaymentMethod, i.CreatedAt, i.BranchId }));
+                invoices.Select(i => new { i.InvoiceId, i.OrderId, i.TotalAmount, i.DiscountPercent, i.TaxPercent, i.IsPaid, i.PaidAt, i.PaymentMethod, i.CreatedAt }));
         }
 
         private void WriteCsv<T>(string filePath, IEnumerable<T> data)
@@ -447,9 +461,10 @@ namespace LabSystem.Services
                 {
                     var val = p.GetValue(item);
                     if (val == null) return "";
-                    if (val is string s && s.Contains(",")) return $"\"{s}\"";
-                    if (val is DateTime dt) return dt.ToString("yyyy-MM-dd HH:mm:ss");
-                    if (val is bool b) return b ? "1" : "0";
+                    var s = val as string;
+                    if (s != null && s.Contains(",")) return "\"" + s + "\"";
+                    if (val is DateTime) return ((DateTime)val).ToString("yyyy-MM-dd HH:mm:ss");
+                    if (val is bool) return (bool)val ? "1" : "0";
                     return val.ToString();
                 });
                 lines.Add(string.Join(",", values));
@@ -459,4 +474,3 @@ namespace LabSystem.Services
         }
     }
 }
-

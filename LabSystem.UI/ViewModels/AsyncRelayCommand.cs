@@ -13,7 +13,8 @@ namespace LabSystem.UI.ViewModels
 
         public AsyncRelayCommand(Func<object, Task> execute, Func<object, bool> canExecute = null)
         {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            if (execute == null) throw new ArgumentNullException("execute");
+            _execute = execute;
             _canExecute = canExecute;
         }
 
@@ -23,7 +24,10 @@ namespace LabSystem.UI.ViewModels
             remove { CommandManager.RequerySuggested -= value; }
         }
 
-        public bool CanExecute(object parameter) => !_isExecuting && (_canExecute == null || _canExecute(parameter));
+        public bool CanExecute(object parameter)
+        {
+            return !_isExecuting && (_canExecute == null || _canExecute(parameter));
+        }
 
         public async void Execute(object parameter)
         {
@@ -36,7 +40,7 @@ namespace LabSystem.UI.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {

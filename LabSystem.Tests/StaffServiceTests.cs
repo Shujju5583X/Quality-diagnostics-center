@@ -36,8 +36,14 @@ namespace LabSystem.Tests
         [TearDown]
         public void TearDown()
         {
-            _context?.Dispose();
-            _connection?.Dispose();
+            if (_context != null)
+            {
+                _context.Dispose();
+            }
+            if (_connection != null)
+            {
+                _connection.Dispose();
+            }
         }
 
         [Test]

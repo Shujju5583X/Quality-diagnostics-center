@@ -18,7 +18,8 @@ namespace LabSystem.Data
         public static string GetLabDbConnectionString()
         {
             // Retrieve the DataDirectory path (set during application startup)
-            string dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory")?.ToString();
+            object dataDirObj = AppDomain.CurrentDomain.GetData("DataDirectory");
+            string dataDirectory = dataDirObj != null ? dataDirObj.ToString() : null;
             
             // Fallback to the base directory if not explicitly set
             if (string.IsNullOrEmpty(dataDirectory))
@@ -32,7 +33,7 @@ namespace LabSystem.Data
             // Perform in-place database encryption if it is currently unencrypted
             EnsureDatabaseIsEncrypted(dbPath, password);
             
-            return $"Data Source={dbPath};Version=3;Password={password};";
+            return "Data Source=" + dbPath + ";Version=3;Password=" + password + ";";
         }
 
         private static string GetOrCreateEncryptionPassword()
@@ -85,7 +86,7 @@ namespace LabSystem.Data
             // Step 1: Try opening WITH password — already encrypted, nothing to do
             try
             {
-                using (var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;Password={password};"))
+                using (var conn = new SQLiteConnection("Data Source=" + dbPath + ";Version=3;Password=" + password + ";"))
                 {
                     conn.Open();
                     using (var cmd = conn.CreateCommand())
@@ -104,7 +105,7 @@ namespace LabSystem.Data
             // Step 2: Try opening WITHOUT password — unencrypted, needs encryption
             try
             {
-                using (var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
+                using (var conn = new SQLiteConnection("Data Source=" + dbPath + ";Version=3;"))
                 {
                     conn.Open();
                     using (var cmd = conn.CreateCommand())
@@ -117,7 +118,7 @@ namespace LabSystem.Data
                 // It's a valid unencrypted database — now encrypt it
                 try
                 {
-                    using (var conn = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
+                    using (var conn = new SQLiteConnection("Data Source=" + dbPath + ";Version=3;"))
                     {
                         conn.Open();
                         conn.ChangePassword(password);

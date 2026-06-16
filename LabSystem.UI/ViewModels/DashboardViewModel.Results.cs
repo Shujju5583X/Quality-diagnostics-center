@@ -28,12 +28,13 @@ namespace LabSystem.UI.ViewModels
                 }
                 if (string.IsNullOrWhiteSpace(r.ValueText))
                 {
-                    ResultErrorMessage = $"Please enter a valid value for {r.TestName}.";
+                    ResultErrorMessage = "Please enter a valid value for " + r.TestName + ".";
                     return;
                 }
-                if (!r.HasOptions && !double.TryParse(r.ValueText, out _))
+                double discardVal;
+                if (!r.HasOptions && !double.TryParse(r.ValueText, out discardVal))
                 {
-                    ResultErrorMessage = $"Please enter a valid numeric value for {r.TestName}.";
+                    ResultErrorMessage = "Please enter a valid numeric value for " + r.TestName + ".";
                     return;
                 }
             }
@@ -43,7 +44,8 @@ namespace LabSystem.UI.ViewModels
                 // Save each result
                 foreach (var r in SelectedOrderResults)
                 {
-                    double? val = r.ValueText == "Sample Rejected" ? (double?)null : (double.TryParse(r.ValueText, out var parsedVal) ? parsedVal : (double?)null);
+                    double parsedVal;
+                    double? val = r.ValueText == "Sample Rejected" ? (double?)null : (double.TryParse(r.ValueText, out parsedVal) ? (double?)parsedVal : null);
                     var result = new Result
                     {
                         OrderId = SelectedOrder.OrderId,
@@ -115,7 +117,71 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to generate report.");
-                MessageBox.Show($"Error generating PDF report: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error generating PDF report: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteEditResultsAsync(object obj)
+        {
+            if (SelectedOrder == null || SelectedOrder.StatusEnum != LabSystem.Core.Enums.OrderStatus.Complete) return;
+
+            IsResultEditMode = true;
+            foreach (var ri in SelectedOrderResults)
+            {
+                ri.IsReadOnly = false;
+                ri.IsAmendmentMode = true;
+            }
+            OnPropertyChanged("SelectedOrderResults");
+        }
+
+        private async Task ExecuteSaveAmendmentAsync(object obj)
+        {
+            if (SelectedOrder == null || SelectedOrder.StatusEnum != LabSystem.Core.Enums.OrderStatus.Complete) return;
+
+            var reasonDialog = new Views.AmendmentReasonDialog();
+            if (reasonDialog.ShowDialog() != true)
+            {
+                await CancelEditModeAsync();
+                return;
+            }
+
+            string reason = reasonDialog.Reason;
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                MessageBox.Show("Amendment reason is required.", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                foreach (var ri in SelectedOrderResults)
+                {
+                    double parsedVal;
+                    double? newValue = double.TryParse(ri.ValueText, out parsedVal) ? (double?)parsedVal : null;
+                    await _resultService.AmendResultAsync(ri.ResultId, newValue, ri.ValueText, reason, App.AuthenticatedStaffId);
+                }
+
+                int selectedOrderId = SelectedOrder.OrderId;
+                await LoadResultsForSelectedOrderAsync();
+                IsResultEditMode = false;
+
+                MessageBox.Show("Results amended successfully.", "Amended", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                SelectedOrder = Orders.FirstOrDefault(o => o.OrderId == selectedOrderId);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to save amendment.");
+                MessageBox.Show("Amendment failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task CancelEditModeAsync()
+        {
+            IsResultEditMode = false;
+            if (SelectedOrder != null)
+            {
+                await LoadResultsForSelectedOrderAsync();
             }
         }
     }

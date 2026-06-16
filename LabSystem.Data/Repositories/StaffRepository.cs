@@ -12,7 +12,7 @@ namespace LabSystem.Data.Repositories
     {
         public StaffRepository(LabDbContext context) : base(context) { }
 
-        public async Task<Staff> GetByFullNameAsync(string fullName, CancellationToken cancellationToken = default)
+        public async Task<Staff> GetByFullNameAsync(string fullName, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(fullName))
                 return null;

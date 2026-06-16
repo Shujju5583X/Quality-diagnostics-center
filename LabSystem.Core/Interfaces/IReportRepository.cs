@@ -8,7 +8,7 @@ namespace LabSystem.Core.Interfaces
 {
     public interface IReportRepository : IRepository<Report>
     {
-        Task<IEnumerable<Report>> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<Report>> GetByDateRangeAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default);
+        Task<IEnumerable<Report>> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IEnumerable<Report>> GetByDateRangeAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

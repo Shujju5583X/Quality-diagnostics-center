@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
-using LabSystem.Core.Enums;
 
 namespace LabSystem.Services
 {
@@ -13,67 +12,27 @@ namespace LabSystem.Services
     {
         private readonly ITestOrderRepository _orderRepo;
         private readonly ITestTypeRepository _testTypeRepo;
-        private readonly IRepository<Specimen> _specimenRepo;
         private readonly IStaffRepository _staffRepo;
 
         public OrderService(
             ITestOrderRepository orderRepo, 
             ITestTypeRepository testTypeRepo,
-            IRepository<Specimen> specimenRepo,
             IStaffRepository staffRepo)
         {
             _orderRepo = orderRepo;
             _testTypeRepo = testTypeRepo;
-            _specimenRepo = specimenRepo;
             _staffRepo = staffRepo;
         }
 
-        public async Task CreateOrderAsync(TestOrder order, List<int> testTypeIds, int operatorStaffId = 1, CancellationToken cancellationToken = default)
+        public async Task CreateOrderAsync(TestOrder order, List<int> testTypeIds, int operatorStaffId = 1, CancellationToken cancellationToken = default(CancellationToken))
         {
             order.OrderedAt = DateTime.UtcNow;
             order.CreatedAt = DateTime.UtcNow;
             order.UpdatedAt = DateTime.UtcNow;
             await _orderRepo.AddOrderWithTestTypesAsync(order, testTypeIds, cancellationToken);
-
-            var sampleTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var testTypeId in testTypeIds)
-            {
-                var testType = await _testTypeRepo.GetByIdAsync(testTypeId, cancellationToken);
-                if (testType != null && !string.IsNullOrWhiteSpace(testType.SampleType))
-                {
-                    sampleTypes.Add(testType.SampleType.Trim());
-                }
-            }
-
-            // Resolve operator name for CollectedBy
-            string collectedBy = "System";
-            try
-            {
-                var staff = await _staffRepo.GetByIdAsync(operatorStaffId, cancellationToken);
-                if (staff != null) collectedBy = staff.FullName;
-            }
-            catch { /* fallback to "System" */ }
-
-            int index = 1;
-            int currentYear = DateTime.UtcNow.Year;
-            foreach (var sampleType in sampleTypes)
-            {
-                var barcode = $"QDC-SP-{currentYear}-{order.OrderId:D5}-{index}";
-                var specimen = new Specimen
-                {
-                    OrderId = order.OrderId,
-                    Barcode = barcode,
-                    SampleType = sampleType,
-                    CollectionTime = DateTime.UtcNow,
-                    CollectedBy = collectedBy,
-                    StatusEnum = SpecimenStatus.Collected
-                };
-                await _specimenRepo.AddAsync(specimen, cancellationToken);
-                index++;
-            }
         }
 
-        public async Task UpdateOrderStatusAsync(int orderId, string status, CancellationToken cancellationToken = default)
+        public async Task UpdateOrderStatusAsync(int orderId, string status, CancellationToken cancellationToken = default(CancellationToken))
         {
             var order = await _orderRepo.GetByIdAsync(orderId, cancellationToken);
             if (order != null)

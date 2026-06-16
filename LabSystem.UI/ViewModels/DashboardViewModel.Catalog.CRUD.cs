@@ -45,7 +45,7 @@ namespace LabSystem.UI.ViewModels
                 return;
             }
 
-            var dialogResult = MessageBox.Show($"Are you sure you want to delete department '{SelectedDepartment.Name}'? This will delete all tests belonging to this department.", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            var dialogResult = MessageBox.Show("Are you sure you want to delete department '" + SelectedDepartment.Name + "'? This will delete all tests belonging to this department.", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (dialogResult == MessageBoxResult.No)
             {
                 return;
@@ -69,6 +69,41 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
+        private async Task ExecuteRenameDepartmentAsync()
+        {
+            if (SelectedDepartment == null)
+            {
+                MessageBox.Show("Please select a department to rename.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewDepartmentName))
+            {
+                MessageBox.Show("Please enter a new name for the department.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                var dept = await _departmentRepo.GetByIdAsync(SelectedDepartment.DepartmentId);
+                if (dept != null)
+                {
+                    dept.Name = NewDepartmentName.Trim();
+                    await _departmentRepo.UpdateAsync(dept);
+                    Log.Information("Renamed department ID {DepartmentId} to: {NewName}", dept.DepartmentId, dept.Name);
+
+                    NewDepartmentName = string.Empty;
+                    await LoadDataAsync();
+                    MessageBox.Show("Department renamed successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to rename department.");
+                MessageBox.Show("Error renaming department. Make sure the name is unique.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private async Task ExecuteDeleteCatalogTestAsync()
         {
             if (SelectedCatalogTest == null)
@@ -77,7 +112,7 @@ namespace LabSystem.UI.ViewModels
                 return;
             }
 
-            var dialogResult = MessageBox.Show($"Are you sure you want to delete test '{SelectedCatalogTest.Name}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var dialogResult = MessageBox.Show("Are you sure you want to delete test '" + SelectedCatalogTest.Name + "'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (dialogResult == MessageBoxResult.No)
             {
                 return;

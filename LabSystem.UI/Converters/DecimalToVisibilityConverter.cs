@@ -9,7 +9,7 @@ namespace LabSystem.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is decimal d && d > 0)
+            if (value is decimal && (decimal)value > 0)
             {
                 return Visibility.Visible;
             }

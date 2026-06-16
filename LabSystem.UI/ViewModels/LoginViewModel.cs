@@ -17,11 +17,11 @@ namespace LabSystem.UI.ViewModels
         private string _errorMessage;
         private bool _isLoginSuccess;
 
-        public ObservableCollection<Staff> StaffMembers { get; } = new ObservableCollection<Staff>();
+        public ObservableCollection<Staff> StaffMembers { get; private set; }
 
         public Staff SelectedStaff
         {
-            get => _selectedStaff;
+            get { return _selectedStaff; }
             set
             {
                 _selectedStaff = value;
@@ -32,7 +32,7 @@ namespace LabSystem.UI.ViewModels
 
         public string Pin
         {
-            get => _pin;
+            get { return _pin; }
             set
             {
                 _pin = value;
@@ -43,7 +43,7 @@ namespace LabSystem.UI.ViewModels
 
         public string ErrorMessage
         {
-            get => _errorMessage;
+            get { return _errorMessage; }
             set
             {
                 _errorMessage = value;
@@ -53,7 +53,7 @@ namespace LabSystem.UI.ViewModels
 
         public bool IsLoginSuccess
         {
-            get => _isLoginSuccess;
+            get { return _isLoginSuccess; }
             private set
             {
                 _isLoginSuccess = value;
@@ -61,13 +61,15 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        public ICommand LoginCommand { get; }
+        public ICommand LoginCommand { get; private set; }
 
-        public Action CloseAction { get; set; }
+        public Action LoginSuccessAction { get; set; }
 
         public LoginViewModel(IStaffRepository staffRepo)
         {
-            _staffRepo = staffRepo ?? throw new ArgumentNullException(nameof(staffRepo));
+            if (staffRepo == null) throw new ArgumentNullException("staffRepo");
+            _staffRepo = staffRepo;
+            StaffMembers = new ObservableCollection<Staff>();
             LoginCommand = new RelayCommand(async o => await ExecuteLoginAsync(), o => SelectedStaff != null && !string.IsNullOrEmpty(Pin));
         }
 
@@ -102,7 +104,7 @@ namespace LabSystem.UI.ViewModels
                 var remaining = staff.LockoutEnd.Value - DateTime.UtcNow;
                 if (remaining.TotalSeconds > 0)
                 {
-                    ErrorMessage = $"Account locked. Try again in {(int)Math.Ceiling(remaining.TotalSeconds)} seconds.";
+                    ErrorMessage = "Account locked. Try again in " + (int)Math.Ceiling(remaining.TotalSeconds) + " seconds.";
                     return;
                 }
             }
@@ -133,7 +135,10 @@ namespace LabSystem.UI.ViewModels
                         
                         IsLoginSuccess = true;
                         App.AuthenticatedStaffId = staff.StaffId;
-                        CloseAction?.Invoke();
+                        if (LoginSuccessAction != null)
+                        {
+                            LoginSuccessAction();
+                        }
                         return;
                     }
                     else
@@ -152,7 +157,10 @@ namespace LabSystem.UI.ViewModels
 
                     IsLoginSuccess = true;
                     App.AuthenticatedStaffId = staff.StaffId;
-                    CloseAction?.Invoke();
+                    if (LoginSuccessAction != null)
+                    {
+                        LoginSuccessAction();
+                    }
                 }
                 else
                 {
@@ -166,7 +174,7 @@ namespace LabSystem.UI.ViewModels
                     else
                     {
                         await _staffRepo.UpdateAsync(staff);
-                        ErrorMessage = $"Invalid PIN. {5 - staff.FailedLoginAttempts} attempts remaining.";
+                        ErrorMessage = "Invalid PIN. " + (5 - staff.FailedLoginAttempts) + " attempts remaining.";
                     }
                 }
             }

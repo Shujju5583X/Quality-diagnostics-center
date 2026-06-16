@@ -80,7 +80,7 @@ namespace LabSystem.UI.ViewModels
                 return;
             }
 
-            var dialogResult = MessageBox.Show($"Are you sure you want to delete Doctor '{SelectedDoctor.FullName}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var dialogResult = MessageBox.Show("Are you sure you want to delete Doctor '" + SelectedDoctor.FullName + "'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (dialogResult == MessageBoxResult.No)
             {
                 return;

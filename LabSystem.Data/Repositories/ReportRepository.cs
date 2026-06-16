@@ -13,7 +13,7 @@ namespace LabSystem.Data.Repositories
     {
         public ReportRepository(LabDbContext context) : base(context) { }
 
-        public async Task<IEnumerable<Report>> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Report>> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.AsNoTracking()
                          .Where(r => r.OrderId == orderId)
@@ -21,7 +21,7 @@ namespace LabSystem.Data.Repositories
                          .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Report>> GetByDateRangeAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Report>> GetByDateRangeAsync(DateTime start, DateTime end, CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.AsNoTracking()
                          .Where(r => r.GeneratedAt >= start && r.GeneratedAt <= end)

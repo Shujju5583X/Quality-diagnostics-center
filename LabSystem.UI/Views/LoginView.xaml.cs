@@ -6,10 +6,7 @@ using LabSystem.UI.ViewModels;
 
 namespace LabSystem.UI.Views
 {
-    /// <summary>
-    /// Interaction logic for LoginView.xaml
-    /// </summary>
-    public partial class LoginView : Window
+    public partial class LoginView : UserControl
     {
         public LoginView()
         {
@@ -18,7 +15,8 @@ namespace LabSystem.UI.Views
 
         private void PinBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
-            if (DataContext is LoginViewModel vm)
+            var vm = DataContext as LoginViewModel;
+            if (vm != null)
             {
                 vm.Pin = ((PasswordBox)sender).Password;
             }

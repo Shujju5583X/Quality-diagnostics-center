@@ -47,9 +47,12 @@ CREATE TABLE IF NOT EXISTS TestOrders (
 CREATE TABLE IF NOT EXISTS OrderTestTypes (
     OrderId INTEGER NOT NULL,
     TypeId INTEGER NOT NULL,
+    PackageId INTEGER,
+    BilledCost REAL NOT NULL DEFAULT 0.0,
     PRIMARY KEY (OrderId, TypeId),
     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId) ON DELETE CASCADE,
-    FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE
+    FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE,
+    FOREIGN KEY(PackageId) REFERENCES TestPanels(PanelId)
 );
 
 CREATE TABLE IF NOT EXISTS Specimens (
@@ -96,6 +99,7 @@ CREATE TABLE IF NOT EXISTS Invoices (
     TotalAmount REAL NOT NULL,
     DiscountAmount REAL DEFAULT 0,
     TaxAmount REAL DEFAULT 0,
+    Status TEXT DEFAULT 'Pending' CHECK (Status IN ('Pending', 'Partial', 'Paid')),
     IsPaid INTEGER DEFAULT 0,
     PaidAt DATETIME,
     CreatedAt DATETIME NOT NULL,
@@ -136,6 +140,17 @@ CREATE TABLE IF NOT EXISTS SchemaVersion (
     AppliedAt DATETIME NOT NULL
 );
 INSERT INTO SchemaVersion (Version, AppliedAt) VALUES (1, CURRENT_TIMESTAMP);
+
+CREATE TABLE IF NOT EXISTS DoctorCommissions (
+    CommissionId INTEGER PRIMARY KEY AUTOINCREMENT,
+    DoctorId INTEGER NOT NULL,
+    InvoiceId INTEGER NOT NULL,
+    CommissionAmount REAL NOT NULL,
+    Status TEXT NOT NULL DEFAULT 'Unpaid' CHECK (Status IN ('Unpaid', 'Paid')),
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(DoctorId) REFERENCES Doctors(DoctorId),
+    FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId)
+);
 
 CREATE INDEX IF NOT EXISTS IX_TestOrders_PatientId ON TestOrders (PatientId);
 CREATE INDEX IF NOT EXISTS IX_Results_OrderId ON Results (OrderId);

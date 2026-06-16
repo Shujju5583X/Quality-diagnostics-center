@@ -16,7 +16,7 @@ namespace LabSystem.UI
             catch (Exception ex)
             {
                 var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} MAINWINDOW XAML PARSE ERROR: {ex}\r\n");
+                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MAINWINDOW XAML PARSE ERROR: " + ex + "\r\n");
                 Log.Fatal(ex, "Failed to parse MainWindow XAML.");
                 throw;
             }
@@ -26,7 +26,7 @@ namespace LabSystem.UI
                 Log.Information("MainWindow Loaded.");
                 System.IO.File.AppendAllText(
                     System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} MainWindow Loaded OK\r\n");
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainWindow Loaded OK\r\n");
             };
 
             this.ContentRendered += (s, e) =>
@@ -34,8 +34,9 @@ namespace LabSystem.UI
                 Log.Information("MainWindow ContentRendered.");
                 System.IO.File.AppendAllText(
                     System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} MainWindow ContentRendered OK\r\n");
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainWindow ContentRendered OK\r\n");
             };
+
         }
     }
 }
