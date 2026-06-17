@@ -208,5 +208,28 @@ namespace LabSystem.UI.ViewModels
                 MessageBox.Show("Error adding test type.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private async Task LoadCatalogTestsForDepartmentAsync()
+        {
+            if (SelectedDepartment == null) return;
+            try
+            {
+                var testTypes = await _testTypeRepo.GetAllAsync();
+                CatalogTestTypes.Clear();
+                var filtered = testTypes
+                    .Where(t => t.DepartmentId == SelectedDepartment.DepartmentId)
+                    .OrderBy(x => x.SortOrder)
+                    .ThenBy(x => x.Name);
+
+                foreach (var t in filtered)
+                {
+                    CatalogTestTypes.Add(t);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load catalog tests for department.");
+            }
+        }
     }
 }

@@ -15,7 +15,7 @@ namespace LabSystem.Core.Models
         public virtual Doctor Doctor { get; set; }
         public int InvoiceId { get; set; }
         public virtual Invoice Invoice { get; set; }
-        public double CommissionAmount { get; set; }
+        public decimal CommissionAmount { get; set; }
         public string Status { get; set; }
         public DateTime CreatedAt { get; set; }
     }

@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Core.Enums;
-using LabSystem.Services;
 using Serilog;
 
 namespace LabSystem.UI.ViewModels
@@ -28,9 +28,12 @@ namespace LabSystem.UI.ViewModels
         private readonly IRepository<Doctor> _doctorRepo;
         private readonly IRepository<Department> _departmentRepo;
         private readonly IRepository<Setting> _settingRepo;
+        private readonly IUnitOfWork _unitOfWork;
 
         // Fixed operator identity — single-person mode, no login required
         public const int DefaultStaffId = 1;
+
+        private CancellationTokenSource _cts = new CancellationTokenSource();
 
         private Patient _selectedPatient;
         private TestOrder _selectedOrder;
@@ -434,7 +437,8 @@ namespace LabSystem.UI.ViewModels
             IBackupService backupService,
             IRepository<Doctor> doctorRepo,
             IRepository<Department> departmentRepo,
-            IRepository<Setting> settingRepo)
+            IRepository<Setting> settingRepo,
+            IUnitOfWork unitOfWork)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
@@ -452,6 +456,7 @@ namespace LabSystem.UI.ViewModels
             _doctorRepo = doctorRepo;
             _departmentRepo = departmentRepo;
             _settingRepo = settingRepo;
+            _unitOfWork = unitOfWork;
 
             Patients = new ObservableCollection<Patient>();
             Orders = new ObservableCollection<TestOrder>();
@@ -537,7 +542,7 @@ namespace LabSystem.UI.ViewModels
         {
             try
             {
-                await LoadDataAsync();
+                await LoadDataAsync(_cts.Token);
             }
             catch (Exception ex)
             {
@@ -548,7 +553,7 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private async Task LoadDataAsync()
+        private async Task LoadDataAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             try
             {
@@ -649,169 +654,6 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        private async Task LoadCatalogTestsForDepartmentAsync()
-        {
-            if (SelectedDepartment == null) return;
-            try
-            {
-                var testTypes = await _testTypeRepo.GetAllAsync();
-                CatalogTestTypes.Clear();
-                var filtered = testTypes
-                    .Where(t => t.DepartmentId == SelectedDepartment.DepartmentId)
-                    .OrderBy(x => x.SortOrder)
-                    .ThenBy(x => x.Name);
-                
-                foreach (var t in filtered)
-                {
-                    CatalogTestTypes.Add(t);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load catalog tests for department.");
-            }
-        }
-
-        private async Task LoadInvoicesAsync()
-        {
-            try
-            {
-                Invoices.Clear();
-                var invoices = await _billingService.GetAllInvoicesAsync();
-                foreach (var inv in invoices.OrderByDescending(i => i.InvoiceId))
-                {
-                    Invoices.Add(inv);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load invoices.");
-            }
-        }
-
-        private async Task ExecuteAddPaymentAsync(string paymentMethod)
-        {
-            try
-            {
-                if (SelectedInvoice == null || SelectedInvoice.IsPaid)
-                {
-                    MessageBox.Show("Please select an unpaid invoice.", "No Invoice Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                if (PaymentAmount <= 0)
-                {
-                    MessageBox.Show("Please enter a valid payment amount.", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                if (PaymentAmount > SelectedInvoice.GrandTotal)
-                {
-                    MessageBox.Show("Amount exceeds grand total of \u20B9" + SelectedInvoice.GrandTotal.ToString("N2") + ".", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var invoiceId = SelectedInvoice.InvoiceId;
-                await _billingService.AddPaymentAsync(invoiceId, PaymentAmount, paymentMethod);
-                MessageBox.Show("Payment of \u20B9" + PaymentAmount.ToString("N2") + " recorded via " + paymentMethod + ".", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
-                PaymentAmount = 0;
-                await LoadInvoicesAsync();
-                SelectedInvoice = Invoices.FirstOrDefault(i => i.InvoiceId == invoiceId);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to process payment.");
-                MessageBox.Show("Payment failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task ExecuteApplyDiscountTaxAsync()
-        {
-            try
-            {
-                if (SelectedInvoice == null || SelectedInvoice.IsPaid)
-                {
-                    MessageBox.Show("Please select an unpaid invoice.", "No Invoice Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var invoiceId = SelectedInvoice.InvoiceId;
-                await _billingService.UpdateInvoiceFinancialsAsync(invoiceId, DiscountAmount, TaxAmount);
-                MessageBox.Show("Discount/tax applied.", "Updated", MessageBoxButton.OK, MessageBoxImage.Information);
-                await LoadInvoicesAsync();
-                SelectedInvoice = Invoices.FirstOrDefault(i => i.InvoiceId == invoiceId);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to apply discount/tax.");
-                MessageBox.Show("Failed to apply discount/tax: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task ExecuteGenerateRevenueReportAsync()
-        {
-            try
-            {
-                RevenueStats = await _billingService.GetRevenueReportAsync(ReportStartDate, ReportEndDate);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to generate revenue report.");
-                MessageBox.Show("Failed to generate revenue report: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task ExecuteLoadPatientHistoryAsync()
-        {
-            if (SelectedPatient == null)
-            {
-                MessageBox.Show("Please select a patient first.", "No Patient Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                PatientHistory.Clear();
-                PatientHistoryName = SelectedPatient.FullName;
-
-                var orders = await _patientRepo.GetPatientOrdersAsync(SelectedPatient.PatientId);
-                foreach (var order in orders)
-                {
-                    var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId);
-                    foreach (var result in results)
-                    {
-                        if (result.TestType == null)
-                        {
-                            result.TestType = await _testTypeRepo.GetByIdAsync(result.TypeId);
-                        }
-
-                        PatientHistory.Add(new PatientHistoryEntry
-                        {
-                            OrderDate = order.OrderedAt,
-                            TestName = result.TestType != null ? result.TestType.Name ?? "Unknown" : "Unknown",
-                            Value = result.Value,
-                            ValueText = result.ValueText,
-                            Unit = result.TestType != null ? result.TestType.Unit ?? "" : "",
-                            IsAbnormal = result.IsAbnormal,
-                            ReferenceLow = result.TestType != null ? result.TestType.ReferenceRangeLow : null,
-                            ReferenceHigh = result.TestType != null ? result.TestType.ReferenceRangeHigh : null
-                        });
-                    }
-                }
-
-                PatientHistoryCount = PatientHistory.Count;
-
-                var historyWindow = new Views.PatientHistoryWindow();
-                historyWindow.DataContext = this;
-                historyWindow.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load patient history.");
-                MessageBox.Show("Failed to load patient history: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         private async Task RefreshDashboardStatsAsync()
         {
             try
@@ -833,18 +675,6 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to refresh dashboard statistics.");
-            }
-        }
-
-        private async Task LoadResultsForSelectedOrderSafeAsync()
-        {
-            try
-            {
-                await LoadResultsForSelectedOrderAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load results for selected order.");
             }
         }
 

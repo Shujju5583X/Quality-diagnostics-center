@@ -9,6 +9,20 @@ CREATE TABLE IF NOT EXISTS Patients (
     Uhid TEXT UNIQUE
 );
 
+CREATE TABLE IF NOT EXISTS Doctors (
+    DoctorId INTEGER PRIMARY KEY AUTOINCREMENT,
+    FullName TEXT NOT NULL,
+    ContactPhone TEXT NOT NULL,
+    Commission REAL NOT NULL DEFAULT 0.0,
+    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Departments (
+    DepartmentId INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS TestTypes (
     TypeId INTEGER PRIMARY KEY AUTOINCREMENT,
     Name TEXT NOT NULL,
@@ -55,18 +69,6 @@ CREATE TABLE IF NOT EXISTS OrderTestTypes (
     FOREIGN KEY(PackageId) REFERENCES TestPanels(PanelId)
 );
 
-CREATE TABLE IF NOT EXISTS Specimens (
-    SpecimenId INTEGER PRIMARY KEY AUTOINCREMENT,
-    OrderId INTEGER NOT NULL,
-    Barcode TEXT NOT NULL UNIQUE,
-    SampleType TEXT NOT NULL,
-    CollectionTime DATETIME,
-    CollectedBy TEXT,
-    Status TEXT NOT NULL,
-    RejectionReason TEXT,
-    FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS ReferenceRanges (
     ReferenceRangeId INTEGER PRIMARY KEY AUTOINCREMENT,
     TestTypeId INTEGER NOT NULL,
@@ -97,6 +99,7 @@ CREATE TABLE IF NOT EXISTS Invoices (
     InvoiceId INTEGER PRIMARY KEY AUTOINCREMENT,
     OrderId INTEGER NOT NULL UNIQUE,
     TotalAmount REAL NOT NULL,
+    AmountPaid REAL NOT NULL DEFAULT 0.0,
     DiscountAmount REAL DEFAULT 0,
     TaxAmount REAL DEFAULT 0,
     Status TEXT DEFAULT 'Pending' CHECK (Status IN ('Pending', 'Partial', 'Paid')),
@@ -135,12 +138,6 @@ CREATE TABLE IF NOT EXISTS Reports (
     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId)
 );
 
-CREATE TABLE IF NOT EXISTS SchemaVersion (
-    Version INTEGER PRIMARY KEY,
-    AppliedAt DATETIME NOT NULL
-);
-INSERT INTO SchemaVersion (Version, AppliedAt) VALUES (1, CURRENT_TIMESTAMP);
-
 CREATE TABLE IF NOT EXISTS DoctorCommissions (
     CommissionId INTEGER PRIMARY KEY AUTOINCREMENT,
     DoctorId INTEGER NOT NULL,
@@ -152,10 +149,36 @@ CREATE TABLE IF NOT EXISTS DoctorCommissions (
     FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId)
 );
 
+CREATE TABLE IF NOT EXISTS SchemaVersion (
+    Version INTEGER PRIMARY KEY,
+    AppliedAt DATETIME NOT NULL
+);
+INSERT INTO SchemaVersion (Version, AppliedAt) VALUES (1, CURRENT_TIMESTAMP);
+
+CREATE TABLE IF NOT EXISTS Settings (
+    Key TEXT PRIMARY KEY,
+    Value TEXT
+);
+INSERT OR IGNORE INTO Settings (Key, Value) VALUES
+    ('operator_name', ''),
+    ('operator_address', ''),
+    ('operator_phone', ''),
+    ('letterhead_path', ''),
+    ('last_backup', NULL);
+
+CREATE TABLE IF NOT EXISTS Payments (
+    PaymentId INTEGER PRIMARY KEY AUTOINCREMENT,
+    InvoiceId INTEGER NOT NULL,
+    Amount REAL NOT NULL,
+    PaymentMethod TEXT,
+    PaymentDate DATETIME NOT NULL,
+    FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS IX_TestOrders_PatientId ON TestOrders (PatientId);
 CREATE INDEX IF NOT EXISTS IX_Results_OrderId ON Results (OrderId);
 CREATE INDEX IF NOT EXISTS IX_Results_TypeId ON Results (TypeId);
 CREATE INDEX IF NOT EXISTS IX_Results_TechnicianId ON Results (TechnicianId);
 CREATE INDEX IF NOT EXISTS IX_Reports_OrderId ON Reports (OrderId);
-CREATE INDEX IF NOT EXISTS IX_Specimens_OrderId ON Specimens (OrderId);
 CREATE INDEX IF NOT EXISTS IX_ReferenceRanges_TestTypeId ON ReferenceRanges (TestTypeId);
+CREATE INDEX IF NOT EXISTS IX_Payments_InvoiceId ON Payments (InvoiceId);

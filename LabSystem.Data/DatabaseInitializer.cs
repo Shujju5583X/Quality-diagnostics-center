@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -9,6 +10,75 @@ namespace LabSystem.Data
 {
     public static class DatabaseInitializer
     {
+        private static readonly List<Migration> Migrations = new List<Migration>
+        {
+            new Migration(2, "Update DepartmentId in TestTypes and seed sample types", @"
+                INSERT OR IGNORE INTO Departments (Name)
+                SELECT DISTINCT Category FROM TestTypes WHERE Category IS NOT NULL AND Category != '';
+
+                UPDATE TestTypes
+                SET DepartmentId = (SELECT DepartmentId FROM Departments WHERE Name = TestTypes.Category)
+                WHERE DepartmentId IS NULL OR DepartmentId = 0;
+
+                UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'HEMATOLOGY';
+                UPDATE TestTypes SET SampleType = 'Serum' WHERE (SampleType IS NULL OR SampleType = '') AND Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
+                UPDATE TestTypes SET SampleType = 'Urine' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'CLINICAL PATHOLOGY';
+                UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Name = 'Blood Grouping & Rh';
+            "),
+            new Migration(3, "Seed reference ranges", @"
+                INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
+                SELECT TypeId, 'Male', 12, 120, 13.0, 17.0 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
+                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') LIMIT 1);
+
+                INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
+                SELECT TypeId, 'Female', 12, 120, 12.0, 15.0 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
+                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Female' LIMIT 1);
+
+                INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
+                SELECT TypeId, 'Male', 0, 11, 11.0, 14.5 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
+                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND AgeMax <= 11 LIMIT 1);
+
+                INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
+                SELECT TypeId, 'Female', 0, 11, 11.0, 14.5 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
+                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Female' AND AgeMax <= 11 LIMIT 1);
+
+                INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
+                SELECT TypeId, 'Other', 0, 120, 12.0, 16.0 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
+                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Other' LIMIT 1);
+            "),
+            new Migration(4, "Seed test panels", @"
+                INSERT OR IGNORE INTO TestPanels (Name, Description, Price) VALUES
+                ('Lipid Profile Panel', 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, VLDL, and non-HDL cholesterol.', 1200.00),
+                ('Thyroid Profile Panel', 'Thyroid Function Test including T3, T4, and TSH screening.', 900.00),
+                ('CBC Panel', 'Complete Blood Count including Haemoglobin, Haematocrit, RBC, WBC, Platelet, and differential counts.', 800.00),
+                ('KFT Panel', 'Kidney Function Test including Blood Urea, Creatinine, Uric Acid, and BUN.', 600.00),
+                ('LFT Panel', 'Liver Function Test including SGOT, SGPT, ALP, Bilirubin, Protein, Albumin, and Globulin.', 700.00),
+                ('Electrolyte Panel', 'Serum Electrolytes including Sodium, Potassium, Chloride, and Bicarbonate.', 400.00);
+            "),
+            new Migration(5, "Link panel test types", @"
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'Lipid Profile Panel' AND t.Name IN ('Cholesterol, Total', 'Triglycerides', 'HDL Cholesterol', 'LDL Cholesterol', 'VLDL Cholesterol', 'Non-HDL Cholesterol');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'Thyroid Profile Panel' AND t.Name IN ('Triiodothyronine (T3)', 'Thyroxine (T4)', 'TSH (Thyroid Stimulating Hormone)');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'CBC Panel' AND t.Name IN ('Hemoglobin (Hb)', 'Packed Cell Volume (PCV)', 'Total RBC count', 'Total WBC count', 'Platelet Count', 'Mean Corpuscular Volume (MCV)', 'Mean Corpuscular Hb (MCH)', 'Mean Corpuscular Hb Concn. (MCHC)', 'RDW', 'Neutrophils', 'Lymphocytes', 'Eosinophils', 'Monocytes', 'Basophils');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'KFT Panel' AND t.Name IN ('Urea (KFT)', 'Creatinine (KFT)', 'Uric Acid (KFT)', 'Calcium, Total (KFT)');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'LFT Panel' AND t.Name IN ('AST (SGOT)', 'ALT (SGPT)', 'Alkaline Phosphatase (LFT)', 'Bilirubin Total', 'Bilirubin Direct', 'Bilirubin Indirect', 'Total Protein (LFT)', 'Albumin (LFT)');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'Electrolyte Panel' AND t.Name IN ('Sodium', 'Potassium', 'Chloride', 'Bicarbonate');
+            "),
+            new Migration(6, "Convert legacy -999.0 sentinel values in Results", @"
+                UPDATE Results SET Value = NULL WHERE Value = -999.0;
+            ")
+        };
+
         public static void Initialize(LabDbContext db)
         {
             db.Database.Initialize(false);
@@ -29,7 +99,7 @@ namespace LabSystem.Data
                 InitializeSchema(db);
             }
 
-            EnsureSchemaUpToDate(db);
+            ApplyMigrations(db);
 
             var staffCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Staff").FirstOrDefault();
             if (staffCount == 0)
@@ -121,380 +191,79 @@ namespace LabSystem.Data
             }
         }
 
-        private class PatientDobDto
+        private static void ApplyMigrations(LabDbContext db)
         {
-            public int PatientId { get; set; }
-            public DateTime? DateOfBirth { get; set; }
-        }
-
-        private static void EnsureSchemaUpToDate(LabDbContext db)
-        {
-            // 1. Ensure DateOfBirth exists on Patients
             try
             {
-                db.Database.ExecuteSqlCommand("SELECT DateOfBirth FROM Patients LIMIT 1;");
+                db.Database.ExecuteSqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS SchemaVersion (
+                        Version INTEGER PRIMARY KEY,
+                        AppliedAt DATETIME NOT NULL
+                    );
+                ");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to create SchemaVersion tracking table.");
+                return;
+            }
+
+            int currentVersion = 0;
+            try
+            {
+                var result = db.Database.SqlQuery<int?>("SELECT MAX(Version) FROM SchemaVersion").FirstOrDefault();
+                currentVersion = result.GetValueOrDefault();
             }
             catch
             {
+                // SchemaVersion table exists but query failed — treat as version 0
+            }
+
+            // If no SchemaVersion record exists but tables already exist (pre-migration DB), mark as current
+            if (currentVersion == 0)
+            {
                 try
                 {
-                    db.Database.ExecuteSqlCommand("ALTER TABLE Patients ADD COLUMN DateOfBirth DATETIME;");
-                    Log.Information("Added DateOfBirth column to Patients table.");
+                    db.Database.ExecuteSqlCommand("INSERT OR IGNORE INTO SchemaVersion (Version, AppliedAt) VALUES (1, CURRENT_TIMESTAMP);");
+                    currentVersion = 1;
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Failed to add DateOfBirth column to Patients.");
+                    Log.Warning(ex, "Failed to record initial SchemaVersion.");
                 }
             }
 
-            // 2. Create Doctors table
-            try
+            foreach (var migration in Migrations)
             {
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS Doctors (
-                        DoctorId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        FullName TEXT NOT NULL,
-                        ContactPhone TEXT NOT NULL,
-                        Commission REAL NOT NULL DEFAULT 0.0,
-                        CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-                    );
-                ");
-                Log.Information("Doctors table verified/created.");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to create Doctors table.");
-            }
+                if (migration.Version <= currentVersion)
+                    continue;
 
-            // 3. Create Departments table and migrate TestTypes.Category to it
-            try
-            {
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS Departments (
-                        DepartmentId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Name TEXT NOT NULL UNIQUE
-                    );
-                ");
-                Log.Information("Departments table verified/created.");
-
-                // Migrate distinct categories from TestTypes to Departments
-                db.Database.ExecuteSqlCommand(@"
-                    INSERT OR IGNORE INTO Departments (Name)
-                    SELECT DISTINCT Category FROM TestTypes WHERE Category IS NOT NULL AND Category != '';
-                ");
-
-                // Add DepartmentId to TestTypes
                 try
                 {
-                    db.Database.ExecuteSqlCommand("ALTER TABLE TestTypes ADD COLUMN DepartmentId INTEGER REFERENCES Departments(DepartmentId) ON DELETE SET NULL;");
-                    Log.Information("Added DepartmentId to TestTypes table.");
+                    db.Database.ExecuteSqlCommand(migration.Sql);
+                    db.Database.ExecuteSqlCommand(string.Format(
+                        "INSERT INTO SchemaVersion (Version, AppliedAt) VALUES ({0}, CURRENT_TIMESTAMP);",
+                        migration.Version));
+                    Log.Information("Applied migration v{0}: {1}", migration.Version, migration.Description);
                 }
                 catch (Exception ex)
                 {
-                    Log.Debug(ex, "DepartmentId column addition to TestTypes skipped.");
-                }
-
-                // Update DepartmentId in TestTypes
-                db.Database.ExecuteSqlCommand(@"
-                    UPDATE TestTypes
-                    SET DepartmentId = (SELECT DepartmentId FROM Departments WHERE Name = TestTypes.Category)
-                    WHERE DepartmentId IS NULL OR DepartmentId = 0;
-                ");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to create Departments table or migrate categories.");
-            }
-
-            // 4. Update TestOrders table with DoctorId FK column
-            try
-            {
-                db.Database.ExecuteSqlCommand("ALTER TABLE TestOrders ADD COLUMN DoctorId INTEGER REFERENCES Doctors(DoctorId) ON DELETE SET NULL;");
-                Log.Information("Added DoctorId column to TestOrders table.");
-            }
-            catch (Exception ex)
-            {
-                Log.Debug(ex, "DoctorId column addition to TestOrders skipped.");
-            }
-
-            // 5. Update Invoices table with AmountPaid column
-            try
-            {
-                db.Database.ExecuteSqlCommand("ALTER TABLE Invoices ADD COLUMN AmountPaid REAL NOT NULL DEFAULT 0.0;");
-                Log.Information("Added AmountPaid column to Invoices table.");
-            }
-            catch (Exception ex)
-            {
-                Log.Debug(ex, "AmountPaid column addition to Invoices skipped.");
-            }
-
-            // 6. Create Settings table if not exists and seed
-            try
-            {
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS Settings (
-                        Key TEXT PRIMARY KEY,
-                        Value TEXT
-                    );
-                ");
-                db.Database.ExecuteSqlCommand(@"
-                    INSERT OR IGNORE INTO Settings (Key, Value) VALUES
-                    ('operator_name', ''),
-                    ('operator_address', ''),
-                    ('operator_phone', ''),
-                    ('letterhead_path', ''),
-                    ('last_backup', NULL);
-                ");
-                Log.Information("Settings table verified/created and seeded.");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to create/seed Settings table.");
-            }
-
-            // Safe incremental column additions (idempotent — skipped if column already exists)
-            var migrations = new[]
-            {
-                new { Table = "Patients",    Column = "Gender",               Type = "TEXT" },
-                new { Table = "TestOrders",  Column = "ReferredBy",           Type = "TEXT" },
-                new { Table = "TestTypes",   Column = "SampleType",           Type = "TEXT" },
-                new { Table = "TestTypes",   Column = "InputType",            Type = "INTEGER DEFAULT 0" },
-                new { Table = "Invoices",    Column = "DiscountAmount",        Type = "REAL DEFAULT 0" },
-                new { Table = "Invoices",    Column = "TaxAmount",             Type = "REAL DEFAULT 0" },
-                new { Table = "Invoices",    Column = "DiscountPercent",       Type = "REAL DEFAULT 0" },
-                new { Table = "Invoices",    Column = "TaxPercent",            Type = "REAL DEFAULT 0" },
-                new { Table = "Invoices",    Column = "Status",                Type = "TEXT DEFAULT 'Pending'" },
-                // Audit timestamp columns for simplified single-person workflow
-                new { Table = "TestOrders",  Column = "CreatedAt",            Type = "DATETIME" },
-                new { Table = "TestOrders",  Column = "UpdatedAt",            Type = "DATETIME" },
-                new { Table = "Results",     Column = "CreatedAt",            Type = "DATETIME" },
-                new { Table = "Results",     Column = "UpdatedAt",            Type = "DATETIME" },
-                new { Table = "Results",     Column = "ValueText",            Type = "TEXT" },
-                new { Table = "Invoices",    Column = "UpdatedAt",            Type = "DATETIME" },
-                new { Table = "OrderTestTypes", Column = "PackageId",         Type = "INTEGER REFERENCES TestPanels(PanelId)" },
-                new { Table = "OrderTestTypes", Column = "BilledCost",        Type = "REAL NOT NULL DEFAULT 0.0" },
-                // Remove legacy auth columns from Staff table
-                new { Table = "Staff",       Column = "Role",                 Type = "TEXT" },
-                new { Table = "Staff",       Column = "PinHash",              Type = "TEXT" },
-                new { Table = "Staff",       Column = "FailedLoginAttempts",  Type = "INTEGER DEFAULT 0" },
-                new { Table = "Staff",       Column = "LockoutEnd",           Type = "DATETIME" },
-                new { Table = "Staff",       Column = "CreatedAt",            Type = "DATETIME" },
-            };
-
-            foreach (var migration in migrations)
-            {
-                try
-                {
-                    db.Database.ExecuteSqlCommand("ALTER TABLE " + migration.Table + " ADD COLUMN " + migration.Column + " " + migration.Type + ";");
-                    Log.Information("Applied migration: Added column {Column} to {Table}", migration.Column, migration.Table);
-                }
-                catch (Exception ex)
-                {
-                    Log.Debug(ex, "Migration skipped (column may already exist): {Table}.{Column}", migration.Table, migration.Column);
+                    Log.Warning(ex, "Migration v{0} ({1}) encountered errors (may already be applied).", migration.Version, migration.Description);
                 }
             }
+        }
 
-            // Ensure no NULL values exist for Staff.CreatedAt to avoid mapping issues
-            try
+        private class Migration
+        {
+            public int Version { get; private set; }
+            public string Description { get; private set; }
+            public string Sql { get; private set; }
+
+            public Migration(int version, string description, string sql)
             {
-                db.Database.ExecuteSqlCommand("UPDATE Staff SET CreatedAt = CURRENT_TIMESTAMP WHERE CreatedAt IS NULL;");
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "Failed to update NULL CreatedAt values in Staff table.");
-            }
-
-            try
-            {
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS ReferenceRanges (
-                        ReferenceRangeId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        TestTypeId INTEGER NOT NULL,
-                        Gender TEXT NOT NULL,
-                        AgeMin INTEGER NOT NULL,
-                        AgeMax INTEGER NOT NULL,
-                        RangeLow REAL,
-                        RangeHigh REAL,
-                        FOREIGN KEY(TestTypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE
-                    );
-                ");
-
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS TestPanels (
-                        PanelId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Name TEXT NOT NULL,
-                        Description TEXT,
-                        Price REAL NOT NULL
-                    );
-                ");
-
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS PanelTestTypes (
-                        PanelId INTEGER NOT NULL,
-                        TypeId INTEGER NOT NULL,
-                        PRIMARY KEY(PanelId, TypeId),
-                        FOREIGN KEY(PanelId) REFERENCES TestPanels(PanelId) ON DELETE CASCADE,
-                        FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE
-                    );
-                ");
-
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS Payments (
-                        PaymentId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        InvoiceId INTEGER NOT NULL,
-                        Amount REAL NOT NULL,
-                        PaymentMethod TEXT,
-                        PaymentDate DATETIME NOT NULL,
-                        FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId) ON DELETE CASCADE
-                    );
-                ");
-
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_ReferenceRanges_TestTypeId ON ReferenceRanges (TestTypeId);");
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_Payments_InvoiceId ON Payments (InvoiceId);");
-
-                db.Database.ExecuteSqlCommand(@"
-                    CREATE TABLE IF NOT EXISTS DoctorCommissions (
-                        CommissionId INTEGER PRIMARY KEY AUTOINCREMENT,
-                        DoctorId INTEGER NOT NULL,
-                        InvoiceId INTEGER NOT NULL,
-                        CommissionAmount REAL NOT NULL,
-                        Status TEXT NOT NULL DEFAULT 'Unpaid' CHECK (Status IN ('Unpaid', 'Paid')),
-                        CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY(DoctorId) REFERENCES Doctors(DoctorId),
-                        FOREIGN KEY(InvoiceId) REFERENCES Invoices(InvoiceId)
-                    );
-                ");
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_DoctorCommissions_DoctorId ON DoctorCommissions (DoctorId);");
-                db.Database.ExecuteSqlCommand("CREATE INDEX IF NOT EXISTS IX_DoctorCommissions_InvoiceId ON DoctorCommissions (InvoiceId);");
-
-                try
-                {
-                    db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN IsAmended INTEGER NOT NULL DEFAULT 0;");
-                    db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN AmendmentReason TEXT;");
-                    db.Database.ExecuteSqlCommand("ALTER TABLE Results ADD COLUMN AmendedAt DATETIME;");
-                }
-                catch (Exception)
-                {
-                    // Columns might already exist, ignore error
-                }
-
-                Log.Information("Schema tables verified/created.");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to create/verify schema tables.");
-            }
-
-            try
-            {
-                var hasRejectedRows = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM Results WHERE Value = -999.0").FirstOrDefault() > 0;
-                if (hasRejectedRows)
-                {
-                    db.Database.ExecuteSqlCommand("UPDATE Results SET Value = NULL WHERE Value = -999.0;");
-                    Log.Information("Data migration: Converted legacy -999.0 sentinel values in Results table to NULL.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "Failed to run Results -999.0 sentinel migration.");
-            }
-
-            try
-            {
-                // Set SampleTypes for all TestTypes if they are null/empty
-                db.Database.ExecuteSqlCommand(@"
-                    UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'HEMATOLOGY';
-                    UPDATE TestTypes SET SampleType = 'Serum' WHERE (SampleType IS NULL OR SampleType = '') AND Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
-                    UPDATE TestTypes SET SampleType = 'Urine' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'CLINICAL PATHOLOGY';
-                    UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Name = 'Blood Grouping & Rh';
-                ");
-
-                // Check if ReferenceRanges table is empty
-                var refRangeCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM ReferenceRanges").FirstOrDefault();
-                if (refRangeCount == 0)
-                {
-                    db.Database.ExecuteSqlCommand(@"
-                        INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh) VALUES
-                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Male', 12, 120, 13.0, 17.0),
-                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Female', 12, 120, 12.0, 15.0),
-                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Male', 0, 11, 11.0, 14.5),
-                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Female', 0, 11, 11.0, 14.5),
-                        ((SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'), 'Other', 0, 120, 12.0, 16.0);
-                    ");
-                    Log.Information("Seeded reference ranges.");
-                }
-
-                // Check if TestPanels table is empty
-                var panelCount = db.Database.SqlQuery<int>("SELECT COUNT(*) FROM TestPanels").FirstOrDefault();
-                if (panelCount == 0)
-                {
-                    db.Database.ExecuteSqlCommand(@"
-                        INSERT INTO TestPanels (Name, Description, Price) VALUES
-                        ('Lipid Profile Panel', 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, VLDL, and non-HDL cholesterol.', 1200.00),
-                        ('Thyroid Profile Panel', 'Thyroid Function Test including T3, T4, and TSH screening.', 900.00),
-                        ('CBC Panel', 'Complete Blood Count including Haemoglobin, Haematocrit, RBC, WBC, Platelet, and differential counts.', 800.00),
-                        ('KFT Panel', 'Kidney Function Test including Blood Urea, Creatinine, Uric Acid, and BUN.', 600.00),
-                        ('LFT Panel', 'Liver Function Test including SGOT, SGPT, ALP, Bilirubin, Protein, Albumin, and Globulin.', 700.00),
-                        ('Electrolyte Panel', 'Serum Electrolytes including Sodium, Potassium, Chloride, and Bicarbonate.', 400.00);
-
-                        INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Cholesterol, Total')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triglycerides')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'HDL Cholesterol')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'LDL Cholesterol')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'VLDL Cholesterol')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Lipid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Non-HDL Cholesterol'));
-
-                        INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Triiodothyronine (T3)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Thyroxine (T4)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Thyroid Profile Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'TSH (Thyroid Stimulating Hormone)'));
-
-                        INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Packed Cell Volume (PCV)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Total RBC count')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Total WBC count')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Platelet Count')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Mean Corpuscular Volume (MCV)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Mean Corpuscular Hb (MCH)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Mean Corpuscular Hb Concn. (MCHC)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'RDW')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Neutrophils')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Lymphocytes')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Eosinophils')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Monocytes')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'CBC Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Basophils'));
-
-                        INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'KFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Urea (KFT)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'KFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Creatinine (KFT)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'KFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Uric Acid (KFT)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'KFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Calcium, Total (KFT)'));
-
-                        INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'AST (SGOT)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'ALT (SGPT)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Alkaline Phosphatase (LFT)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin Total')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin Direct')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Bilirubin Indirect')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Total Protein (LFT)')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'LFT Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Albumin (LFT)'));
-
-                        INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Electrolyte Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Sodium')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Electrolyte Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Potassium')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Electrolyte Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Chloride')),
-                        ((SELECT PanelId FROM TestPanels WHERE Name = 'Electrolyte Panel'), (SELECT TypeId FROM TestTypes WHERE Name = 'Bicarbonate'));
-                    ");
-                    Log.Information("Seeded test panels.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to apply seed migrations.");
+                Version = version;
+                Description = description;
+                Sql = sql;
             }
         }
     }

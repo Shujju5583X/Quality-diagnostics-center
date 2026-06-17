@@ -16,7 +16,7 @@ namespace LabSystem.Tests
                 CREATE TABLE IF NOT EXISTS Patients (
                     PatientId INTEGER PRIMARY KEY AUTOINCREMENT,
                     FullName TEXT NOT NULL,
-                    Age INTEGER NOT NULL DEFAULT 0,
+                    DateOfBirth DATETIME,
                     ContactPhone TEXT,
                     ContactEmail TEXT,
                     CreatedAt DATETIME NOT NULL,
@@ -82,9 +82,12 @@ namespace LabSystem.Tests
                 CREATE TABLE IF NOT EXISTS OrderTestTypes (
                     OrderId INTEGER NOT NULL,
                     TypeId INTEGER NOT NULL,
+                    PackageId INTEGER,
+                    BilledCost REAL NOT NULL DEFAULT 0.0,
                     PRIMARY KEY (OrderId, TypeId),
                     FOREIGN KEY(OrderId) REFERENCES TestOrders(OrderId) ON DELETE CASCADE,
-                    FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE
+                    FOREIGN KEY(TypeId) REFERENCES TestTypes(TypeId) ON DELETE CASCADE,
+                    FOREIGN KEY(PackageId) REFERENCES TestPanels(PanelId)
                 );
 
                 CREATE TABLE IF NOT EXISTS ReferenceRanges (
@@ -123,6 +126,7 @@ namespace LabSystem.Tests
                     DiscountPercent REAL DEFAULT 0,
                     TaxPercent REAL DEFAULT 0,
                     IsPaid INTEGER DEFAULT 0,
+                    Status TEXT NOT NULL DEFAULT 'Pending',
                     PaidAt DATETIME,
                     CreatedAt DATETIME NOT NULL,
                     UpdatedAt DATETIME,

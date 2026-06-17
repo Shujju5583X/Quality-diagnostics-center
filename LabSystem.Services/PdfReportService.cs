@@ -20,23 +20,60 @@ namespace LabSystem.Services
         private readonly IRepository<TestType> _testTypeRepo;
         private readonly IRepository<TestPanel> _testPanelRepo;
         private readonly string _letterheadPath;
+        private readonly string _labName;
+        private readonly string _labAddress;
+        private readonly string _labPhone;
 
         public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo)
-            : this(resultRepo, testTypeRepo, null, GetDefaultLetterheadPath())
+            : this(resultRepo, testTypeRepo, null, GetDefaultLetterheadPath(), null)
         {
         }
 
         public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo, string letterheadPath)
-            : this(resultRepo, testTypeRepo, null, letterheadPath)
+            : this(resultRepo, testTypeRepo, null, letterheadPath, null)
         {
         }
 
         public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo, IRepository<TestPanel> testPanelRepo, string letterheadPath)
+            : this(resultRepo, testTypeRepo, testPanelRepo, letterheadPath, null)
+        {
+        }
+
+        public PdfReportService(IResultRepository resultRepo, IRepository<TestType> testTypeRepo, IRepository<TestPanel> testPanelRepo, string letterheadPath, IRepository<Setting> settingRepo)
         {
             _resultRepo = resultRepo;
             _testTypeRepo = testTypeRepo;
             _testPanelRepo = testPanelRepo;
             _letterheadPath = letterheadPath;
+
+            if (settingRepo != null)
+            {
+                try
+                {
+                    var allSettings = settingRepo.GetAllAsync(default(CancellationToken)).Result;
+                    _labName = GetSettingValue(allSettings, "operator_name", "QUALITY DIAGNOSTICS CENTRE");
+                    _labAddress = GetSettingValue(allSettings, "operator_address", "MAIN ROAD, VANDE MART BACK SIDE, BETHAMCHERLA");
+                    _labPhone = GetSettingValue(allSettings, "operator_phone", "86399 79746");
+                }
+                catch
+                {
+                    _labName = "QUALITY DIAGNOSTICS CENTRE";
+                    _labAddress = "MAIN ROAD, VANDE MART BACK SIDE, BETHAMCHERLA";
+                    _labPhone = "86399 79746";
+                }
+            }
+            else
+            {
+                _labName = "QUALITY DIAGNOSTICS CENTRE";
+                _labAddress = "MAIN ROAD, VANDE MART BACK SIDE, BETHAMCHERLA";
+                _labPhone = "86399 79746";
+            }
+        }
+
+        private static string GetSettingValue(IEnumerable<Setting> settings, string key, string defaultValue)
+        {
+            var setting = settings.FirstOrDefault(s => s.Key == key);
+            return (setting != null && !string.IsNullOrWhiteSpace(setting.Value)) ? setting.Value : defaultValue;
         }
 
         private static string GetDefaultLetterheadPath()
@@ -109,12 +146,12 @@ namespace LabSystem.Services
                 var headerPara = section.AddParagraph();
                 headerPara.Format.Alignment = ParagraphAlignment.Center;
                 
-                var titleText = headerPara.AddFormattedText("QUALITY DIAGNOSTICS CENTRE\n", TextFormat.Bold);
+                var titleText = headerPara.AddFormattedText(_labName + "\n", TextFormat.Bold);
                 titleText.Font.Name = "Verdana";
                 titleText.Size = 18;
                 titleText.Color = Color.FromRgb(0, 115, 187);
                 
-                var subtitleText = headerPara.AddFormattedText("MAIN ROAD , VANDE MART BACK SIDE , BETHAMCHERLA  CALL : 86399 79746", TextFormat.Bold);
+                var subtitleText = headerPara.AddFormattedText(_labAddress + "  CALL : " + _labPhone, TextFormat.Bold);
                 subtitleText.Font.Name = "Verdana";
                 subtitleText.Size = 9;
                 subtitleText.Color = Colors.Black;
@@ -529,10 +566,10 @@ namespace LabSystem.Services
             // Add Header
             var headerPara = section.AddParagraph();
             headerPara.Format.Alignment = ParagraphAlignment.Center;
-            var titleText = headerPara.AddFormattedText("QUALITY DIAGNOSTICS CENTRE\n", TextFormat.Bold);
+            var titleText = headerPara.AddFormattedText(_labName + "\n", TextFormat.Bold);
             titleText.Size = 20;
             
-            var subtitleText = headerPara.AddFormattedText("MAIN ROAD , VANDE MART BACK SIDE\nBETHAMCHERLA 8639979746\n\n", TextFormat.NotBold);
+            var subtitleText = headerPara.AddFormattedText(_labAddress + "\n" + _labPhone + "\n\n", TextFormat.NotBold);
             subtitleText.Size = 10;
 
             var invoiceTitle = headerPara.AddFormattedText("INVOICE / BILL", TextFormat.Bold);

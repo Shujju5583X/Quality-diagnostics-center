@@ -1,4 +1,6 @@
+using System;
 using System.Data.Entity;
+using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 
 namespace LabSystem.Data
@@ -18,10 +20,26 @@ namespace LabSystem.Data
             return new EFDbContextTransaction(tx);
         }
 
+        public async Task RunInTransactionAsync(Func<Task> action)
+        {
+            using (var tx = _context.Database.BeginTransaction())
+            {
+                try
+                {
+                    await action();
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
+        }
+
         public void Dispose()
         {
-            // Transient DbContext is disposed by container or caller,
-            // but we can delegate if needed.
+            if (_context != null) _context.Dispose();
         }
     }
 

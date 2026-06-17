@@ -36,6 +36,12 @@ namespace LabSystem.Services
                 result.IsAbnormal = EvaluateIsAbnormal(result.Value, testType, patient);
             }
 
+            // Validate that the test type belongs to this order
+            if (order != null && order.TestTypes != null && !order.TestTypes.Any(t => t.TypeId == result.TypeId))
+            {
+                throw new InvalidOperationException("Test type not associated with this order.");
+            }
+
             result.RecordedAt = DateTime.UtcNow;
             result.CreatedAt = DateTime.UtcNow;
             result.UpdatedAt = DateTime.UtcNow;

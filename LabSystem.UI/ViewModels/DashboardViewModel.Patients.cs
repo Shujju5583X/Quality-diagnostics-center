@@ -300,5 +300,56 @@ namespace LabSystem.UI.ViewModels
             }
             return string.Format("QDC-{0}-{1:D5}", currentYear, seq);
         }
+
+        private async Task ExecuteLoadPatientHistoryAsync()
+        {
+            if (SelectedPatient == null)
+            {
+                MessageBox.Show("Please select a patient first.", "No Patient Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                PatientHistory.Clear();
+                PatientHistoryName = SelectedPatient.FullName;
+
+                var orders = await _patientRepo.GetPatientOrdersAsync(SelectedPatient.PatientId);
+                foreach (var order in orders)
+                {
+                    var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId);
+                    foreach (var result in results)
+                    {
+                        if (result.TestType == null)
+                        {
+                            result.TestType = await _testTypeRepo.GetByIdAsync(result.TypeId);
+                        }
+
+                        PatientHistory.Add(new PatientHistoryEntry
+                        {
+                            OrderDate = order.OrderedAt,
+                            TestName = result.TestType != null ? result.TestType.Name ?? "Unknown" : "Unknown",
+                            Value = result.Value,
+                            ValueText = result.ValueText,
+                            Unit = result.TestType != null ? result.TestType.Unit ?? "" : "",
+                            IsAbnormal = result.IsAbnormal,
+                            ReferenceLow = result.TestType != null ? result.TestType.ReferenceRangeLow : null,
+                            ReferenceHigh = result.TestType != null ? result.TestType.ReferenceRangeHigh : null
+                        });
+                    }
+                }
+
+                PatientHistoryCount = PatientHistory.Count;
+
+                var historyWindow = new Views.PatientHistoryWindow();
+                historyWindow.DataContext = this;
+                historyWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load patient history.");
+                MessageBox.Show("Failed to load patient history: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
     }
 }

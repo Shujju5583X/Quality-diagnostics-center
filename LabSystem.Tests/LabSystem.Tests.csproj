@@ -6,12 +6,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Include="NUnit" Version="3.14.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="Moq" Version="4.16.1" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.105.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LabSystem.Core\LabSystem.Core.csproj" />
     <ProjectReference Include="..\LabSystem.Services\LabSystem.Services.csproj" />
+    <ProjectReference Include="..\LabSystem.UI\LabSystem.UI.csproj" />
   </ItemGroup>
 </Project>

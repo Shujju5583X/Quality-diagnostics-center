@@ -133,15 +133,16 @@ namespace LabSystem.Data
             catch
             {
                 // File exists but can't be opened at all — it's corrupted.
-                // Delete it so DatabaseInitializer will recreate it fresh.
+                // Rename it so data is preserved for recovery, then DatabaseInitializer will recreate it fresh.
                 try
                 {
-                    File.Delete(dbPath);
-                    Serilog.Log.Warning("Deleted corrupted lab.db — will be recreated on next launch.");
+                    string corruptPath = dbPath + ".corrupt." + DateTime.Now.ToString("yyyyMMddHHmmss");
+                    File.Move(dbPath, corruptPath);
+                    Serilog.Log.Warning("Corrupted lab.db renamed to {Path} — will be recreated on next launch.", corruptPath);
                 }
                 catch (Exception ex)
                 {
-                    Serilog.Log.Error(ex, "Failed to delete corrupted lab.db.");
+                    Serilog.Log.Error(ex, "Failed to rename corrupted lab.db.");
                 }
             }
         }

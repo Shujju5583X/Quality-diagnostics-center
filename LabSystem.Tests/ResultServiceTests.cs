@@ -70,6 +70,7 @@ namespace LabSystem.Tests
             // Arrange
             var patient = new Patient { Gender = "Female", Age = 25 }; // Female, 25 years old
             var order = new TestOrder { OrderId = 10, Patient = patient };
+            order.TestTypes = new System.Collections.Generic.List<TestType> { new TestType { TypeId = 1 } };
             
             var testType = new TestType 
             { 

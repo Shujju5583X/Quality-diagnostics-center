@@ -63,7 +63,7 @@ namespace LabSystem.Data.Repositories
             await _context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task UpdateOrderTestPricingAsync(int orderId, int typeId, int? packageId, double billedCost, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task UpdateOrderTestPricingAsync(int orderId, int typeId, int? packageId, decimal billedCost, CancellationToken cancellationToken = default(CancellationToken))
         {
             var parameters = new object[]
             {

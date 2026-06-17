@@ -114,14 +114,36 @@ namespace LabSystem.UI
                 Container.GetInstance<IResultRepository>(),
                 Container.GetInstance<IRepository<LabSystem.Core.Models.TestType>>(),
                 Container.GetInstance<IRepository<LabSystem.Core.Models.TestPanel>>(),
-                GetLetterheadPath()), Lifestyle.Transient);
+                GetLetterheadPath(),
+                Container.GetInstance<IRepository<LabSystem.Core.Models.Setting>>()), Lifestyle.Transient);
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
-            Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
+            Container.Register<IBillingService>(() => new BillingService(
+                Container.GetInstance<IInvoiceRepository>(),
+                Container.GetInstance<IPaymentRepository>(),
+                Container.GetInstance<ITestOrderRepository>(),
+                Container.GetInstance<IRepository<TestPanel>>(),
+                Container.GetInstance<IRepository<DoctorCommission>>(),
+                Container.GetInstance<IRepository<Doctor>>(),
+                Container.GetInstance<IUnitOfWork>()), Lifestyle.Transient);
             Container.Register<IStaffService, StaffService>(Lifestyle.Transient);
 
             // Register ViewModels
             Container.Register<ViewModels.MainViewModel>();
-            Container.Register<ViewModels.DashboardViewModel>();
+            Container.Register<ViewModels.DashboardViewModel>(() => new ViewModels.DashboardViewModel(
+                Container.GetInstance<IPatientRepository>(),
+                Container.GetInstance<ITestOrderRepository>(),
+                Container.GetInstance<IOrderService>(),
+                Container.GetInstance<IPdfReportService>(),
+                Container.GetInstance<IResultRepository>(),
+                Container.GetInstance<IRepository<TestType>>(),
+                Container.GetInstance<IResultService>(),
+                Container.GetInstance<IBillingService>(),
+                Container.GetInstance<IRepository<TestPanel>>(),
+                Container.GetInstance<IBackupService>(),
+                Container.GetInstance<IRepository<Doctor>>(),
+                Container.GetInstance<IRepository<Department>>(),
+                Container.GetInstance<IRepository<Setting>>(),
+                Container.GetInstance<IUnitOfWork>()), Lifestyle.Singleton);
             Container.Register<ViewModels.LoginViewModel>();
             Container.Register<ViewModels.PinSetupViewModel>(Lifestyle.Transient);
             Container.Register<ViewModels.StaffManagementViewModel>();

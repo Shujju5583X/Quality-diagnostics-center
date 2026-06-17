@@ -11,7 +11,8 @@
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Pp]ublish/
+[Pp]ublish*/
+[Pp]ublish-v2/
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 

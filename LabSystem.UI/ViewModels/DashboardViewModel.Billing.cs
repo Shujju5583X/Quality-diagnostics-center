@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using Serilog;
@@ -7,6 +8,95 @@ namespace LabSystem.UI.ViewModels
 {
     public partial class DashboardViewModel
     {
+        private async Task LoadInvoicesAsync()
+        {
+            try
+            {
+                Invoices.Clear();
+                var invoices = await _billingService.GetAllInvoicesAsync();
+                foreach (var inv in invoices.OrderByDescending(i => i.InvoiceId))
+                {
+                    Invoices.Add(inv);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load invoices.");
+            }
+        }
+
+        private async Task ExecuteAddPaymentAsync(string paymentMethod)
+        {
+            try
+            {
+                if (SelectedInvoice == null || SelectedInvoice.IsPaid)
+                {
+                    MessageBox.Show("Please select an unpaid invoice.", "No Invoice Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (PaymentAmount <= 0)
+                {
+                    MessageBox.Show("Please enter a valid payment amount.", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (PaymentAmount > SelectedInvoice.GrandTotal)
+                {
+                    MessageBox.Show("Amount exceeds grand total of \u20B9" + SelectedInvoice.GrandTotal.ToString("N2") + ".", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var invoiceId = SelectedInvoice.InvoiceId;
+                await _billingService.AddPaymentAsync(invoiceId, PaymentAmount, paymentMethod);
+                MessageBox.Show("Payment of \u20B9" + PaymentAmount.ToString("N2") + " recorded via " + paymentMethod + ".", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                PaymentAmount = 0;
+                await LoadInvoicesAsync();
+                SelectedInvoice = Invoices.FirstOrDefault(i => i.InvoiceId == invoiceId);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to process payment.");
+                MessageBox.Show("Payment failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteApplyDiscountTaxAsync()
+        {
+            try
+            {
+                if (SelectedInvoice == null || SelectedInvoice.IsPaid)
+                {
+                    MessageBox.Show("Please select an unpaid invoice.", "No Invoice Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var invoiceId = SelectedInvoice.InvoiceId;
+                await _billingService.UpdateInvoiceFinancialsAsync(invoiceId, DiscountAmount, TaxAmount);
+                MessageBox.Show("Discount/tax applied.", "Updated", MessageBoxButton.OK, MessageBoxImage.Information);
+                await LoadInvoicesAsync();
+                SelectedInvoice = Invoices.FirstOrDefault(i => i.InvoiceId == invoiceId);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to apply discount/tax.");
+                MessageBox.Show("Failed to apply discount/tax: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteGenerateRevenueReportAsync()
+        {
+            try
+            {
+                RevenueStats = await _billingService.GetRevenueReportAsync(ReportStartDate, ReportEndDate);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to generate revenue report.");
+                MessageBox.Show("Failed to generate revenue report: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private async Task ExecuteGenerateBillAsync(object obj)
         {
             if (SelectedOrder == null)

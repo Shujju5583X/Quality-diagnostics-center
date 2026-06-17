@@ -13,11 +13,13 @@ namespace LabSystem.Data
         {
             // For SQLite
             Database.SetInitializer<LabDbContext>(null);
+            Database.ExecuteSqlCommand("PRAGMA foreign_keys = ON");
         }
 
         public LabDbContext(System.Data.Common.DbConnection connection) : base(connection, true)
         {
             Database.SetInitializer<LabDbContext>(null);
+            Database.ExecuteSqlCommand("PRAGMA foreign_keys = ON");
         }
 
         public DbSet<Patient> Patients { get; set; }

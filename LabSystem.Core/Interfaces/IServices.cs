@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -5,6 +6,16 @@ using LabSystem.Core.Models;
 
 namespace LabSystem.Core.Interfaces
 {
+    public interface IBillingService
+    {
+        Task<Invoice> GenerateInvoiceAsync(int orderId);
+        Task<Invoice> GetInvoiceForOrderAsync(int orderId);
+        Task<IEnumerable<Invoice>> GetAllInvoicesAsync();
+        Task UpdateInvoiceFinancialsAsync(int invoiceId, decimal discountAmount, decimal taxAmount);
+        Task AddPaymentAsync(int invoiceId, decimal amount, string paymentMethod);
+        Task<RevenueReportStats> GetRevenueReportAsync(DateTime start, DateTime end);
+    }
+
     public interface IPdfReportService
     {
         Task<string> GenerateReportAsync(TestOrder order, bool includeLetterhead = true, CancellationToken cancellationToken = default(CancellationToken));

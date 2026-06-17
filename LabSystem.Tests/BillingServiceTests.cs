@@ -35,7 +35,8 @@ namespace LabSystem.Tests
             var panelRepo = new TestPanelRepository(_context);
             var commissionRepo = new Repository<DoctorCommission>(_context);
             var doctorRepo = new Repository<Doctor>(_context);
-            _service = new BillingService(invoiceRepo, paymentRepo, orderRepo, panelRepo, commissionRepo, doctorRepo);
+            var unitOfWork = new UnitOfWork(_context);
+            _service = new BillingService(invoiceRepo, paymentRepo, orderRepo, panelRepo, commissionRepo, doctorRepo, unitOfWork);
         }
 
         [TearDown]
@@ -281,12 +282,13 @@ namespace LabSystem.Tests
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // Act: Pay more than total (this should still work in service, UI validates before calling)
-            await _service.AddPaymentAsync(invoice.InvoiceId, 1500m, "Cash");
+            // Act: Pay more than total (this should now throw exception)
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.AddPaymentAsync(invoice.InvoiceId, 1500m, "Cash"));
 
-            // Assert: IsPaid should be true (overpayment allowed at service level)
+            // Assert: IsPaid should remain false (overpayment prevented)
             var updatedInvoice = _context.Invoices.Find(invoice.InvoiceId);
-            Assert.IsTrue(updatedInvoice.IsPaid);
+            Assert.IsFalse(updatedInvoice.IsPaid);
+            Assert.AreEqual(0m, updatedInvoice.AmountPaid);
         }
 
         [Test]
