@@ -20,13 +20,15 @@
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
             <ComboBox x:Name="LetterheadComboBox" Width="180" Height="40" Margin="0,0,10,0" 
                       VerticalContentAlignment="Center" HorizontalContentAlignment="Left"
+                      Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                      materialDesign:HintAssist.Hint="Letterhead"
                       SelectionChanged="LetterheadComboBox_SelectionChanged">
                 <ComboBoxItem Content="With Letterhead" IsSelected="True" />
                 <ComboBoxItem Content="Without Letterhead" />
             </ComboBox>
-            <Button Content="CLOSE" Click="Close_Click" Margin="0,0,10,0" Width="120" Height="40" Style="{StaticResource MaterialDesignOutlinedButton}" />
-            <Button Content="SAVE AS PDF" Click="SavePdf_Click" Margin="0,0,10,0" Width="150" Height="40" Style="{StaticResource MaterialDesignOutlinedButton}" />
-            <Button Content="PRINT DIRECTLY" Click="PrintPdf_Click" Width="150" Height="40" Style="{StaticResource MaterialDesignRaisedButton}"/>
+            <Button Content="CLOSE" Click="Close_Click" Margin="0,0,10,0" Width="120" Height="40" Style="{StaticResource FlatButtonStyle}" />
+            <Button Content="SAVE AS PDF" Click="SavePdf_Click" Margin="0,0,10,0" Width="150" Height="40" Style="{StaticResource OutlinedButtonStyle}" />
+            <Button Content="PRINT DIRECTLY" Click="PrintPdf_Click" Width="150" Height="40" Style="{StaticResource PrimaryButtonStyle}"/>
         </StackPanel>
     </Grid>
 </Window>

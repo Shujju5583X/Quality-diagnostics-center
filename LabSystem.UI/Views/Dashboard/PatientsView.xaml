@@ -1,0 +1,124 @@
+<UserControl x:Class="LabSystem.UI.Views.Dashboard.PatientsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Grid Margin="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3.2*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Patient List -->
+        <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Style="{StaticResource ContentCardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Style="{StaticResource SectionHeaderStyle}" Text="Registered Patients" />
+
+                <TextBox Grid.Row="1"
+                         materialDesign:HintAssist.Hint="Search patient by name, ID, phone..."
+                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                         Margin="0 0 0 16"
+                         Text="{Binding PatientSearchQuery, UpdateSourceTrigger=PropertyChanged}" />
+
+                <WrapPanel Grid.Row="2" Margin="0 0 0 12">
+                    <DatePicker materialDesign:HintAssist.Hint="From Reg. Date"
+                                SelectedDate="{Binding PatientStartDate}"
+                                Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
+                                Width="135" Margin="0 0 12 0" />
+                    <DatePicker materialDesign:HintAssist.Hint="To Reg. Date"
+                                SelectedDate="{Binding PatientEndDate}"
+                                Style="{StaticResource MaterialDesignFloatingHintDatePicker}"
+                                Width="135" />
+                </WrapPanel>
+
+                <DataGrid Grid.Row="3"
+                          ItemsSource="{Binding Patients}"
+                          SelectedItem="{Binding SelectedPatient}"
+                          Style="{StaticResource TealDataGridStyle}"
+                          Margin="0 0 0 4">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="UHID" Binding="{Binding Uhid}" Width="Auto" />
+                        <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
+                        <DataGridTextColumn Header="Gender" Binding="{Binding Gender, TargetNullValue='Male'}" Width="Auto" />
+                        <DataGridTextColumn Header="Age" Binding="{Binding Age}" Width="Auto" />
+                        <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
+                        <DataGridTemplateColumn Header="Action" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Edit"
+                                            Command="{Binding DataContext.EditPatientCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                            Padding="4" Height="24" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="4 8 4 4">
+                    <Button Style="{StaticResource PaginationButtonStyle}" Command="{Binding PreviousPatientPageCommand}" Content="&lt; Prev" />
+                    <TextBlock Text="{Binding PatientPageInfo}" VerticalAlignment="Center" Margin="16 0" FontWeight="SemiBold" />
+                    <Button Style="{StaticResource PaginationButtonStyle}" Command="{Binding NextPatientPageCommand}" Content="Next &gt;" />
+                    <Button Command="{Binding LoadPatientHistoryCommand}"
+                            Content="VIEW HISTORY"
+                            Margin="16 0 0 0"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Height="32" FontSize="11" />
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- Right: Patient Registration Form -->
+        <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Style="{StaticResource ContentCardStyle}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="{Binding PatientFormTitle}" />
+
+                    <TextBox materialDesign:HintAssist.Hint="Full Name *"
+                             Text="{Binding NewPatientName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                             Margin="0 0 0 20" />
+
+                    <ComboBox materialDesign:HintAssist.Hint="Gender"
+                              SelectedValue="{Binding NewPatientGender}" SelectedValuePath="Content"
+                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 20">
+                        <ComboBoxItem Content="select gender" IsEnabled="False" Visibility="Collapsed" />
+                        <ComboBoxItem Content="Male" />
+                        <ComboBoxItem Content="Female" />
+                        <ComboBoxItem Content="Others" />
+                    </ComboBox>
+
+                    <TextBox materialDesign:HintAssist.Hint="Age *"
+                             Text="{Binding NewPatientAge, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                             Margin="0 0 0 20" />
+
+                    <TextBox materialDesign:HintAssist.Hint="Contact Phone"
+                             Text="{Binding NewPatientPhone, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                             Margin="0 0 0 20" />
+
+                    <TextBox materialDesign:HintAssist.Hint="Contact Email"
+                             Text="{Binding NewPatientEmail, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                             Margin="0 0 0 32" />
+
+                    <Button Command="{Binding AddPatientCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="46">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="AccountOutline" Margin="0 0 8 0" VerticalAlignment="Center" Width="20" Height="20" />
+                            <TextBlock Text="{Binding PatientFormButtonText}" VerticalAlignment="Center" FontWeight="Bold" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>

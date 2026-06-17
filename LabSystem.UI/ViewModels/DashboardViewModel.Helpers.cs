@@ -93,7 +93,6 @@ namespace LabSystem.UI.ViewModels
             { 
                 _valueText = value; 
                 OnPropertyChanged(); 
-                OnPropertyChanged("DisplayValue");
                 if (HasOptions && (_selectedOption == null || _selectedOption.Value != value))
                 {
                     double parsedOVal;
@@ -149,23 +148,6 @@ namespace LabSystem.UI.ViewModels
                 {
                     ValueText = _selectedOption.Value;
                 }
-            }
-        }
-
-        public string DisplayValue
-        {
-            get
-            {
-                if (HasOptions)
-                {
-                    double parsedOVal;
-                    double parsedVVal;
-                    var opt = Options.FirstOrDefault(o =>
-                        o.Value == ValueText ||
-                        (double.TryParse(o.Value, out parsedOVal) && double.TryParse(ValueText, out parsedVVal) && Math.Abs(parsedOVal - parsedVVal) < 0.001));
-                    if (opt != null) return opt.Display;
-                }
-                return ValueText;
             }
         }
 

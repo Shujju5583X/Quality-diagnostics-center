@@ -37,12 +37,24 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Copying appsettings.json to output...
+echo Copying SQLite.Interop.dll to output...
+if exist "LabSystem.UI\bin\Release\net451\x86" (
+    xcopy /e /y "LabSystem.UI\bin\Release\net451\x86" "%OUTPUT_DIR%\x86\" >nul
+    echo OK - x86 interop copied
+)
+if exist "LabSystem.UI\bin\Release\net451\x64" (
+    xcopy /e /y "LabSystem.UI\bin\Release\net451\x64" "%OUTPUT_DIR%\x64\" >nul
+    echo OK - x64 interop copied
+)
+
+echo Copying appsettings.json and verify script to output...
 if exist "appsettings.json" (
     copy /y "appsettings.json" "%OUTPUT_DIR%\appsettings.json" >nul
-    echo OK
-) else (
-    echo WARNING: appsettings.json not found at root - skipping.
+    echo OK - appsettings.json
+)
+if exist "verify-app.ps1" (
+    copy /y "verify-app.ps1" "%OUTPUT_DIR%\verify-app.ps1" >nul
+    echo OK - verify-app.ps1
 )
 echo OK
 echo.

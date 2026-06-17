@@ -531,7 +531,6 @@ namespace LabSystem.UI.ViewModels
             EditResultsCommand = new AsyncRelayCommand(async o => await ExecuteEditResultsAsync(o));
             SaveAmendmentCommand = new AsyncRelayCommand(async o => await ExecuteSaveAmendmentAsync(o));
             CancelEditCommand = new AsyncRelayCommand(async o => await CancelEditModeAsync());
-            InitializeAmendResultCommand();
             LoadPatientHistoryCommand = new AsyncRelayCommand(async o => await ExecuteLoadPatientHistoryAsync());
             InitializeRework();
 

@@ -53,7 +53,7 @@ if ($dotnetOk) {
     Write-Result ".NET Framework" "PASS" "$dotnetVersion (release: $release)"
     $pass++
 } else {
-    Write-Result ".NET Framework" "FAIL" "4.5.1+ required — detected: $dotnetVersion"
+    Write-Result ".NET Framework" "FAIL" "4.5.1+ required - detected: $dotnetVersion"
     $fail++
 }
 
@@ -66,7 +66,7 @@ if ($osBuild -ge 7601) {
     Write-Result "Windows Version" "PASS" $osVersion
     $pass++
 } else {
-    Write-Result "Windows Version" "FAIL" "Windows 7 SP1+ required — $osVersion"
+    Write-Result "Windows Version" "FAIL" "Windows 7 SP1+ required - $osVersion"
     $fail++
 }
 
@@ -78,7 +78,7 @@ if ($drive) {
         Write-Result "Free Disk Space" "PASS" "$freeMB MB free on $($drive.Root) (min 200 MB)"
         $pass++
     } else {
-        Write-Result "Free Disk Space" "FAIL" "Only $freeMB MB free on $($drive.Root) — need >= 200 MB"
+        Write-Result "Free Disk Space" "FAIL" "Only $freeMB MB free on $($drive.Root) - need >= 200 MB"
         $fail++
     }
 } else {
@@ -97,6 +97,16 @@ if (Test-Path $exePath) {
 } else {
     Write-Result "Application EXE" "FAIL" "Not found at $exePath"
     Write-Result "Hint" "WARN" "Run publish.bat first to generate the build output"
+    $fail++
+}
+
+# -------- Check 5: SQLite.Interop.dll --------
+$interopPath = Join-Path $scriptPath "x86\SQLite.Interop.dll"
+if (Test-Path $interopPath) {
+    Write-Result "SQLite Interop DLL" "PASS" "x86\SQLite.Interop.dll found"
+    $pass++
+} else {
+    Write-Result "SQLite Interop DLL" "FAIL" "x86\SQLite.Interop.dll not found"
     $fail++
 }
 

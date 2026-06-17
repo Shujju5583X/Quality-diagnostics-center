@@ -18,9 +18,9 @@
         
         <WebBrowser x:Name="PdfWebViewer" Grid.Row="0" Margin="10" />
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
-            <Button Content="CLOSE" Click="Close_Click" Margin="0,0,10,0" Width="120" Height="40" Style="{StaticResource MaterialDesignOutlinedButton}" />
-            <Button Content="SAVE AS PDF" Click="SavePdf_Click" Margin="0,0,10,0" Width="150" Height="40" Style="{StaticResource MaterialDesignOutlinedButton}" />
-            <Button Content="PRINT DIRECTLY" Click="PrintPdf_Click" Width="150" Height="40" Style="{StaticResource MaterialDesignRaisedButton}"/>
+            <Button Content="CLOSE" Click="Close_Click" Margin="0,0,10,0" Width="120" Height="40" Style="{StaticResource FlatButtonStyle}" />
+            <Button Content="SAVE AS PDF" Click="SavePdf_Click" Margin="0,0,10,0" Width="150" Height="40" Style="{StaticResource OutlinedButtonStyle}" />
+            <Button Content="PRINT DIRECTLY" Click="PrintPdf_Click" Width="150" Height="40" Style="{StaticResource PrimaryButtonStyle}"/>
         </StackPanel>
     </Grid>
 </Window>

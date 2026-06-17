@@ -7,28 +7,22 @@
         TextElement.FontWeight="Regular"
         TextElement.FontSize="14"
         FontFamily="{DynamicResource MaterialDesignFont}">
-    
+
     <UserControl.Resources>
-        <local:StringVisibilityConverter x:Key="StringVisibilityConverter" />
     </UserControl.Resources>
-    <Border CornerRadius="12" Background="{DynamicResource MaterialDesignPaper}" BorderBrush="{DynamicResource PrimaryHueMidBrush}" BorderThickness="1.5">
+    <Border CornerRadius="12" Background="{DynamicResource MaterialDesignPaper}" BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="1.5">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Gradient Header Banner -->
-            <Border Grid.Row="0" CornerRadius="10,10,0,0" Height="100">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#673AB7" Offset="0" /> <!-- DeepPurple -->
-                        <GradientStop Color="#9C27B0" Offset="1" /> <!-- Purple -->
-                    </LinearGradientBrush>
-                </Border.Background>
+            <!-- Gradient Header Banner: Teal -> Cyan -->
+            <Border Grid.Row="0" CornerRadius="10,10,0,0" Height="100"
+                    Background="{StaticResource HeaderGradientBrush}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                     <TextBlock Text="QUALITY DIAGNOSTICS" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Technician Authentication" Foreground="#E0E0E0" FontSize="13" FontWeight="SemiBold" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Technician Authentication" Foreground="#B2DFDB" FontSize="13" FontWeight="SemiBold" Margin="0,4,0,0" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
 
@@ -43,8 +37,8 @@
                 </Grid.RowDefinitions>
 
                 <!-- Select Technician ComboBox -->
-                <ComboBox Grid.Row="0" 
-                          ItemsSource="{Binding StaffMembers}" 
+                <ComboBox Grid.Row="0"
+                          ItemsSource="{Binding StaffMembers}"
                           SelectedItem="{Binding SelectedStaff}"
                           DisplayMemberPath="FullName"
                           Style="{StaticResource MaterialDesignFloatingHintComboBox}"
@@ -52,7 +46,7 @@
                           Margin="0,8,0,16" />
 
                 <!-- PIN PasswordBox -->
-                <PasswordBox Grid.Row="1" 
+                <PasswordBox Grid.Row="1"
                              x:Name="PinBox"
                              PasswordChanged="PinBox_PasswordChanged"
                              Style="{StaticResource MaterialDesignFloatingHintPasswordBox}"
@@ -60,31 +54,29 @@
                              Margin="0,0,0,16" />
 
                 <!-- Error Message TextBlock -->
-                <TextBlock Grid.Row="2" 
-                           Text="{Binding ErrorMessage}" 
-                           Foreground="#E53935" 
+                <TextBlock Grid.Row="2"
+                           Text="{Binding ErrorMessage}"
+                           Foreground="{StaticResource ErrorBrush}"
                            FontWeight="SemiBold"
-                           TextWrapping="Wrap" 
+                           TextWrapping="Wrap"
                            HorizontalAlignment="Center"
                            TextAlignment="Center"
-                           Visibility="{Binding ErrorMessage, Converter={StaticResource StringVisibilityConverter}}"
+                           Visibility="{Binding ErrorMessage, Converter={StaticResource StringVisibility}}"
                            Margin="0,0,0,12" />
 
                 <!-- Action Buttons -->
                 <StackPanel Grid.Row="4">
-                    <Button Content="SIGN IN" 
+                    <Button Content="SIGN IN"
                             Command="{Binding LoginCommand}"
-                            Style="{StaticResource MaterialDesignRaisedButton}" 
-                            Height="44" 
-                            FontSize="15" 
-                            FontWeight="Bold" 
-                            materialDesign:ButtonAssist.CornerRadius="6"/>
-                    
-                    <Button Content="Exit Application" 
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Height="44"
+                            FontSize="15" />
+
+                    <Button Content="Exit Application"
                             Click="Exit_Click"
-                            Style="{StaticResource MaterialDesignFlatButton}" 
+                            Style="{StaticResource MaterialDesignFlatButton}"
                             Foreground="{DynamicResource MaterialDesignBodyLight}"
-                            Margin="0,8,0,0" 
+                            Margin="0,8,0,0"
                             Height="36" />
                 </StackPanel>
             </Grid>

@@ -1,0 +1,75 @@
+<UserControl x:Class="LabSystem.UI.Views.Dashboard.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Grid Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="600" Width="500">
+        <StackPanel>
+            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Settings &amp; Backup" FontSize="22" />
+
+            <!-- Operator Info Card -->
+            <materialDesign:Card Style="{StaticResource ContentCardStyle}" Margin="0 0 0 20">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Operator Identity Settings" />
+
+                    <TextBox materialDesign:HintAssist.Hint="Laboratory Name *"
+                             Text="{Binding OperatorName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
+
+                    <TextBox materialDesign:HintAssist.Hint="Address *"
+                             Text="{Binding OperatorAddress, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
+
+                    <TextBox materialDesign:HintAssist.Hint="Phone Number *"
+                             Text="{Binding OperatorPhone, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 24" />
+
+                    <Button Command="{Binding SaveSettingsCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}" Height="40" HorizontalAlignment="Right">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                            <TextBlock Text="SAVE SETTINGS" VerticalAlignment="Center" FontWeight="Bold" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Database Backup Card -->
+            <materialDesign:Card Style="{StaticResource ContentCardStyle}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="CSV Database Backup Engine" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0 0 0 16"
+                               Text="Export full database tables (Patients, Doctors, Invoices, Tests, Results, Settings) to a single CSV backup file. Keep these safe in external storage." />
+
+                    <Grid Margin="0 0 0 20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Last Backup:" Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontWeight="SemiBold" Margin="0 0 12 0" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{Binding LastBackupTime}"
+                                   FontWeight="SemiBold" Foreground="{StaticResource PrimaryDarkBrush}" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                        <Button Command="{Binding BackupCommand}"
+                                Style="{StaticResource AccentButtonStyle}" Height="42" HorizontalAlignment="Left" Margin="0 0 16 0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Database" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                <TextBlock Text="DOWNLOAD CSV BACKUP" VerticalAlignment="Center" FontWeight="Bold" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Command="{Binding RestoreBackupCommand}"
+                                Style="{StaticResource OutlinedButtonStyle}" Height="42" HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Database" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                <TextBlock Text="RESTORE FROM CSV" VerticalAlignment="Center" FontWeight="Bold" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </materialDesign:Card>
+        </StackPanel>
+    </Grid>
+</UserControl>

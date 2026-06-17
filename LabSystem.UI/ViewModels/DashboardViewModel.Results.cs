@@ -301,47 +301,6 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
-        public ICommand AmendResultCommand { get; private set; }
-
-        public void InitializeAmendResultCommand()
-        {
-            AmendResultCommand = new AsyncRelayCommand(async o => await ExecuteAmendResultAsync(o));
-        }
-
-        private async Task ExecuteAmendResultAsync(object parameter)
-        {
-            var ri = parameter as ResultInput;
-            if (ri == null) return;
-
-            var reasonDialog = new Views.AmendmentReasonDialog();
-            if (reasonDialog.ShowDialog() != true) return;
-
-            string reason = reasonDialog.Reason;
-            if (string.IsNullOrWhiteSpace(reason))
-            {
-                MessageBox.Show("Amendment reason is required.", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                double parsedVal;
-                double? newValue = double.TryParse(ri.ValueText, out parsedVal) ? (double?)parsedVal : null;
-                await _resultService.AmendResultAsync(ri.ResultId, newValue, ri.ValueText, reason, App.AuthenticatedStaffId);
-
-                ri.IsAmendmentMode = false;
-                ri.IsAbnormal = ReferenceRangeEvaluator.IsAbnormal(newValue,
-                    await _testTypeRepo.GetByIdAsync(ri.TypeId), SelectedOrder != null ? SelectedOrder.Patient : null);
-
-                MessageBox.Show("Result amended successfully.", "Amended", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to amend result.");
-                MessageBox.Show("Amendment failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         private async Task LoadResultsForSelectedOrderSafeAsync()
         {
             try

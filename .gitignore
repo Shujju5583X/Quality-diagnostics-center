@@ -83,6 +83,14 @@ tools/
 *.dll.bak
 *.pdb
 
+# Build archives and documentation artifacts
+*.zip
+*.docx
+
+# Diagnostics and startup logs
+diagnostics.host.*.txt
+lab_*.log.txt
+
 # Local project notes / temp files
 initial_prompt.txt
 Project-Progress.txt
