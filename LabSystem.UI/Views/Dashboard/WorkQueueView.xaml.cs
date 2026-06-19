@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using LabSystem.Core.Models;
@@ -23,13 +24,56 @@ namespace LabSystem.UI.Views.Dashboard
             }
         }
 
-        private void PendingTestsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void OrderFilters_Changed(object sender, TextChangedEventArgs e)
         {
-            var vm = DataContext as ViewModels.DashboardViewModel;
-            if (vm != null && vm.SelectedOrder != null)
+            ApplyFilters();
+        }
+
+        private void OrderFilters_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void ApplyFilters()
+        {
+            if (OrdersList == null) return;
+
+            var text = OrderSearchBox != null ? OrderSearchBox.Text : null;
+            string statusFilter = null;
+            if (StatusFilterComboBox != null)
             {
-                vm.WorkQueueTabIndex = 1;
+                var selectedItem = StatusFilterComboBox.SelectedItem as ComboBoxItem;
+                if (selectedItem != null && selectedItem.Content != null)
+                {
+                    statusFilter = selectedItem.Content.ToString();
+                }
             }
+
+            var cv = CollectionViewSource.GetDefaultView(OrdersList.ItemsSource);
+            if (cv == null) return;
+
+            cv.Filter = o =>
+            {
+                var order = o as LabSystem.Core.Models.TestOrder;
+                if (order == null) return false;
+
+                // Status Filter
+                if (statusFilter != null && statusFilter != "All Orders")
+                {
+                    if (order.Status != statusFilter) return false;
+                }
+
+                // Text Filter
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    bool match = (order.Patient != null && order.Patient.FullName != null && order.Patient.FullName.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                                 (order.ReferredBy != null && order.ReferredBy.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                                 order.OrderId.ToString().Contains(text);
+                    if (!match) return false;
+                }
+
+                return true;
+            };
         }
 
         private void ResultsEntryGrid_PreviewKeyDown(object sender, KeyEventArgs e)

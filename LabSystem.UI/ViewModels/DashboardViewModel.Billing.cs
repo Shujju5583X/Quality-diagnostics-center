@@ -35,21 +35,27 @@ namespace LabSystem.UI.ViewModels
                     return;
                 }
 
-                if (PaymentAmount <= 0)
+                decimal amountToPay = PaymentAmount;
+                if (amountToPay <= 0)
+                {
+                    amountToPay = SelectedInvoice.DueAmount;
+                }
+
+                if (amountToPay <= 0)
                 {
                     MessageBox.Show("Please enter a valid payment amount.", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                if (PaymentAmount > SelectedInvoice.GrandTotal)
+                if (amountToPay > SelectedInvoice.DueAmount)
                 {
-                    MessageBox.Show("Amount exceeds grand total of \u20B9" + SelectedInvoice.GrandTotal.ToString("N2") + ".", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Amount exceeds due balance of \u20B9" + SelectedInvoice.DueAmount.ToString("N2") + ".", "Invalid Amount", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 var invoiceId = SelectedInvoice.InvoiceId;
-                await _billingService.AddPaymentAsync(invoiceId, PaymentAmount, paymentMethod);
-                MessageBox.Show("Payment of \u20B9" + PaymentAmount.ToString("N2") + " recorded via " + paymentMethod + ".", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                await _billingService.AddPaymentAsync(invoiceId, amountToPay, paymentMethod);
+                MessageBox.Show("Payment of \u20B9" + amountToPay.ToString("N2") + " recorded via " + paymentMethod + ".", "Payment Successful", MessageBoxButton.OK, MessageBoxImage.Information);
                 PaymentAmount = 0;
                 await LoadInvoicesAsync();
                 SelectedInvoice = Invoices.FirstOrDefault(i => i.InvoiceId == invoiceId);

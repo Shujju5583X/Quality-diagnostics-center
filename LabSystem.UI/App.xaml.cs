@@ -214,10 +214,6 @@ namespace LabSystem.UI
 
         private static string GetLetterheadPath()
         {
-            var path = FileUtilities.FindFileUpwards("Sample reports", "10 001.jpg.jpeg");
-            if (path != null && File.Exists(path))
-                return path;
-
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var candidates = new[]
             {
@@ -234,6 +230,10 @@ namespace LabSystem.UI
                 if (File.Exists(candidate))
                     return candidate;
             }
+
+            var path = FileUtilities.FindFileUpwards("Sample reports", "10 001.jpg.jpeg");
+            if (path != null && File.Exists(path))
+                return path;
 
             return candidates[0];
         }

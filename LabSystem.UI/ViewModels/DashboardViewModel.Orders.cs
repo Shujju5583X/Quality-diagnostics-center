@@ -38,6 +38,7 @@ namespace LabSystem.UI.ViewModels
                 return;
             }
 
+            TestOrder order = null;
             try
             {
                 var testIds = selectedTests.Select(t => t.TypeId).ToList();
@@ -53,7 +54,7 @@ namespace LabSystem.UI.ViewModels
                     referredBy = OrderReferredBy.Trim();
                 }
 
-                var order = new TestOrder
+                order = new TestOrder
                 {
                     PatientId = SelectedPatient.PatientId,
                     StatusEnum = OrderStatus.Pending,
@@ -65,29 +66,39 @@ namespace LabSystem.UI.ViewModels
 
                 await _orderService.CreateOrderAsync(order, testIds, App.AuthenticatedStaffId);
                 Log.Information("Created test order ID {OrderId} for Patient ID {PatientId}", order.OrderId, SelectedPatient.PatientId);
-
-                // Generate Invoice automatically
-                await _billingService.GenerateInvoiceAsync(order.OrderId);
-
-                // Unselect test checkboxes
-                foreach (var t in TestTypes)
-                {
-                    t.IsSelected = false;
-                }
-
-                OrderReferredBy = "SELF";
-                OrderNotes = string.Empty;
-                SelectedTestPanel = null;
-                SelectedDoctorForOrder = DoctorsForOrder != null ? DoctorsForOrder.FirstOrDefault() : null;
-
-                await LoadDataAsync();
-                MessageBox.Show("Test order created successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to create order.");
-                MessageBox.Show("Error creating test order.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string detail = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                MessageBox.Show("Error creating test order:\n\n" + detail, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
+
+            try
+            {
+                await _billingService.GenerateInvoiceAsync(order.OrderId);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to generate invoice for order {OrderId}.", order.OrderId);
+                string detail = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                MessageBox.Show("Order created but invoice generation failed:\n\n" + detail + "\n\nOrder ID: " + order.OrderId, "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            // Unselect test checkboxes
+            foreach (var t in TestTypes)
+            {
+                t.IsSelected = false;
+            }
+
+            OrderReferredBy = "SELF";
+            OrderNotes = string.Empty;
+            SelectedTestPanel = null;
+            SelectedDoctorForOrder = DoctorsForOrder != null ? DoctorsForOrder.FirstOrDefault() : null;
+
+            await LoadDataAsync();
+            MessageBox.Show("Test order created successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
     }

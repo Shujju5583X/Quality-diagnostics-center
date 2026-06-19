@@ -12,13 +12,14 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="SimpleInjector" Version="4.10.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.105.2" />
+    <PackageReference Include="Stub.System.Data.SQLite.Core.NetFramework" Version="1.0.115.5" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Configuration" />
   </ItemGroup>
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net451</TargetFramework>
     <UseWPF>true</UseWPF>
     <LangVersion>5</LangVersion>
@@ -29,6 +30,11 @@
     <Resource Include="logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\letterhead.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\LabSystem.Data\Migrations\V1__init.sql" Link="Resources\V1__init.sql" />

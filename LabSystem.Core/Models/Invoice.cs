@@ -42,7 +42,7 @@ namespace LabSystem.Core.Models
         [NotMapped]
         public decimal DueAmount
         {
-            get { return GrandTotal - AmountPaid; }
+            get { return Math.Max(0, GrandTotal - AmountPaid); }
         }
 
         public string Status { get; set; }

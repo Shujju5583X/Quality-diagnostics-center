@@ -40,60 +40,57 @@ namespace LabSystem.Services
         {
             try
             {
-                await _unitOfWork.RunInTransactionAsync(async () =>
+                var order = await _orderRepo.GetByIdAsync(orderId);
+                if (order == null) throw new Exception("Order not found.");
+
+                // Check if invoice already exists
+                var existing = await _invoiceRepo.GetByOrderIdAsync(orderId);
+                if (existing != null) return existing;
+
+                // Load all test panels with their test types eager-loaded
+                var panels = await _panelRepo.GetAllAsync();
+
+                var orderedTestTypeIds = new HashSet<int>(order.TestTypes.Select(t => t.TypeId));
+                decimal total = 0;
+                var testTypesAppliedToPanels = new HashSet<int>();
+
+                // Sort panels by number of tests descending to match larger panels first
+                foreach (var panel in panels.OrderByDescending(p => p.TestTypes.Count))
                 {
-                    var order = await _orderRepo.GetByIdAsync(orderId);
-                    if (order == null) throw new Exception("Order not found.");
-
-                    // Check if invoice already exists
-                    var existing = await _invoiceRepo.GetByOrderIdAsync(orderId);
-                    if (existing != null) return;
-
-                    // Load all test panels with their test types eager-loaded
-                    var panels = await _panelRepo.GetAllAsync();
-
-                    var orderedTestTypeIds = new HashSet<int>(order.TestTypes.Select(t => t.TypeId));
-                    decimal total = 0;
-                    var testTypesAppliedToPanels = new HashSet<int>();
-
-                    // Sort panels by number of tests descending to match larger panels first
-                    foreach (var panel in panels.OrderByDescending(p => p.TestTypes.Count))
+                    var panelTestTypeIds = panel.TestTypes.Select(t => t.TypeId).ToList();
+                    if (panelTestTypeIds.Count > 0 && panelTestTypeIds.All(id => orderedTestTypeIds.Contains(id) && !testTypesAppliedToPanels.Contains(id)))
                     {
-                        var panelTestTypeIds = panel.TestTypes.Select(t => t.TypeId).ToList();
-                        if (panelTestTypeIds.Count > 0 && panelTestTypeIds.All(id => orderedTestTypeIds.Contains(id) && !testTypesAppliedToPanels.Contains(id)))
+                        total += panel.Price;
+                        decimal distributedCost = panel.Price / panelTestTypeIds.Count;
+                        
+                        foreach (var id in panelTestTypeIds)
                         {
-                            total += panel.Price;
-                            decimal distributedCost = panel.Price / panelTestTypeIds.Count;
-                            
-                            foreach (var id in panelTestTypeIds)
-                            {
-                                testTypesAppliedToPanels.Add(id);
-                                await _orderRepo.UpdateOrderTestPricingAsync(orderId, id, panel.PanelId, distributedCost);
-                            }
+                            testTypesAppliedToPanels.Add(id);
+                            await _orderRepo.UpdateOrderTestPricingAsync(orderId, id, panel.PanelId, distributedCost);
                         }
                     }
+                }
 
-                    // Add remaining individual test type prices
-                    foreach (var testType in order.TestTypes)
+                // Add remaining individual test type prices
+                foreach (var testType in order.TestTypes)
+                {
+                    if (!testTypesAppliedToPanels.Contains(testType.TypeId))
                     {
-                        if (!testTypesAppliedToPanels.Contains(testType.TypeId))
-                        {
-                            total += testType.Price;
-                            await _orderRepo.UpdateOrderTestPricingAsync(orderId, testType.TypeId, null, testType.Price);
-                        }
+                        total += testType.Price;
+                        await _orderRepo.UpdateOrderTestPricingAsync(orderId, testType.TypeId, null, testType.Price);
                     }
+                }
 
-                    var invoice = new Invoice
-                    {
-                        OrderId = orderId,
-                        TotalAmount = total,
-                        Status = "Pending",
-                        IsPaid = false,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                var invoice = new Invoice
+                {
+                    OrderId = orderId,
+                    TotalAmount = total,
+                    Status = "Pending",
+                    IsPaid = false,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-                    await _invoiceRepo.AddAsync(invoice);
-                });
+                await _invoiceRepo.AddAsync(invoice);
                 
                 return await _invoiceRepo.GetByOrderIdAsync(orderId);
             }
@@ -133,66 +130,63 @@ namespace LabSystem.Services
 
         public async Task AddPaymentAsync(int invoiceId, decimal amount, string paymentMethod)
         {
-            await _unitOfWork.RunInTransactionAsync(async () =>
+            var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
+            if (invoice == null)
             {
-                var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
-                if (invoice == null)
-                {
-                    throw new InvalidOperationException("Invoice not found.");
-                }
+                throw new InvalidOperationException("Invoice not found.");
+            }
 
-                // Check for overpayment
-                var existingPayments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
-                decimal currentPaidAmount = existingPayments.Sum(p => p.Amount);
-                if (currentPaidAmount + amount > invoice.GrandTotal)
-                {
-                    throw new InvalidOperationException(
-                        string.Format("Payment of {0} would exceed outstanding balance of {1}.", amount, invoice.GrandTotal - currentPaidAmount));
-                }
+            // Check for overpayment
+            var existingPayments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
+            decimal currentPaidAmount = existingPayments.Sum(p => p.Amount);
+            if (currentPaidAmount + amount > invoice.GrandTotal)
+            {
+                throw new InvalidOperationException(
+                    string.Format("Payment of {0} would exceed outstanding balance of {1}.", amount, invoice.GrandTotal - currentPaidAmount));
+            }
 
-                var payment = new Payment
-                {
-                    InvoiceId = invoiceId,
-                    Amount = amount,
-                    PaymentMethod = paymentMethod,
-                    PaymentDate = DateTime.UtcNow
-                };
-                await _paymentRepo.AddAsync(payment);
-                
-                // Recalculate IsPaid using computed GrandTotal
-                var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
-                decimal paidAmount = payments.Sum(p => p.Amount);
-                
-                invoice.AmountPaid = paidAmount;
-                invoice.IsPaid = paidAmount >= invoice.GrandTotal;
-                invoice.Status = invoice.IsPaid ? "Paid" : (paidAmount > 0 ? "Partial" : "Pending");
-                if (invoice.IsPaid && !invoice.PaidAt.HasValue)
-                {
-                    invoice.PaidAt = DateTime.UtcNow;
-                    invoice.PaymentMethod = paymentMethod;
+            var payment = new Payment
+            {
+                InvoiceId = invoiceId,
+                Amount = amount,
+                PaymentMethod = paymentMethod,
+                PaymentDate = DateTime.UtcNow
+            };
+            await _paymentRepo.AddAsync(payment);
+            
+            // Recalculate IsPaid using computed GrandTotal
+            var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
+            decimal paidAmount = payments.Sum(p => p.Amount);
+            
+            invoice.AmountPaid = paidAmount;
+            invoice.IsPaid = paidAmount >= invoice.GrandTotal;
+            invoice.Status = invoice.IsPaid ? "Paid" : (paidAmount > 0 ? "Partial" : "Pending");
+            if (invoice.IsPaid && !invoice.PaidAt.HasValue)
+            {
+                invoice.PaidAt = DateTime.UtcNow;
+                invoice.PaymentMethod = paymentMethod;
 
-                    // Implement Doctor Commission Trigger
-                    var order = await _orderRepo.GetByIdAsync(invoice.OrderId);
-                    if (order != null && order.DoctorId.HasValue)
+                // Implement Doctor Commission Trigger
+                var order = await _orderRepo.GetByIdAsync(invoice.OrderId);
+                if (order != null && order.DoctorId.HasValue)
+                {
+                    var doctor = await _doctorRepo.GetByIdAsync(order.DoctorId.Value);
+                    if (doctor != null && doctor.Commission > 0)
                     {
-                        var doctor = await _doctorRepo.GetByIdAsync(order.DoctorId.Value);
-                        if (doctor != null && doctor.Commission > 0)
+                        var commissionAmount = invoice.GrandTotal * (doctor.Commission / 100.0m);
+                        await _commissionRepo.AddAsync(new DoctorCommission
                         {
-                            var commissionAmount = invoice.GrandTotal * (doctor.Commission / 100.0m);
-                            await _commissionRepo.AddAsync(new DoctorCommission
-                            {
-                                DoctorId = doctor.DoctorId,
-                                InvoiceId = invoice.InvoiceId,
-                                CommissionAmount = commissionAmount,
-                                Status = "Unpaid",
-                                CreatedAt = DateTime.UtcNow
-                            });
-                        }
+                            DoctorId = doctor.DoctorId,
+                            InvoiceId = invoice.InvoiceId,
+                            CommissionAmount = commissionAmount,
+                            Status = "Unpaid",
+                            CreatedAt = DateTime.UtcNow
+                        });
                     }
                 }
-                
-                await _invoiceRepo.UpdateAsync(invoice);
-            });
+            }
+            
+            await _invoiceRepo.UpdateAsync(invoice);
         }
 
         public async Task<RevenueReportStats> GetRevenueReportAsync(DateTime start, DateTime end)

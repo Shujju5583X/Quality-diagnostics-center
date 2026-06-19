@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows.Input;
 using LabSystem.Core.Models;
 using LabSystem.Core.Enums;
 using LabSystem.Core.Services;
@@ -98,6 +99,7 @@ namespace LabSystem.UI.ViewModels
                     SelectedPackageForOrder = null;
                 }
                 OnPropertyChanged("FilteredTestTypesForOrder");
+                OnPropertyChanged("IsCategoryFilterActive");
             }
         }
 
@@ -114,8 +116,28 @@ namespace LabSystem.UI.ViewModels
                     SelectedDepartmentForOrder = null;
                 }
                 OnPropertyChanged("FilteredTestTypesForOrder");
+                OnPropertyChanged("IsCategoryFilterActive");
             }
         }
+
+        private string _testSearchQuery;
+        public string TestSearchQuery
+        {
+            get { return _testSearchQuery; }
+            set
+            {
+                _testSearchQuery = value;
+                OnPropertyChanged();
+                OnPropertyChanged("FilteredTestTypesForOrder");
+            }
+        }
+
+        public bool IsCategoryFilterActive
+        {
+            get { return SelectedDepartmentForOrder != null || SelectedPackageForOrder != null; }
+        }
+
+        public ICommand ClearCategoryFiltersCommand { get; private set; }
 
         public ObservableCollection<DepartmentSelection> DepartmentsForOrder { get; private set; }
         public ObservableCollection<PackageSelection> PackagesForOrder { get; private set; }
@@ -124,16 +146,24 @@ namespace LabSystem.UI.ViewModels
         {
             get
             {
+                IEnumerable<TestTypeSelection> query = TestTypes;
+
                 if (SelectedDepartmentForOrder != null)
                 {
-                    return TestTypes.Where(t => t.Category == SelectedDepartmentForOrder.Name);
+                    query = query.Where(t => string.Equals(t.Category, SelectedDepartmentForOrder.Name, StringComparison.OrdinalIgnoreCase));
                 }
-                if (SelectedPackageForOrder != null && SelectedPackageForOrder.TestTypes != null)
+                else if (SelectedPackageForOrder != null && SelectedPackageForOrder.TestTypes != null)
                 {
                     var typeIds = new HashSet<int>(SelectedPackageForOrder.TestTypes.Select(t => t.TypeId));
-                    return TestTypes.Where(t => typeIds.Contains(t.TypeId));
+                    query = query.Where(t => typeIds.Contains(t.TypeId));
                 }
-                return Enumerable.Empty<TestTypeSelection>();
+
+                if (!string.IsNullOrWhiteSpace(TestSearchQuery))
+                {
+                    query = query.Where(t => t.Name != null && t.Name.IndexOf(TestSearchQuery, StringComparison.OrdinalIgnoreCase) >= 0);
+                }
+
+                return query.ToList();
             }
         }
 
@@ -227,6 +257,14 @@ namespace LabSystem.UI.ViewModels
             DepartmentsForOrder = new ObservableCollection<DepartmentSelection>();
             PackagesForOrder = new ObservableCollection<PackageSelection>();
             DoctorsForOrder = new ObservableCollection<Doctor>();
+
+            ClearCategoryFiltersCommand = new RelayCommand(o => ExecuteClearCategoryFilters());
+        }
+
+        private void ExecuteClearCategoryFilters()
+        {
+            SelectedDepartmentForOrder = null;
+            SelectedPackageForOrder = null;
         }
 
         private void LoadDataRework(IEnumerable<Doctor> doctorsList, IEnumerable<Department> departmentsList, IEnumerable<TestPanel> panels)
@@ -247,6 +285,10 @@ namespace LabSystem.UI.ViewModels
                 DepartmentsForOrder.Clear();
                 foreach (var dept in departmentsList.OrderBy(d => d.Name))
                 {
+                    if (DepartmentsForOrder.Any(d => string.Equals(d.Name, dept.Name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
                     DepartmentsForOrder.Add(new DepartmentSelection(OnDepartmentSelectionChanged)
                     {
                         DepartmentId = dept.DepartmentId,
@@ -259,6 +301,10 @@ namespace LabSystem.UI.ViewModels
                 PackagesForOrder.Clear();
                 foreach (var p in panels.OrderBy(x => x.Name))
                 {
+                    if (PackagesForOrder.Any(pkg => string.Equals(pkg.Name, p.Name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
                     PackagesForOrder.Add(new PackageSelection(OnPackageSelectionChanged)
                     {
                         PanelId = p.PanelId,
@@ -322,6 +368,12 @@ namespace LabSystem.UI.ViewModels
         private void OnDepartmentSelectionChanged(DepartmentSelection deptSel)
         {
             if (_updatingSelections) return;
+
+            if (deptSel.IsSelected)
+            {
+                SelectedDepartmentForOrder = deptSel;
+            }
+
             _updatingSelections = true;
             try
             {
@@ -342,6 +394,12 @@ namespace LabSystem.UI.ViewModels
         private void OnPackageSelectionChanged(PackageSelection pkgSel)
         {
             if (_updatingSelections) return;
+
+            if (pkgSel.IsSelected)
+            {
+                SelectedPackageForOrder = pkgSel;
+            }
+
             _updatingSelections = true;
             try
             {

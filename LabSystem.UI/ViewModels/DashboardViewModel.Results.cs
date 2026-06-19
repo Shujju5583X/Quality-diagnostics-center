@@ -44,54 +44,43 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
-                await _unitOfWork.RunInTransactionAsync(async () =>
+                // Save each result
+                foreach (var r in SelectedOrderResults)
                 {
-                    // Save each result
-                    foreach (var r in SelectedOrderResults)
+                    double parsedVal;
+                    double? val = r.ValueText == "Sample Rejected" ? (double?)null : (double.TryParse(r.ValueText, out parsedVal) ? (double?)parsedVal : null);
+                    var result = new Result
                     {
-                        double parsedVal;
-                        double? val = r.ValueText == "Sample Rejected" ? (double?)null : (double.TryParse(r.ValueText, out parsedVal) ? (double?)parsedVal : null);
-                        var result = new Result
-                        {
-                            OrderId = SelectedOrder.OrderId,
-                            TypeId = r.TypeId,
-                            Value = val,
-                            ValueText = r.ValueText,
-                            TechnicianId = DefaultStaffId,
-                            RecordedAt = DateTime.UtcNow
-                        };
+                        OrderId = SelectedOrder.OrderId,
+                        TypeId = r.TypeId,
+                        Value = val,
+                        ValueText = r.ValueText,
+                        TechnicianId = DefaultStaffId,
+                        RecordedAt = DateTime.UtcNow
+                    };
 
-                        await _resultService.AddResultAsync(result);
-                    }
+                    await _resultService.AddResultAsync(result);
+                }
 
-                    int selectedOrderId = SelectedOrder.OrderId;
+                int selectedOrderId = SelectedOrder.OrderId;
 
-                    // Update order status to Complete
-                    await _orderService.UpdateOrderStatusAsync(selectedOrderId, "Complete");
-                    Log.Information("Verified and completed order {OrderId}", selectedOrderId);
+                // Update order status to Complete
+                await _orderService.UpdateOrderStatusAsync(selectedOrderId, "Complete");
+                Log.Information("Verified and completed order {OrderId}", selectedOrderId);
 
-                    // Reload
-                    await LoadDataAsync();
-                    
-                    // Select the order again to refresh results grid as read-only
-                    SelectedOrder = Orders.FirstOrDefault(o => o.OrderId == selectedOrderId);
-                    
-                    MessageBox.Show("Results verified and saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Reload
+                await LoadDataAsync();
+                
+                // Select the order again to refresh results grid as read-only
+                SelectedOrder = Orders.FirstOrDefault(o => o.OrderId == selectedOrderId);
+                
+                MessageBox.Show("Results verified and saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    // Generate and open the PDF report immediately
-                    try
-                    {
-                        if (SelectedOrder != null)
-                        {
-                            var previewWindow = new Views.PdfPreviewWindow(SelectedOrder, _reportService);
-                            previewWindow.ShowDialog();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "Failed to automatically generate PDF report after saving results.");
-                    }
-                });
+                // Navigate to the Report Generation tab instead of opening the PDF preview directly
+                if (SelectedOrder != null)
+                {
+                    ExecuteNavigateToReport(SelectedOrder);
+                }
             }
             catch (Exception ex)
             {

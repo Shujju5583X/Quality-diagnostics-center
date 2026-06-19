@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Common;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure.Annotations;
 using System.Data.Entity.ModelConfiguration.Conventions;
@@ -11,15 +12,28 @@ namespace LabSystem.Data
     {
         public LabDbContext() : base(new SQLiteConnection(SecureConfigurationManager.GetLabDbConnectionString()), true)
         {
-            // For SQLite
             Database.SetInitializer<LabDbContext>(null);
-            Database.ExecuteSqlCommand("PRAGMA foreign_keys = ON");
+            var conn = Database.Connection;
+            if (conn.State != System.Data.ConnectionState.Open)
+                conn.Open();
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "PRAGMA foreign_keys = ON";
+                cmd.ExecuteNonQuery();
+            }
         }
 
-        public LabDbContext(System.Data.Common.DbConnection connection) : base(connection, true)
+        public LabDbContext(DbConnection connection) : base(connection, true)
         {
             Database.SetInitializer<LabDbContext>(null);
-            Database.ExecuteSqlCommand("PRAGMA foreign_keys = ON");
+            var conn = Database.Connection;
+            if (conn.State != System.Data.ConnectionState.Open)
+                conn.Open();
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "PRAGMA foreign_keys = ON";
+                cmd.ExecuteNonQuery();
+            }
         }
 
         public DbSet<Patient> Patients { get; set; }

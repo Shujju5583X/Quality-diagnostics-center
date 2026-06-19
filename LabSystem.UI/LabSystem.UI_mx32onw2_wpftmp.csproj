@@ -1,0 +1,100 @@
+<Project>
+  <PropertyGroup>
+    <AssemblyName>LabSystem.UI</AssemblyName>
+    <IntermediateOutputPath>obj\Debug\</IntermediateOutputPath>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>E:\Quality diagnostics center\LabSystem.UI\obj\</MSBuildProjectExtensionsPath>
+    <_TargetAssemblyProjectName>LabSystem.UI</_TargetAssemblyProjectName>
+    <RootNamespace>LabSystem.UI</RootNamespace>
+  </PropertyGroup>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <ItemGroup>
+    <ProjectReference Include="..\LabSystem.Core\LabSystem.Core.csproj" />
+    <ProjectReference Include="..\LabSystem.Data\LabSystem.Data.csproj" />
+    <ProjectReference Include="..\LabSystem.Services\LabSystem.Services.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MaterialDesignThemes" Version="2.6.0" />
+    <PackageReference Include="MaterialDesignColors" Version="1.2.0" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="SimpleInjector" Version="4.10.0" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Stub.System.Data.SQLite.Core.NetFramework" Version="1.0.115.5" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net451</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>5</LangVersion>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\LabSystem.Data\Migrations\V1__init.sql" Link="Resources\V1__init.sql" />
+    <EmbeddedResource Include="..\seed.sql" Link="Resources\seed.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\bcrypt.net-next\4.0.3\lib\net35\BCrypt.Net-Next.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\closedxml\0.95.4\lib\net40\ClosedXML.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\documentformat.openxml\2.7.2\lib\net40\DocumentFormat.OpenXml.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\entityframework\6.4.4\lib\net45\EntityFramework.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\entityframework\6.4.4\lib\net45\EntityFramework.SqlServer.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\excelnumberformat\1.0.10\lib\net20\ExcelNumberFormat.dll" />
+    <ReferencePath Include="E:\Quality diagnostics center\LabSystem.Core\bin\Debug\net451\LabSystem.Core.dll" />
+    <ReferencePath Include="E:\Quality diagnostics center\LabSystem.Data\bin\Debug\net451\LabSystem.Data.dll" />
+    <ReferencePath Include="E:\Quality diagnostics center\LabSystem.Services\bin\Debug\net451\LabSystem.Services.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\materialdesigncolors\1.2.0\lib\net45\MaterialDesignColors.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\materialdesignthemes\2.6.0\lib\net45\MaterialDesignThemes.Wpf.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\Microsoft.CSharp.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\pdfsharp-migradoc\1.50.5147\lib\net20\MigraDoc.DocumentObjectModel.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\pdfsharp-migradoc\1.50.5147\lib\net20\MigraDoc.Rendering.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\pdfsharp-migradoc\1.50.5147\lib\net20\MigraDoc.RtfRendering.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\mscorlib.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\pdfsharp-migradoc\1.50.5147\lib\net20\PdfSharp.Charting.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\pdfsharp-migradoc\1.50.5147\lib\net20\PdfSharp.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\PresentationCore.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\PresentationFramework.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\serilog\2.10.0\lib\net45\Serilog.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\serilog.sinks.file\5.0.0\lib\net45\Serilog.Sinks.File.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\simpleinjector\4.10.0\lib\net45\SimpleInjector.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.ComponentModel.DataAnnotations.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Configuration.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Core.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Data.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\stub.system.data.sqlite.core.netframework\1.0.115.5\lib\net451\System.Data.SQLite.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\system.data.sqlite.ef6\1.0.115.5\lib\net451\System.Data.SQLite.EF6.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Drawing.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.IO.Compression.FileSystem.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Numerics.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Runtime.Serialization.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Windows.Controls.Ribbon.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Xaml.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Xml.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\System.Xml.Linq.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\UIAutomationClient.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\UIAutomationClientsideProviders.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\UIAutomationProvider.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\UIAutomationTypes.dll" />
+    <ReferencePath Include="C:\Users\hp\.nuget\packages\microsoft.netframework.referenceassemblies.net451\1.0.3\build\.NETFramework\v4.5.1\WindowsBase.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\MainWindow.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\Views\DashboardView.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\Views\Dashboard\BillingView.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\Views\Dashboard\WorkQueueView.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\Views\LoginView.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\Views\PatientHistoryWindow.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\Views\PdfPreviewWindow.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\Views\PinSetupView.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\App.g.cs" />
+    <Compile Include="E:\Quality diagnostics center\LabSystem.UI\obj\Debug\net451\GeneratedInternalTypeHelper.g.cs" />
+  </ItemGroup>
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+</Project>

@@ -1,4 +1,7 @@
+using System;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace LabSystem.UI.Views.Dashboard
 {
@@ -9,11 +12,36 @@ namespace LabSystem.UI.Views.Dashboard
             InitializeComponent();
         }
 
-        private void DoctorsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void DoctorSearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (DoctorsTabControl != null)
+            var textBox = sender as TextBox;
+            var filterText = textBox != null ? textBox.Text : null;
+            var cv = CollectionViewSource.GetDefaultView(DoctorsGrid.ItemsSource);
+            if (cv == null) return;
+
+            if (string.IsNullOrWhiteSpace(filterText))
             {
-                DoctorsTabControl.SelectedIndex = 0;
+                cv.Filter = null;
+            }
+            else
+            {
+                cv.Filter = o =>
+                {
+                    var doc = o as LabSystem.Core.Models.Doctor;
+                    if (doc == null) return false;
+                    return (doc.FullName != null && doc.FullName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                           (doc.ContactPhone != null && doc.ContactPhone.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                           doc.DoctorId.ToString().Contains(filterText);
+                };
+            }
+        }
+
+        private void ClearDoctorSelection_Click(object sender, RoutedEventArgs e)
+        {
+            var vm = DataContext as ViewModels.DashboardViewModel;
+            if (vm != null)
+            {
+                vm.SelectedDoctor = null;
             }
         }
     }

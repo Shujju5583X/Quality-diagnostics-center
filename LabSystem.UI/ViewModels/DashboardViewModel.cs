@@ -301,10 +301,10 @@ namespace LabSystem.UI.ViewModels
             {
                 _selectedInvoice = value;
                 OnPropertyChanged();
-                // Update PaymentAmount to grand total when invoice changes
+                // Update PaymentAmount to due amount when invoice changes
                 if (_selectedInvoice != null)
                 {
-                    PaymentAmount = _selectedInvoice.GrandTotal;
+                    PaymentAmount = _selectedInvoice.DueAmount;
                     DiscountAmount = _selectedInvoice.DiscountAmount;
                     TaxAmount = _selectedInvoice.TaxAmount;
                     SelectedOrder = _selectedInvoice.Order ?? Orders.FirstOrDefault(o => o.OrderId == _selectedInvoice.OrderId);
@@ -627,6 +627,7 @@ namespace LabSystem.UI.ViewModels
                     Orders.Add(o);
                 }
                 OnPropertyChanged("PendingOrdersFiltered");
+                OnPropertyChanged("CompleteOrders");
 
                 // Load Catalog Test Types
                 CatalogTestTypes.Clear();

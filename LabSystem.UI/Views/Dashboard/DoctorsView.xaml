@@ -3,76 +3,110 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     <Grid Margin="24">
-        <materialDesign:Card Style="{StaticResource ContentCardStyle}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3.2*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Registered Doctors List -->
+        <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Style="{StaticResource ContentCardStyle}">
             <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Style="{StaticResource SectionHeaderStyle}" Text="Doctors Registry" />
+                <TextBlock Grid.Row="0" Style="{StaticResource SectionHeaderStyle}" Text="Registered Doctors" />
 
-                <TabControl Grid.Row="1" x:Name="DoctorsTabControl">
-                    <!-- Tab A: Doctor Form -->
-                    <TabItem Header="Doctor Form" FontSize="13" FontWeight="SemiBold">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel Margin="0 16" MaxWidth="500" HorizontalAlignment="Left">
-                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Add / Edit Doctor" />
+                <!-- Search box -->
+                <TextBox Grid.Row="1"
+                         x:Name="DoctorSearchBox"
+                         materialDesign:HintAssist.Hint="Search doctors by name, phone..."
+                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                         Margin="0 0 0 16"
+                         TextChanged="DoctorSearchBox_TextChanged" />
 
-                                <TextBox materialDesign:HintAssist.Hint="Full Name *"
-                                         Text="{Binding NewDoctorName, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
-
-                                <TextBox materialDesign:HintAssist.Hint="Contact Phone *"
-                                         Text="{Binding NewDoctorPhone, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
-
-                                <TextBox materialDesign:HintAssist.Hint="Commission Rate (%) *"
-                                         Text="{Binding NewDoctorCommission, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 24" />
-
-                                <Button Command="{Binding SaveDoctorCommand}"
-                                        Style="{StaticResource PrimaryButtonStyle}" Height="40">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" />
-                                        <TextBlock Text="SAVE DOCTOR" VerticalAlignment="Center" FontWeight="Bold" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
-
-                    <!-- Tab B: Doctors List -->
-                    <TabItem Header="Doctors List" FontSize="13" FontWeight="SemiBold">
-                        <Grid Margin="0 16">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <DataGrid ItemsSource="{Binding Doctors}"
-                                      SelectedItem="{Binding SelectedDoctor, Mode=TwoWay}"
-                                      SelectionChanged="DoctorsList_SelectionChanged"
-                                      Style="{StaticResource TealDataGridStyle}">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Doctor ID" Binding="{Binding DoctorId}" Width="Auto" />
-                                    <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="*" />
-                                    <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
-                                    <DataGridTextColumn Header="Commission (%)" Binding="{Binding Commission, StringFormat='{}{0}%'}" Width="Auto" />
-                                    <DataGridTemplateColumn Header="Action" Width="Auto">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Button Command="{Binding DataContext.DeleteDoctorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                        Style="{StaticResource DangerButtonStyle}" Padding="4" Height="28" FontSize="11">
-                                                    <materialDesign:PackIcon Kind="Delete" Width="14" Height="14" />
-                                                </Button>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </Grid>
-                    </TabItem>
-                </TabControl>
+                <DataGrid Grid.Row="2"
+                          x:Name="DoctorsGrid"
+                          ItemsSource="{Binding Doctors}"
+                          SelectedItem="{Binding SelectedDoctor, Mode=TwoWay}"
+                          Style="{StaticResource TealDataGridStyle}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Doctor ID" Binding="{Binding DoctorId}" Width="Auto" />
+                        <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="*" />
+                        <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
+                        <DataGridTextColumn Header="Commission (%)" Binding="{Binding Commission, StringFormat='{}{0}%'}" Width="Auto" />
+                        <DataGridTemplateColumn Header="Action" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding DataContext.DeleteDoctorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            Style="{StaticResource DangerButtonStyle}" Padding="4" Height="28" Width="28" FontSize="11">
+                                        <materialDesign:PackIcon Kind="Delete" Width="14" Height="14" />
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
             </Grid>
+        </materialDesign:Card>
+
+        <!-- Right: Doctor Registration / Edit Form -->
+        <materialDesign:Card Grid.Column="1" Margin="12 0 0 0" Style="{StaticResource ContentCardStyle}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock>
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource SectionHeaderStyle}">
+                                <Setter Property="Text" Value="Edit Doctor Details" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedDoctor}" Value="{x:Null}">
+                                        <Setter Property="Text" Value="Add New Doctor" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBox materialDesign:HintAssist.Hint="Full Name *"
+                             Text="{Binding NewDoctorName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
+
+                    <TextBox materialDesign:HintAssist.Hint="Contact Phone *"
+                             Text="{Binding NewDoctorPhone, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 16" />
+
+                    <TextBox materialDesign:HintAssist.Hint="Commission Rate (%) *"
+                             Text="{Binding NewDoctorCommission, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 24" />
+
+                    <Button Command="{Binding SaveDoctorCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}" Height="46">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                            <TextBlock Text="SAVE DOCTOR" VerticalAlignment="Center" FontWeight="Bold" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Click="ClearDoctorSelection_Click" Margin="0 12 0 0" Height="40">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource OutlinedButtonStyle}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedDoctor}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Close" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                            <TextBlock Text="CANCEL / CLEAR" VerticalAlignment="Center" FontWeight="Bold" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
         </materialDesign:Card>
     </Grid>
 </UserControl>

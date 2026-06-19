@@ -28,23 +28,23 @@ namespace LabSystem.Data
             new Migration(3, "Seed reference ranges", @"
                 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
                 SELECT TypeId, 'Male', 12, 120, 13.0, 17.0 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
-                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') LIMIT 1);
+                AND NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') LIMIT 1);
 
                 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
                 SELECT TypeId, 'Female', 12, 120, 12.0, 15.0 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
-                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Female' LIMIT 1);
+                AND NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Female' LIMIT 1);
 
                 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
                 SELECT TypeId, 'Male', 0, 11, 11.0, 14.5 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
-                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND AgeMax <= 11 LIMIT 1);
+                AND NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND AgeMax <= 11 LIMIT 1);
 
                 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
                 SELECT TypeId, 'Female', 0, 11, 11.0, 14.5 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
-                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Female' AND AgeMax <= 11 LIMIT 1);
+                AND NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Female' AND AgeMax <= 11 LIMIT 1);
 
                 INSERT INTO ReferenceRanges (TestTypeId, Gender, AgeMin, AgeMax, RangeLow, RangeHigh)
                 SELECT TypeId, 'Other', 0, 120, 12.0, 16.0 FROM TestTypes WHERE Name = 'Hemoglobin (Hb)'
-                WHERE NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Other' LIMIT 1);
+                AND NOT EXISTS (SELECT 1 FROM ReferenceRanges WHERE TestTypeId = (SELECT TypeId FROM TestTypes WHERE Name = 'Hemoglobin (Hb)') AND Gender = 'Other' LIMIT 1);
             "),
             new Migration(4, "Seed test panels", @"
                 INSERT OR IGNORE INTO TestPanels (Name, Description, Price) VALUES
@@ -76,6 +76,18 @@ namespace LabSystem.Data
             "),
             new Migration(6, "Convert legacy -999.0 sentinel values in Results", @"
                 UPDATE Results SET Value = NULL WHERE Value = -999.0;
+            "),
+            new Migration(7, "Add Role, PinHash, FailedLoginAttempts, LockoutEnd to Staff", @"
+                ALTER TABLE Staff ADD COLUMN Role TEXT DEFAULT 'Technician';
+                ALTER TABLE Staff ADD COLUMN PinHash TEXT;
+                ALTER TABLE Staff ADD COLUMN FailedLoginAttempts INTEGER DEFAULT 0;
+                ALTER TABLE Staff ADD COLUMN LockoutEnd DATETIME;
+            "),
+            new Migration(8, "Add DepartmentId column to TestTypes", @"
+                ALTER TABLE TestTypes ADD COLUMN DepartmentId INTEGER REFERENCES Departments(DepartmentId) ON DELETE SET NULL;
+            "),
+            new Migration(9, "Add DoctorId column to TestOrders", @"
+                ALTER TABLE TestOrders ADD COLUMN DoctorId INTEGER REFERENCES Doctors(DoctorId) ON DELETE SET NULL;
             ")
         };
 
@@ -248,7 +260,26 @@ namespace LabSystem.Data
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(ex, "Migration v{0} ({1}) encountered errors (may already be applied).", migration.Version, migration.Description);
+                    string msg = ex.Message ?? "";
+                    if (msg.IndexOf("duplicate column name", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        msg.IndexOf("already exists", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        try
+                        {
+                            db.Database.ExecuteSqlCommand(string.Format(
+                                "INSERT OR IGNORE INTO SchemaVersion (Version, AppliedAt) VALUES ({0}, CURRENT_TIMESTAMP);",
+                                migration.Version));
+                            Log.Information("Migration v{0} ({1}) skipped (schema already up-to-date) and marked as applied.", migration.Version, migration.Description);
+                        }
+                        catch (Exception innerEx)
+                        {
+                            Log.Warning(innerEx, "Failed to record SchemaVersion for pre-applied migration v{0}.", migration.Version);
+                        }
+                    }
+                    else
+                    {
+                        Log.Warning(ex, "Migration v{0} ({1}) encountered errors.", migration.Version, migration.Description);
+                    }
                 }
             }
         }

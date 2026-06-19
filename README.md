@@ -1,26 +1,26 @@
-# Quality Diagnostics Center - Laboratory System
+# Quality Diagnostics Center - Laboratory System 🏥
 
-A comprehensive, enterprise-grade **Medical Laboratory Management System** designed to streamline clinical workflows, client directories, and laboratory diagnostics, built with a **.NET Framework (WPF)** desktop architecture.
+> A comprehensive, enterprise-grade **Medical Laboratory Management System** designed to streamline clinical workflows, client directories, and laboratory diagnostics, built with a **.NET Framework (WPF)** desktop architecture.
 
-This WPF application handles complete day-to-day laboratory operations including patient registration, referral doctor commission mapping, active panel/test type catalog navigation, keyboard-optimized clinical result entries, dynamic demographic reference ranges, professional PDF report generation, billing adjustments, and automated multi-format backups.
+This powerful WPF application handles complete day-to-day laboratory operations including patient registration, referral doctor commission mapping, active panel/test type catalog navigation, keyboard-optimized clinical result entries, dynamic demographic reference ranges, professional PDF report generation, billing adjustments, and automated multi-format backups.
 
 ---
 
-## 🌟 Key Features
+## ✨ Key Features
 
 ### 👤 Patient Management
 *   **Demographic Profile System:** Search, view, and manage client profiles with dynamic filtering.
-*   **Unified Register:** Fast registration utilizing a dropdown gender selection (Male, Female, Others) and age tracking.
+*   **Unified Register:** Fast registration utilizing a dropdown gender selection and age tracking.
 *   **Historical Diagnostics Log:** Access a patient's historical test records linked directly to their profile.
 
 ### 🩺 Doctor & Referral Management
 *   **Referral Tracking:** Link orders to referring doctors using a drop-down menu in the ordering process (defaults to "Self" if none selected).
-*   **Commission Tracking:** Manage commissions for reference doctors. Track unpaid/paid commissions per invoice via the `DoctorCommission` model.
-*   **Doctor Directory Tabs:** Complete CRUD operations (Add, Update, Delete, View) for reference doctors, their contact info, and commission percentages.
+*   **Commission Tracking:** Manage commissions for reference doctors. Track unpaid/paid commissions per invoice.
+*   **Doctor Directory:** Complete CRUD operations for reference doctors, their contact info, and commission percentages.
 
 ### 🧪 Test Ordering & Catalog Management
 *   **Test Catalog & Departments:** Tests are categorized dynamically under clinical departments (e.g., Biochemistry, Hematology, Microbiology).
-*   **Grouped Panel Ordering:** Quickly order entire panels (such as Lipid Panel, CBC Panel, CMP Panel). Selecting a panel automatically selects and prices all constituent test types.
+*   **Grouped Panel Ordering:** Quickly order entire panels (such as Lipid Panel, CBC Panel, CMP Panel).
 *   **Dynamic Price Calculations:** Displays running totals for selected tests and packages.
 
 ### ⌨️ Keyboard-Friendly Result Entry
@@ -32,18 +32,19 @@ This WPF application handles complete day-to-day laboratory operations including
 *   **Real-time Flags:** Automatically flags values outside the demographic-specific reference range as `ABNORMAL` for priority verification.
 
 ### 💳 Billing & Invoicing System
-*   **Flexible Settlements:** Choose between Cash and UPI payment methods. Selecting a method marks the invoice as Paid and unlocks billing generation.
-*   **Taxes & Discounts:** Dynamically adds tax and discount lines to invoices. Unused fields are omitted from printouts.
+*   **Flexible Settlements:** Choose between Cash and UPI payment methods.
+*   **Taxes & Discounts:** Dynamically adds tax and discount lines to invoices.
 *   **Due Tracking:** Automatically tracks unpaid/due amounts if partial or no payment has been made.
-*   **Integrated Preview:** WPF-integrated PDF preview window utilizing an embedded browser control to preview, download, or print invoices.
+*   **Integrated Preview:** WPF-integrated PDF preview window utilizing an embedded browser control.
 
 ### 💾 Backup & Data Export Engine
-*   **Automatic Exit Backup:** Backs up the SQLite database file (`lab.db`) to `Backups/Database/` when the app is closed.
-*   **ClosedXML Excel Workbook:** Generates formatted multi-tab Excel workbooks containing worksheets for Patients, Orders, Results, Catalog, and Staff. Color-codes abnormal results in light pink with bold red text.
-*   **Manual Single-File CSV Export:** Export all tables (Settings, Patients, Doctors, Departments, Test Catalog, Orders, Results, Invoices) to a structured CSV file via the Settings menu.
+*   **Automatic Exit Backup:** Backs up the SQLite database file when the app is closed.
+*   **ClosedXML Excel Workbook:** Generates formatted multi-tab Excel workbooks containing worksheets for all critical data.
+*   **Manual Single-File CSV Export:** Export all tables to a structured CSV file via the Settings menu.
 
 ### ⚙️ Operator & Settings Profile
-*   **Operator Info Profile:** Customize clinic metadata (Name, Address, Phone) stored locally in the database settings table.
+*   **Operator Info Profile:** Customize clinic metadata (Name, Address, Phone) stored locally.
+*   **Security & PIN Verification:** Setup and use PIN for high-privilege access and actions.
 *   **Audit Logs:** Logs system events locally with daily rolling Serilog file sinks.
 
 ---
@@ -64,66 +65,33 @@ graph TD
 
 ### Layer Breakdown
 
-1.  **`LabSystem.Core` (Domain Layer)**
-    *   **Models:** Core entities including `Patient`, `TestOrder`, `Result`, `TestType`, `Staff`, `Report`, `Invoice`, `Payment`, `ReferenceRange`, `TestPanel`, `Specimen`, `Doctor`, `Department`, and `Setting`.
-    *   **Interfaces:** Service and repository abstractions (`IPatientRepository`, `ITestOrderRepository`, `IResultRepository`, `IBillingService`, `IBackupService`, etc.).
-2.  **`LabSystem.Data` (Infrastructure & Persistence Layer)**
-    *   **Entity Framework 6:** Configured with ORM mappings for SQLite.
-    *   **DbContext:** Custom database context mapping table structures and foreign key indexes.
-    *   **Initializers:** Automated migration and seed script bootstrapping (`DatabaseInitializer.cs`).
-3.  **`LabSystem.Services` (Business Logic Layer)**
-    *   **Order and Result Engines:** `OrderService` and `ResultService` manage order state and demographic-specific ranges.
-    *   **Billing & PDF Engines:** `BillingService` and `PdfReportService` manage payments and render MigraDoc PDF structures (both clinical reports and invoice layouts).
-    *   **Backups:** `SqliteBackupService` handles DB cloning, ClosedXML workbook exports, and CSV backups.
-4.  **`LabSystem.UI` (WPF Presentation Layer)**
-    *   **Material Design:** Theme config using the **Material Design in XAML** toolkit.
-    *   **Modular ViewModels:** The dashboard viewmodel is split into logical partial classes (`Patients`, `Orders`, `Results`, `Billing`, `Catalog`, `Doctors`, `Settings`, and `LabRework`) to isolate concerns and scale complexity.
-    *   **Dependency Injection:** Managed via **SimpleInjector** to register database contexts, repositories, services, and viewmodels.
+1.  **`LabSystem.Core`**: Domain entities, models, and interfaces.
+2.  **`LabSystem.Data`**: Entity Framework 6 data context and repository implementations.
+3.  **`LabSystem.Services`**: Business logic, PDF rendering, backing up, and billing services.
+4.  **`LabSystem.UI`**: WPF presentation layer with Material Design.
 
 ---
 
 ## 🛠️ Technology Stack
 
-*   **Language & Runtime:** C# 5.0 / .NET Framework 4.5.1
-*   **User Interface:** WPF (Windows Presentation Foundation) with MaterialDesignThemes (v2.6.0)
-*   **Database & ORM:** SQLite and Entity Framework 6 (v6.1.3)
-*   **Spreadsheet Engine:** ClosedXML (v0.95.4)
-*   **PDF Engine:** PDFsharp & MigraDoc (v1.50.5147)
-*   **Dependency Injection:** SimpleInjector (v4.10.0)
-*   **Logging:** Serilog (v2.10.0) with rolling daily file sinks
-*   **Testing:** NUnit (v3.14.0) and Moq (v4.16.1)
-
----
-
-## 📁 Repository Layout
-
-```text
-Quality diagnostics center/
-├── LabSystem.sln                  # Visual Studio Solution File
-├── setup.ps1                      # Setup automation script (WPF & EF configuration)
-├── seed.sql                       # Database seed SQL script
-├── appsettings.example.json       # Settings template file for development config
-│
-├── LabSystem.Core/                # Domain entities, interfaces, and services
-├── LabSystem.Data/                # DB context, repository implementations, and EF setups
-├── LabSystem.Services/            # PDF rendering, backup, and billing services
-├── LabSystem.UI/                  # WPF Views, ViewModels, Converters, and App config
-├── LabSystem.Tests/               # Unit testing suites (NUnit + Moq)
-├── implementation-plans/          # Architecture and feature planning documents
-└── Sample reports/                # Sample clinical report PDFs and letterhead assets
-```
+*   **Language & Runtime:** C# 10 / .NET 6.0
+*   **User Interface:** WPF (Windows Presentation Foundation) with MaterialDesignThemes
+*   **Database & ORM:** SQLite and Entity Framework Core
+*   **Spreadsheet Engine:** ClosedXML
+*   **PDF Engine:** PDFsharp & MigraDoc
+*   **Dependency Injection:** Microsoft.Extensions.DependencyInjection
+*   **Logging:** Serilog with rolling daily file sinks
+*   **Testing:** NUnit and Moq
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-1.  **.NET SDK 6.0 or higher** (provides MSBuild tools to compile target Framework configurations).
+1.  **.NET SDK 6.0 or higher**
 2.  **Powershell 5.1+** (for setup automation).
 
 ### Setup and Database Bootstrapping
-> **Warning:** `setup.ps1` is a project scaffolding script that **destroys and recreates** the project structure from scratch. Do not run it on an existing cloned repository — it will delete all source code.
-
 The application automatically provisions a local SQLite database (`lab.db`) on startup if it is not found in the output directory, applying migration scripts and populating seed values.
 
 ### Building and Running the Application

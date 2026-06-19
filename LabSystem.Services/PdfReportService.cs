@@ -44,8 +44,8 @@ namespace LabSystem.Services
             _resultRepo = resultRepo;
             _testTypeRepo = testTypeRepo;
             _testPanelRepo = testPanelRepo;
-            _letterheadPath = letterheadPath;
 
+            string dbPath = null;
             if (settingRepo != null)
             {
                 try
@@ -54,6 +54,7 @@ namespace LabSystem.Services
                     _labName = GetSettingValue(allSettings, "operator_name", "QUALITY DIAGNOSTICS CENTRE");
                     _labAddress = GetSettingValue(allSettings, "operator_address", "MAIN ROAD, VANDE MART BACK SIDE, BETHAMCHERLA");
                     _labPhone = GetSettingValue(allSettings, "operator_phone", "86399 79746");
+                    dbPath = GetSettingValue(allSettings, "letterhead_path", "");
                 }
                 catch
                 {
@@ -68,6 +69,15 @@ namespace LabSystem.Services
                 _labAddress = "MAIN ROAD, VANDE MART BACK SIDE, BETHAMCHERLA";
                 _labPhone = "86399 79746";
             }
+
+            if (!string.IsNullOrWhiteSpace(dbPath) && File.Exists(dbPath))
+            {
+                _letterheadPath = dbPath;
+            }
+            else
+            {
+                _letterheadPath = letterheadPath;
+            }
         }
 
         private static string GetSettingValue(IEnumerable<Setting> settings, string key, string defaultValue)
@@ -78,10 +88,6 @@ namespace LabSystem.Services
 
         private static string GetDefaultLetterheadPath()
         {
-            var path = FileUtilities.FindFileUpwards("Sample reports", "10 001.jpg.jpeg");
-            if (path != null && File.Exists(path))
-                return path;
-
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var candidates = new[]
             {
@@ -98,6 +104,10 @@ namespace LabSystem.Services
                 if (File.Exists(candidate))
                     return candidate;
             }
+
+            var path = FileUtilities.FindFileUpwards("Sample reports", "10 001.jpg.jpeg");
+            if (path != null && File.Exists(path))
+                return path;
 
             return candidates[0];
         }
@@ -764,7 +774,7 @@ namespace LabSystem.Services
             balanceRow.Height = "0.6cm";
             balanceRow.VerticalAlignment = VerticalAlignment.Center;
             balanceRow.Cells[0].MergeRight = 1;
-            var balanceLbl = balanceRow.Cells[0].AddParagraph("BALANCE DUE");
+            var balanceLbl = balanceRow.Cells[0].AddParagraph("DUE AMOUNT");
             balanceLbl.Format.Font.Bold = true;
             balanceLbl.Format.Alignment = ParagraphAlignment.Right;
             balanceRow.Cells[0].Format.RightIndent = "0.5cm";
