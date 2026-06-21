@@ -28,8 +28,20 @@ namespace LabSystem.UI
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            // Set SQLite database folder path to output directory
-            AppDomain.CurrentDomain.SetData("DataDirectory", AppDomain.CurrentDomain.BaseDirectory);
+            // Set SQLite database folder path to Local AppData output directory
+            string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Quality Diagnostics Center");
+            try
+            {
+                if (!Directory.Exists(appDataPath))
+                {
+                    Directory.CreateDirectory(appDataPath);
+                }
+            }
+            catch (Exception)
+            {
+                appDataPath = AppDomain.CurrentDomain.BaseDirectory;
+            }
+            AppDomain.CurrentDomain.SetData("DataDirectory", appDataPath);
 
             // Single-operator mode: default staff ID is 1
             AuthenticatedStaffId = 1;
@@ -37,8 +49,17 @@ namespace LabSystem.UI
             base.OnStartup(e);
 
             // Initialize Serilog
-            string logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
-            Directory.CreateDirectory(logDir);
+            string logDir = Path.Combine(FileUtilities.GetWritableDataDirectory(), "Logs");
+            try
+            {
+                if (!Directory.Exists(logDir))
+                {
+                    Directory.CreateDirectory(logDir);
+                }
+            }
+            catch (Exception)
+            {
+            }
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.File(Path.Combine(logDir, "lab_.log"), rollingInterval: RollingInterval.Day,
@@ -50,8 +71,8 @@ namespace LabSystem.UI
             // Catch WPF Dispatcher thread exceptions (XAML parse, binding, rendering errors)
             DispatcherUnhandledException += (s, args) =>
             {
-                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DISPATCHER ERROR: " + args.Exception + "\r\n");
+                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
+                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DISPATCHER ERROR: " + args.Exception + "\r\n"); } catch {}
                 Log.Fatal(args.Exception, "Dispatcher unhandled exception.");
                 string innerMessage = args.Exception.InnerException != null ? args.Exception.InnerException.Message : "";
                 MessageBox.Show("Dispatcher error: " + args.Exception.Message + "\n\n" + innerMessage,
@@ -61,16 +82,16 @@ namespace LabSystem.UI
 
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
             {
-                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " APPDOMAIN ERROR: " + args.ExceptionObject + "\r\n");
+                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
+                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " APPDOMAIN ERROR: " + args.ExceptionObject + "\r\n"); } catch {}
                 Log.Fatal(args.ExceptionObject as Exception, "Unhandled exception occurred.");
                 MessageBox.Show("A critical error occurred. Please check the logs.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             };
 
             TaskScheduler.UnobservedTaskException += (s, args) =>
             {
-                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " UNOBSERVED TASK ERROR: " + args.Exception + "\r\n");
+                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
+                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " UNOBSERVED TASK ERROR: " + args.Exception + "\r\n"); } catch {}
                 Log.Fatal(args.Exception, "Unobserved task exception.");
                 args.SetObserved();
             };
@@ -173,8 +194,8 @@ namespace LabSystem.UI
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Failed to start MainWindow after login.");
-                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " STARTUP CRASH: " + ex + "\r\n");
+                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
+                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " STARTUP CRASH: " + ex + "\r\n"); } catch {}
                 string startupInnerMessage = ex.InnerException != null ? ex.InnerException.Message : "";
                 MessageBox.Show("Startup crash: " + ex.Message + "\n\n" + startupInnerMessage,
                     "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);

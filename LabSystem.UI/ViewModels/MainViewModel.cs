@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows.Input;
 using LabSystem.Core.Interfaces;
 using Serilog;
+using LabSystem.Core;
 
 namespace LabSystem.UI.ViewModels
 {
@@ -19,9 +20,13 @@ namespace LabSystem.UI.ViewModels
         public MainViewModel(IBackupService backupService)
         {
             Log.Information("MainViewModel constructor start.");
-            System.IO.File.AppendAllText(
-                System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
-                System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainViewModel ctor start\r\n");
+            try
+            {
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log"),
+                    System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainViewModel ctor start\r\n");
+            }
+            catch {}
 
             // Start on the login screen
             Log.Information("Resolving LoginViewModel...");
@@ -46,9 +51,13 @@ namespace LabSystem.UI.ViewModels
             });
 
             Log.Information("MainViewModel constructor complete.");
-            System.IO.File.AppendAllText(
-                System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
-                System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainViewModel ctor complete\r\n");
+            try
+            {
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log"),
+                    System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainViewModel ctor complete\r\n");
+            }
+            catch {}
         }
     }
 }

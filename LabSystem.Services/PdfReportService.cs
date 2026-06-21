@@ -483,7 +483,7 @@ namespace LabSystem.Services
             };
             renderer.RenderDocument();
 
-            string dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Reports", dateStr);
+            string dir = Path.Combine(FileUtilities.GetWritableDataDirectory(), "Reports", dateStr);
             Directory.CreateDirectory(dir);
 
             string safePatientName = patientName;
@@ -803,7 +803,7 @@ namespace LabSystem.Services
             };
             renderer.RenderDocument();
 
-            string dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Invoices", dateStr);
+            string dir = Path.Combine(FileUtilities.GetWritableDataDirectory(), "Invoices", dateStr);
             Directory.CreateDirectory(dir);
 
             string safePatientName = patientName;

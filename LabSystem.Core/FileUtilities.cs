@@ -17,5 +17,16 @@ namespace LabSystem.Core
             }
             return null;
         }
+
+        public static string GetWritableDataDirectory()
+        {
+            object dataDirObj = AppDomain.CurrentDomain.GetData("DataDirectory");
+            string dataDirectory = dataDirObj != null ? dataDirObj.ToString() : null;
+            if (string.IsNullOrEmpty(dataDirectory))
+            {
+                dataDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            }
+            return dataDirectory;
+        }
     }
 }

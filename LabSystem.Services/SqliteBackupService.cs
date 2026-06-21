@@ -8,6 +8,7 @@ using ClosedXML.Excel;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Core.Enums;
+using LabSystem.Core;
 
 namespace LabSystem.Services
 {
@@ -38,9 +39,10 @@ namespace LabSystem.Services
 
         public async Task BackupNowAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            string dbBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Database");
-            string excelBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "Excel");
-            string csvBackupsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Backups", "CSV");
+            string writableDir = FileUtilities.GetWritableDataDirectory();
+            string dbBackupsDir = Path.Combine(writableDir, "Backups", "Database");
+            string excelBackupsDir = Path.Combine(writableDir, "Backups", "Excel");
+            string csvBackupsDir = Path.Combine(writableDir, "Backups", "CSV");
             
             Directory.CreateDirectory(dbBackupsDir);
             Directory.CreateDirectory(excelBackupsDir);
@@ -49,7 +51,7 @@ namespace LabSystem.Services
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HHmm");
             
             // 1. Core SQLite Database Backup (for Developers/Admins)
-            string sourceFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lab.db");
+            string sourceFile = Path.Combine(writableDir, "lab.db");
             if (File.Exists(sourceFile))
             {
                 try

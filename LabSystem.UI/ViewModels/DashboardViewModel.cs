@@ -10,6 +10,7 @@ using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
 using LabSystem.Core.Enums;
 using Serilog;
+using LabSystem.Core;
 
 namespace LabSystem.UI.ViewModels
 {
@@ -110,7 +111,7 @@ namespace LabSystem.UI.ViewModels
                 OnPropertyChanged();
                 try
                 {
-                    var path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "sidebar_pinned.txt");
+                    var path = System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "sidebar_pinned.txt");
                     System.IO.File.WriteAllText(path, value.ToString());
                 }
                 catch (Exception ex)
@@ -473,7 +474,7 @@ namespace LabSystem.UI.ViewModels
             // Load sidebar pin state
             try
             {
-                var path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "sidebar_pinned.txt");
+                var path = System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "sidebar_pinned.txt");
                 if (System.IO.File.Exists(path))
                 {
                     bool.TryParse(System.IO.File.ReadAllText(path), out _isSidebarPinned);
@@ -546,9 +547,13 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to initialize dashboard.");
-                System.IO.File.AppendAllText(
-                    System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
-                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DASHBOARD INIT ERROR: " + ex + "\r\n");
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log"),
+                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DASHBOARD INIT ERROR: " + ex + "\r\n");
+                }
+                catch {}
             }
         }
 

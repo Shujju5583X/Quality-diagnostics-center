@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 using Serilog;
+using LabSystem.Core;
 
 namespace LabSystem.UI
 {
@@ -15,8 +16,8 @@ namespace LabSystem.UI
             }
             catch (Exception ex)
             {
-                var crashFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
-                File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MAINWINDOW XAML PARSE ERROR: " + ex + "\r\n");
+                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
+                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MAINWINDOW XAML PARSE ERROR: " + ex + "\r\n"); } catch {}
                 Log.Fatal(ex, "Failed to parse MainWindow XAML.");
                 throw;
             }
@@ -24,17 +25,25 @@ namespace LabSystem.UI
             this.Loaded += (s, e) =>
             {
                 Log.Information("MainWindow Loaded.");
-                System.IO.File.AppendAllText(
-                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
-                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainWindow Loaded OK\r\n");
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log"),
+                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainWindow Loaded OK\r\n");
+                }
+                catch {}
             };
 
             this.ContentRendered += (s, e) =>
             {
                 Log.Information("MainWindow ContentRendered.");
-                System.IO.File.AppendAllText(
-                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log"),
-                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainWindow ContentRendered OK\r\n");
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log"),
+                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " MainWindow ContentRendered OK\r\n");
+                }
+                catch {}
             };
 
         }
