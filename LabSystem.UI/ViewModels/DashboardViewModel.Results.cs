@@ -180,6 +180,55 @@ namespace LabSystem.UI.ViewModels
             }
         }
 
+        private async Task ExecuteDeleteResultAsync(object obj)
+        {
+            var resultInput = obj as ResultInput;
+            if (resultInput == null || resultInput.ResultId <= 0)
+            {
+                MessageBox.Show("Please select a saved result to delete.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (SelectedOrder == null || SelectedOrder.StatusEnum != OrderStatus.Complete)
+            {
+                MessageBox.Show("Results can only be deleted from completed orders.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Show reason dialog
+            var reasonDialog = new Views.AmendmentReasonDialog();
+            if (reasonDialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            string reason = reasonDialog.Reason;
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                MessageBox.Show("A reason is required to delete a result.", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                "Are you sure you want to delete the result for '" + resultInput.TestName + "'?\n\nReason: " + reason,
+                "Confirm Delete Result", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            try
+            {
+                await _resultService.DeleteResultAsync(resultInput.ResultId, reason);
+                Log.Information("Deleted result {ResultId} for test '{TestName}'", resultInput.ResultId, resultInput.TestName);
+                await LoadResultsForSelectedOrderAsync();
+                MessageBox.Show("Result deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to delete result.");
+                MessageBox.Show("Error deleting result: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private async Task LoadResultsForSelectedOrderAsync()
         {
             SelectedOrderResults.Clear();
@@ -260,7 +309,7 @@ namespace LabSystem.UI.ViewModels
                     ri.Options.Add(new ResultOption { Display = "AB Rh Negative", Value = "8" });
                     break;
                 case ResultInputType.Categorical:
-                    if (ri.TestName.Contains("Rapid Malaria") || ri.TestName.Contains("HBsAg") || ri.TestName.Contains("HCV") || ri.TestName.Contains("VDRL") || ri.TestName.Contains("HIV"))
+                    if (ri.TestName.Contains("HBsAg") || ri.TestName.Contains("HCV") || ri.TestName.Contains("VDRL"))
                     {
                         ri.Options.Add(new ResultOption { Display = "Negative", Value = "0" });
                         ri.Options.Add(new ResultOption { Display = "Positive", Value = "1" });

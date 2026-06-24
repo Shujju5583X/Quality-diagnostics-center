@@ -1,0 +1,173 @@
+<UserControl x:Class="LabSystem.UI.Views.Dashboard.StaffManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Grid Margin="0 16 0 0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="2.5*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Staff List -->
+        <Grid Grid.Column="0" Margin="0 0 12 0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Style="{StaticResource SectionHeaderStyle}" Text="Staff Members" />
+
+            <TextBox Grid.Row="1"
+                     x:Name="StaffSearchBox"
+                     materialDesign:HintAssist.Hint="Search by name..."
+                     Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                     Margin="0 0 0 12"
+                     TextChanged="StaffSearchBox_TextChanged" />
+
+            <DataGrid Grid.Row="2"
+                      x:Name="StaffGrid"
+                      ItemsSource="{Binding StaffMembers}"
+                      SelectedItem="{Binding SelectedStaff, Mode=TwoWay}"
+                      Style="{StaticResource TealDataGridStyle}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding StaffId}" Width="Auto" />
+                    <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="*" />
+                    <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="Auto" />
+                    <DataGridTemplateColumn Header="Status" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock FontSize="11" FontWeight="SemiBold" Padding="6 2">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Active" />
+                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LockoutEnd}" Value="{x:Null}">
+                                                    <Setter Property="Text" Value="Active" />
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Action" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Command="{Binding DataContext.EditStaffCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                            Padding="4" Height="24" Width="24" ToolTip="Edit">
+                                        <materialDesign:PackIcon Kind="Pencil" Width="14" Height="14" />
+                                    </Button>
+                                    <Button Command="{Binding DataContext.DeleteStaffCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource DangerButtonStyle}" Padding="4" Height="24" Width="24" FontSize="11" ToolTip="Delete">
+                                        <materialDesign:PackIcon Kind="Delete" Width="14" Height="14" />
+                                    </Button>
+                                    <Button Command="{Binding DataContext.ToggleLockoutCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                            Padding="4" Height="24" Width="24" ToolTip="Lock/Unlock">
+                                        <materialDesign:PackIcon Kind="Lock" Width="14" Height="14" />
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <!-- Right: Add/Edit Staff Form -->
+        <Grid Grid.Column="1" Margin="12 0 0 0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Add/Edit Form -->
+            <StackPanel Grid.Row="0">
+                <TextBlock>
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource SectionHeaderStyle}">
+                            <Setter Property="Text" Value="Add New Staff" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsStaffSelected}" Value="True">
+                                    <Setter Property="Text" Value="Edit Staff Details" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <TextBox materialDesign:HintAssist.Hint="Full Name *"
+                         Text="{Binding EditStaffName, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                         Margin="0 0 0 16" />
+
+                <ComboBox materialDesign:HintAssist.Hint="Role"
+                          SelectedValue="{Binding EditStaffRole}" SelectedValuePath="Content"
+                          Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 16">
+                    <ComboBoxItem Content="Admin" />
+                    <ComboBoxItem Content="Technician" />
+                    <ComboBoxItem Content="Receptionist" />
+                </ComboBox>
+
+                <TextBox materialDesign:HintAssist.Hint="PIN (min 4 digits) *"
+                         x:Name="StaffPinBox"
+                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                         Margin="0 0 0 24" />
+
+                <Button Command="{Binding UpdateStaffCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}" Height="42">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                        <TextBlock Text="SAVE STAFF" VerticalAlignment="Center" FontWeight="Bold" />
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding ClearSelectionCommand}" Margin="0 12 0 0" Height="38">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource OutlinedButtonStyle}">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsStaffSelected}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Close" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                        <TextBlock Text="CANCEL / CLEAR" VerticalAlignment="Center" FontWeight="Bold" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- Reset PIN Section -->
+            <Border Grid.Row="2" Background="#F5F5F5" CornerRadius="8" Padding="12">
+                <StackPanel>
+                    <TextBlock Text="RESET PIN" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0 0 0 8" />
+                    <TextBlock Text="{Binding SelectedStaff.FullName, TargetNullValue='Select a staff member'}"
+                               FontWeight="SemiBold" Foreground="{StaticResource PrimaryDarkBrush}" Margin="0 0 0 8" />
+                    <TextBox materialDesign:HintAssist.Hint="New PIN (min 4 digits)"
+                             x:Name="ResetPinBox"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
+                    <Button Command="{Binding ResetPinCommand}"
+                            Style="{StaticResource OutlinedButtonStyle}" Height="36" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Key" Margin="0 0 8 0" VerticalAlignment="Center" Width="16" Height="16" />
+                            <TextBlock Text="RESET PIN" VerticalAlignment="Center" FontWeight="Bold" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

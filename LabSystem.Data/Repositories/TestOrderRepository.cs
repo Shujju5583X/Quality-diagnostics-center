@@ -78,5 +78,21 @@ namespace LabSystem.Data.Repositories
                 cancellationToken, 
                 parameters);
         }
+
+        public async Task<IEnumerable<TestOrder>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return await _dbSet.AsNoTracking()
+                         .Include(o => o.Patient)
+                         .Include(o => o.TestTypes)
+                         .OrderByDescending(o => o.OrderedAt)
+                         .Skip((page - 1) * pageSize)
+                         .Take(pageSize)
+                         .ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> GetCountAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return await _dbSet.CountAsync(cancellationToken);
+        }
     }
 }

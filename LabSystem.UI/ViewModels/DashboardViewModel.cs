@@ -30,6 +30,11 @@ namespace LabSystem.UI.ViewModels
         private readonly IRepository<Department> _departmentRepo;
         private readonly IRepository<Setting> _settingRepo;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPaymentRepository _paymentRepo;
+        private readonly IRepository<DoctorCommission> _commissionRepo;
+        private readonly IStaffService _staffService;
+        private readonly IStaffRepository _staffRepo;
+        private readonly IRepository<Invoice> _invoiceRepo;
 
         // Fixed operator identity — single-person mode, no login required
         public const int DefaultStaffId = 1;
@@ -55,6 +60,11 @@ namespace LabSystem.UI.ViewModels
         private int _patientTotalPages = 1;
         private int _patientTotalCount = 0;
         public const int PageSize = 15;
+
+        // Order pagination fields
+        private int _orderCurrentPage = 1;
+        private int _orderTotalPages = 1;
+        private int _orderTotalCount = 0;
 
         // Order tab fields
         private string _orderNotes;
@@ -356,6 +366,24 @@ namespace LabSystem.UI.ViewModels
             set { _todayRevenue = value; OnPropertyChanged(); }
         }
 
+        public int OrderCurrentPage
+        {
+            get { return _orderCurrentPage; }
+            set { _orderCurrentPage = value; OnPropertyChanged(); }
+        }
+
+        public int OrderTotalPages
+        {
+            get { return _orderTotalPages; }
+            set { _orderTotalPages = value; OnPropertyChanged(); }
+        }
+
+        public int OrderTotalCount
+        {
+            get { return _orderTotalCount; }
+            set { _orderTotalCount = value; OnPropertyChanged(); }
+        }
+
         // Billing properties - Discount/Tax amount (flat rupee amount)
         public decimal DiscountAmount
         {
@@ -403,6 +431,8 @@ namespace LabSystem.UI.ViewModels
         public ICommand AddCatalogTestCommand { get; private set; }
         public ICommand PreviousPatientPageCommand { get; private set; }
         public ICommand NextPatientPageCommand { get; private set; }
+        public ICommand PreviousOrderPageCommand { get; private set; }
+        public ICommand NextOrderPageCommand { get; private set; }
         public ICommand AddPaymentCashCommand { get; private set; }
         public ICommand AddPaymentUpiCommand { get; private set; }
         public ICommand ApplyDiscountTaxCommand { get; private set; }
@@ -420,10 +450,35 @@ namespace LabSystem.UI.ViewModels
         public ICommand DeleteDepartmentCommand { get; private set; }
         public ICommand RenameDepartmentCommand { get; private set; }
         public ICommand DeleteCatalogTestCommand { get; private set; }
+        public ICommand AddTestPanelCommand { get; private set; }
+        public ICommand UpdateTestPanelCommand { get; private set; }
+        public ICommand DeleteTestPanelCommand { get; private set; }
+        public ICommand EditTestPanelCommand { get; private set; }
         public ICommand NavigateToReportCommand { get; private set; }
         public ICommand EditResultsCommand { get; private set; }
         public ICommand SaveAmendmentCommand { get; private set; }
         public ICommand CancelEditCommand { get; private set; }
+        public ICommand DeletePatientCommand { get; private set; }
+        public ICommand EditOrderCommand { get; private set; }
+        public ICommand SaveOrderEditCommand { get; private set; }
+        public ICommand CancelOrderEditCommand { get; private set; }
+        public ICommand VoidOrderCommand { get; private set; }
+        public ICommand DeleteResultCommand { get; private set; }
+        public ICommand VoidInvoiceCommand { get; private set; }
+        public ICommand VoidPaymentCommand { get; private set; }
+        public ICommand DeleteSettingCommand { get; private set; }
+        public ICommand AddSettingCommand { get; private set; }
+
+        private StaffManagementViewModel _staffManagementVM;
+        public StaffManagementViewModel StaffManagementVM
+        {
+            get
+            {
+                if (_staffManagementVM == null)
+                    _staffManagementVM = new StaffManagementViewModel(_staffService, _staffRepo);
+                return _staffManagementVM;
+            }
+        }
 
         public DashboardViewModel(
             IPatientRepository patientRepo,
@@ -439,7 +494,13 @@ namespace LabSystem.UI.ViewModels
             IRepository<Doctor> doctorRepo,
             IRepository<Department> departmentRepo,
             IRepository<Setting> settingRepo,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IPaymentRepository paymentRepo,
+            IRepository<DoctorCommission> commissionRepo,
+            ICsvBackupService csvBackupService,
+            IStaffService staffService,
+            IStaffRepository staffRepo,
+            IRepository<Invoice> invoiceRepo)
         {
             _patientRepo = patientRepo;
             _orderRepo = orderRepo;
@@ -458,6 +519,12 @@ namespace LabSystem.UI.ViewModels
             _departmentRepo = departmentRepo;
             _settingRepo = settingRepo;
             _unitOfWork = unitOfWork;
+            _paymentRepo = paymentRepo;
+            _commissionRepo = commissionRepo;
+            _csvBackupService = csvBackupService;
+            _staffService = staffService;
+            _staffRepo = staffRepo;
+            _invoiceRepo = invoiceRepo;
 
             Patients = new ObservableCollection<Patient>();
             Orders = new ObservableCollection<TestOrder>();
@@ -469,6 +536,8 @@ namespace LabSystem.UI.ViewModels
             Departments = new ObservableCollection<Department>();
             PatientHistory = new ObservableCollection<PatientHistoryEntry>();
             TestPanels = new ObservableCollection<TestPanel>();
+            TestPanelsCatalog = new ObservableCollection<TestPanel>();
+            SettingsCollection = new ObservableCollection<Setting>();
             ReferredByHistory = new ObservableCollection<string>();
 
             // Load sidebar pin state
@@ -508,6 +577,10 @@ namespace LabSystem.UI.ViewModels
             DeleteDepartmentCommand = new AsyncRelayCommand(async o => await ExecuteDeleteDepartmentAsync());
             RenameDepartmentCommand = new AsyncRelayCommand(async o => await ExecuteRenameDepartmentAsync());
             DeleteCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteDeleteCatalogTestAsync());
+            AddTestPanelCommand = new AsyncRelayCommand(async o => await ExecuteAddTestPanelAsync());
+            UpdateTestPanelCommand = new AsyncRelayCommand(async o => await ExecuteUpdateTestPanelAsync());
+            DeleteTestPanelCommand = new AsyncRelayCommand(async o => await ExecuteDeleteTestPanelAsync());
+            EditTestPanelCommand = new AsyncRelayCommand(async o => await ExecuteEditTestPanelAsync(o));
             
             NavigateToReportCommand = new RelayCommand(ExecuteNavigateToReport);
 
@@ -529,10 +602,38 @@ namespace LabSystem.UI.ViewModels
                 }
             });
 
+            PreviousOrderPageCommand = new AsyncRelayCommand(async o =>
+            {
+                if (OrderCurrentPage > 1)
+                {
+                    OrderCurrentPage--;
+                    await LoadOrdersAsync();
+                }
+            });
+
+            NextOrderPageCommand = new AsyncRelayCommand(async o =>
+            {
+                if (OrderCurrentPage < OrderTotalPages)
+                {
+                    OrderCurrentPage++;
+                    await LoadOrdersAsync();
+                }
+            });
+
             EditResultsCommand = new AsyncRelayCommand(async o => await ExecuteEditResultsAsync(o));
             SaveAmendmentCommand = new AsyncRelayCommand(async o => await ExecuteSaveAmendmentAsync(o));
             CancelEditCommand = new AsyncRelayCommand(async o => await CancelEditModeAsync());
             LoadPatientHistoryCommand = new AsyncRelayCommand(async o => await ExecuteLoadPatientHistoryAsync());
+            DeletePatientCommand = new AsyncRelayCommand(async o => await ExecuteDeletePatientAsync());
+            EditOrderCommand = new AsyncRelayCommand(async o => await ExecuteEditOrderAsync(o));
+            SaveOrderEditCommand = new AsyncRelayCommand(async o => await ExecuteSaveOrderEditAsync(o));
+            CancelOrderEditCommand = new AsyncRelayCommand(async o => await ExecuteCancelOrderEditAsync(o));
+            VoidOrderCommand = new AsyncRelayCommand(async o => await ExecuteVoidOrderAsync(o));
+            DeleteResultCommand = new AsyncRelayCommand(async o => await ExecuteDeleteResultAsync(o));
+            VoidInvoiceCommand = new AsyncRelayCommand(async o => await ExecuteVoidInvoiceAsync());
+            VoidPaymentCommand = new AsyncRelayCommand(async o => await ExecuteVoidPaymentAsync(o));
+            DeleteSettingCommand = new AsyncRelayCommand(async o => await ExecuteDeleteSettingAsync(o));
+            AddSettingCommand = new AsyncRelayCommand(async o => await ExecuteAddSettingAsync());
             InitializeRework();
 
             var unused2 = InitializeAsync();
@@ -547,13 +648,6 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to initialize dashboard.");
-                try
-                {
-                    System.IO.File.AppendAllText(
-                        System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log"),
-                        DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DASHBOARD INIT ERROR: " + ex + "\r\n");
-                }
-                catch {}
             }
         }
 
@@ -572,6 +666,13 @@ namespace LabSystem.UI.ViewModels
                 var lastBackupSetting = settingsList.FirstOrDefault(s => s.Key == "last_backup");
                 var lastBackup = lastBackupSetting != null ? lastBackupSetting.Value : null;
                 LastBackupTime = string.IsNullOrEmpty(lastBackup) ? "No backup has been created yet." : lastBackup;
+
+                // Load Settings Collection for management UI
+                SettingsCollection.Clear();
+                foreach (var s in settingsList.OrderBy(s => s.Key))
+                {
+                    SettingsCollection.Add(s);
+                }
 
                 // Load Doctors
                 Doctors.Clear();
@@ -624,15 +725,15 @@ namespace LabSystem.UI.ViewModels
                     TestPanels.Add(p);
                 }
 
-                // Load Orders
-                Orders.Clear();
-                var orders = await _orderRepo.GetAllAsync();
-                foreach (var o in orders)
+                // Load Test Panels for Catalog
+                TestPanelsCatalog.Clear();
+                foreach (var p in panels.OrderBy(p => p.Name))
                 {
-                    Orders.Add(o);
+                    TestPanelsCatalog.Add(p);
                 }
-                OnPropertyChanged("PendingOrdersFiltered");
-                OnPropertyChanged("CompleteOrders");
+
+                // Load Orders (paginated)
+                await LoadOrdersAsync();
 
                 // Load Catalog Test Types
                 CatalogTestTypes.Clear();
@@ -655,7 +756,7 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to load dashboard data.");
-                MessageBox.Show("Error loading data from database. See logs.", "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError("Error loading data from database. See logs.", "Database Error");
             }
         }
 
@@ -669,12 +770,12 @@ namespace LabSystem.UI.ViewModels
 
                 AbnormalResultsFlagged = await _resultRepo.CountAbnormalAsync();
 
-                // Today's aggregates
-                DateTime todayStart = DateTime.Today;
-                TodayPatients = Patients.Count(p => p.CreatedAt >= todayStart);
-                TodayOrders = Orders.Count(o => o.OrderedAt >= todayStart);
+                // Today's aggregates aligned to UTC
+                DateTime todayStartUtc = DateTime.Today.ToUniversalTime();
+                TodayPatients = await _patientRepo.GetPatientsCountAsync(null, todayStartUtc, null);
+                TodayOrders = Orders.Count(o => o.OrderedAt >= todayStartUtc);
 
-                var todayInvoices = Invoices.Where(i => i.CreatedAt >= todayStart);
+                var todayInvoices = Invoices.Where(i => i.CreatedAt >= todayStartUtc);
                 TodayRevenue = todayInvoices.Sum(i => (decimal)i.AmountPaid);
             }
             catch (Exception ex)

@@ -132,6 +132,23 @@ namespace LabSystem.UI.ViewModels
                 var entityToUpdate = await _testTypeRepo.GetByIdAsync(SelectedCatalogTest.TypeId);
                 if (entityToUpdate == null) return;
 
+                int? targetDeptId = null;
+                string categoryName = CatalogTestCategory != null ? CatalogTestCategory.Trim() : null;
+                if (!string.IsNullOrWhiteSpace(categoryName))
+                {
+                    var matchingDept = Departments.FirstOrDefault(d => string.Equals(d.Name, categoryName, StringComparison.OrdinalIgnoreCase));
+                    if (matchingDept != null)
+                    {
+                        targetDeptId = matchingDept.DepartmentId;
+                        CatalogTestCategory = matchingDept.Name;
+                    }
+                }
+                else if (SelectedDepartment != null)
+                {
+                    targetDeptId = SelectedDepartment.DepartmentId;
+                    CatalogTestCategory = SelectedDepartment.Name;
+                }
+
                 entityToUpdate.Name = CatalogTestName;
                 entityToUpdate.Unit = CatalogTestUnit;
                 entityToUpdate.ReferenceRangeLow = CatalogTestLow;
@@ -143,6 +160,7 @@ namespace LabSystem.UI.ViewModels
                 entityToUpdate.Interpretation = CatalogTestInterpretation;
                 entityToUpdate.SortOrder = CatalogTestSortOrder;
                 entityToUpdate.Price = CatalogTestPrice;
+                entityToUpdate.DepartmentId = targetDeptId;
 
                 await _testTypeRepo.UpdateAsync(entityToUpdate);
 
@@ -157,11 +175,12 @@ namespace LabSystem.UI.ViewModels
                 SelectedCatalogTest.Interpretation = CatalogTestInterpretation;
                 SelectedCatalogTest.SortOrder = CatalogTestSortOrder;
                 SelectedCatalogTest.Price = CatalogTestPrice;
+                SelectedCatalogTest.DepartmentId = targetDeptId;
 
                 Log.Information("Admin updated TestType {TypeId}: {TestName}", SelectedCatalogTest.TypeId, CatalogTestName);
 
                 MessageBox.Show("Test type saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                await LoadDataAsync();
+                await RefreshCatalogStateAsync(targetDeptId, entityToUpdate.TypeId);
             }
             catch (Exception ex)
             {
@@ -180,6 +199,23 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
+                int? targetDeptId = null;
+                string categoryName = CatalogTestCategory != null ? CatalogTestCategory.Trim() : null;
+                if (!string.IsNullOrWhiteSpace(categoryName))
+                {
+                    var matchingDept = Departments.FirstOrDefault(d => string.Equals(d.Name, categoryName, StringComparison.OrdinalIgnoreCase));
+                    if (matchingDept != null)
+                    {
+                        targetDeptId = matchingDept.DepartmentId;
+                        CatalogTestCategory = matchingDept.Name;
+                    }
+                }
+                else if (SelectedDepartment != null)
+                {
+                    targetDeptId = SelectedDepartment.DepartmentId;
+                    CatalogTestCategory = SelectedDepartment.Name;
+                }
+
                 var newTest = new TestType
                 {
                     Name = CatalogTestName,
@@ -192,15 +228,15 @@ namespace LabSystem.UI.ViewModels
                     Method = CatalogTestMethod,
                     Interpretation = CatalogTestInterpretation,
                     SortOrder = CatalogTestSortOrder,
-                    Price = CatalogTestPrice
+                    Price = CatalogTestPrice,
+                    DepartmentId = targetDeptId
                 };
 
                 await _testTypeRepo.AddAsync(newTest);
                 Log.Information("Admin added new TestType: {TestName}", CatalogTestName);
 
                 MessageBox.Show("New test type added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                await LoadDataAsync();
-                SelectedCatalogTest = newTest;
+                await RefreshCatalogStateAsync(targetDeptId, newTest.TypeId);
             }
             catch (Exception ex)
             {
@@ -230,6 +266,34 @@ namespace LabSystem.UI.ViewModels
             {
                 Log.Error(ex, "Failed to load catalog tests for department.");
             }
+        }
+
+        private async Task RefreshCatalogStateAsync(int? selectDepartmentId, int? selectTestTypeId)
+        {
+            await LoadDataAsync();
+
+            _selectedDepartment = selectDepartmentId.HasValue 
+                ? Departments.FirstOrDefault(d => d.DepartmentId == selectDepartmentId.Value)
+                : null;
+            OnPropertyChanged("SelectedDepartment");
+
+            if (_selectedDepartment != null)
+            {
+                await LoadCatalogTestsForDepartmentAsync();
+            }
+            else
+            {
+                var testTypes = await _testTypeRepo.GetAllAsync();
+                CatalogTestTypes.Clear();
+                foreach (var t in testTypes.OrderBy(x => x.SortOrder).ThenBy(x => x.Name))
+                {
+                    CatalogTestTypes.Add(t);
+                }
+            }
+
+            SelectedCatalogTest = selectTestTypeId.HasValue
+                ? CatalogTestTypes.FirstOrDefault(t => t.TypeId == selectTestTypeId.Value)
+                : null;
         }
     }
 }

@@ -71,8 +71,6 @@ namespace LabSystem.UI
             // Catch WPF Dispatcher thread exceptions (XAML parse, binding, rendering errors)
             DispatcherUnhandledException += (s, args) =>
             {
-                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
-                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " DISPATCHER ERROR: " + args.Exception + "\r\n"); } catch {}
                 Log.Fatal(args.Exception, "Dispatcher unhandled exception.");
                 string innerMessage = args.Exception.InnerException != null ? args.Exception.InnerException.Message : "";
                 MessageBox.Show("Dispatcher error: " + args.Exception.Message + "\n\n" + innerMessage,
@@ -82,16 +80,12 @@ namespace LabSystem.UI
 
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
             {
-                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
-                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " APPDOMAIN ERROR: " + args.ExceptionObject + "\r\n"); } catch {}
                 Log.Fatal(args.ExceptionObject as Exception, "Unhandled exception occurred.");
                 MessageBox.Show("A critical error occurred. Please check the logs.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             };
 
             TaskScheduler.UnobservedTaskException += (s, args) =>
             {
-                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
-                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " UNOBSERVED TASK ERROR: " + args.Exception + "\r\n"); } catch {}
                 Log.Fatal(args.Exception, "Unobserved task exception.");
                 args.SetObserved();
             };
@@ -147,6 +141,7 @@ namespace LabSystem.UI
                 Container.GetInstance<IRepository<Doctor>>(),
                 Container.GetInstance<IUnitOfWork>()), Lifestyle.Transient);
             Container.Register<IStaffService, StaffService>(Lifestyle.Transient);
+            Container.Register<ICsvBackupService, CsvBackupService>(Lifestyle.Transient);
 
             // Register ViewModels
             Container.Register<ViewModels.MainViewModel>();
@@ -164,7 +159,13 @@ namespace LabSystem.UI
                 Container.GetInstance<IRepository<Doctor>>(),
                 Container.GetInstance<IRepository<Department>>(),
                 Container.GetInstance<IRepository<Setting>>(),
-                Container.GetInstance<IUnitOfWork>()), Lifestyle.Singleton);
+                Container.GetInstance<IUnitOfWork>(),
+                Container.GetInstance<IPaymentRepository>(),
+                Container.GetInstance<IRepository<DoctorCommission>>(),
+                Container.GetInstance<ICsvBackupService>(),
+                Container.GetInstance<IStaffService>(),
+                Container.GetInstance<IStaffRepository>(),
+                Container.GetInstance<IRepository<Invoice>>()), Lifestyle.Singleton);
             Container.Register<ViewModels.LoginViewModel>();
             Container.Register<ViewModels.PinSetupViewModel>(Lifestyle.Transient);
             Container.Register<ViewModels.StaffManagementViewModel>();
@@ -194,8 +195,6 @@ namespace LabSystem.UI
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Failed to start MainWindow after login.");
-                var crashFile = Path.Combine(FileUtilities.GetWritableDataDirectory(), "startup_crash.log");
-                try { File.AppendAllText(crashFile, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " STARTUP CRASH: " + ex + "\r\n"); } catch {}
                 string startupInnerMessage = ex.InnerException != null ? ex.InnerException.Message : "";
                 MessageBox.Show("Startup crash: " + ex.Message + "\n\n" + startupInnerMessage,
                     "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);

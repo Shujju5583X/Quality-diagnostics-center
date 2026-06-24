@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
+using Serilog;
 
 namespace LabSystem.Services
 {
@@ -41,6 +42,34 @@ namespace LabSystem.Services
                 order.UpdatedAt = DateTime.UtcNow;
                 await _orderRepo.UpdateAsync(order, cancellationToken);
             }
+        }
+
+        public async Task UpdateOrderAsync(int orderId, string notes, string referredBy, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var order = await _orderRepo.GetByIdAsync(orderId, cancellationToken);
+            if (order == null)
+                throw new InvalidOperationException("Order not found.");
+
+            order.Notes = notes ?? "";
+            order.ReferredBy = referredBy ?? "SELF";
+            order.UpdatedAt = DateTime.UtcNow;
+            await _orderRepo.UpdateAsync(order, cancellationToken);
+            Log.Information("Updated order {OrderId}: Notes='{Notes}', ReferredBy='{ReferredBy}'", orderId, notes, referredBy);
+        }
+
+        public async Task VoidOrderAsync(int orderId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var order = await _orderRepo.GetByIdAsync(orderId, cancellationToken);
+            if (order == null)
+                throw new InvalidOperationException("Order not found.");
+
+            if (order.StatusEnum == Core.Enums.OrderStatus.Voided)
+                throw new InvalidOperationException("Order is already voided.");
+
+            order.Status = Core.Enums.OrderStatus.Voided.ToString();
+            order.UpdatedAt = DateTime.UtcNow;
+            await _orderRepo.UpdateAsync(order, cancellationToken);
+            Log.Information("Voided order {OrderId}", orderId);
         }
     }
 }

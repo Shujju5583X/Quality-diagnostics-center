@@ -520,14 +520,6 @@ namespace LabSystem.Services
                     default: return "Unknown Group";
                 }
             }
-            if (testType.Name.Contains("Malarial Parasite") || testType.Name.Contains("PBS Malarial"))
-            {
-                return val >= 1.0 ? "Detected" : "Not Detected";
-            }
-            if (testType.Name.Contains("Rapid Malaria"))
-            {
-                return val >= 1.0 ? "Positive" : "Negative";
-            }
             if (testType.Unit == "Qualitative" || testType.Name.Contains("Urine Sugar") || testType.Name.Contains("Urine Protein"))
             {
                 return val >= 1.0 ? "Present" : "Absent";

@@ -90,11 +90,5 @@ tools/
 diagnostics.host.*.txt
 lab_*.log.txt
 
-# Local project notes / temp files
-initial_prompt.txt
-Project-Progress.txt
-Step-by-Step*.txt
-Rework.txt
-project_review.md
-Lab_System_Architecture_Corrections_v1.2.md
-Lab_System_Implementation_Plan.md
+# Build and Temp folders
+[Oo]utput/

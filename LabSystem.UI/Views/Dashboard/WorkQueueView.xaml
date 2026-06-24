@@ -309,6 +309,20 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
+
+                            <!-- Delete Result -->
+                            <DataGridTemplateColumn Header="" Width="40" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding DataContext.DeleteResultCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource DangerButtonStyle}" Padding="4" Height="24" Width="24" FontSize="11"
+                                                ToolTip="Delete Result">
+                                            <materialDesign:PackIcon Kind="Delete" Width="14" Height="14" />
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -321,7 +335,98 @@
                     <!-- Action buttons -->
                     <Border Grid.Row="4" Background="{StaticResource ContentBackgroundBrush}"
                             BorderBrush="{StaticResource SurfaceBorderBrush}" BorderThickness="0 1 0 0" Padding="16 12">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left: Order Edit/Void actions -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                                <!-- EDIT ORDER (only for Pending, not in edit mode) -->
+                                <Button Command="{Binding EditOrderCommand}" Margin="0 0 8 0" Height="42">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Pencil" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                        <TextBlock Text="EDIT ORDER" VerticalAlignment="Center" FontWeight="Bold" />
+                                    </StackPanel>
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource OutlinedButtonStyle}">
+                                            <Setter Property="Height" Value="42" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOrderEditMode}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Complete">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Voided">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- SAVE ORDER EDIT -->
+                                <Button Command="{Binding SaveOrderEditCommand}" Margin="0 0 8 0" Height="42">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                        <TextBlock Text="SAVE ORDER" VerticalAlignment="Center" FontWeight="Bold" />
+                                    </StackPanel>
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+                                            <Setter Property="Height" Value="42" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOrderEditMode}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- CANCEL ORDER EDIT -->
+                                <Button Command="{Binding CancelOrderEditCommand}" Margin="0 0 8 0" Height="42">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Close" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                        <TextBlock Text="CANCEL" VerticalAlignment="Center" FontWeight="Bold" />
+                                    </StackPanel>
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource OutlinedButtonStyle}">
+                                            <Setter Property="Height" Value="42" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOrderEditMode}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- VOID ORDER -->
+                                <Button Command="{Binding VoidOrderCommand}" Margin="0 0 8 0" Height="42">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Cancel" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                                        <TextBlock Text="VOID ORDER" VerticalAlignment="Center" FontWeight="Bold" />
+                                    </StackPanel>
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource DangerButtonStyle}">
+                                            <Setter Property="Height" Value="42" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOrderEditMode}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SelectedOrder.Status}" Value="Voided">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Right: Result entry actions (existing) -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                             <!-- VERIFY & SAVE -->
                             <Button Command="{Binding SaveResultsCommand}" Margin="0 0 12 0" Height="42">
                                 <StackPanel Orientation="Horizontal">
@@ -410,6 +515,7 @@
                                 <materialDesign:PackIcon Kind="Refresh" Width="18" Height="18" />
                             </Button>
                         </StackPanel>
+                        </Grid>
                     </Border>
                 </Grid>
             </materialDesign:Card>

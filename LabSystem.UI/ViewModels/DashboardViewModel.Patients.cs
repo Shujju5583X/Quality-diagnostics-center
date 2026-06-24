@@ -301,6 +301,79 @@ namespace LabSystem.UI.ViewModels
             return string.Format("QDC-{0}-{1:D5}", currentYear, seq);
         }
 
+        private async Task ExecuteDeletePatientAsync()
+        {
+            if (SelectedPatient == null)
+            {
+                MessageBox.Show("Please select a patient to delete.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var patient = SelectedPatient;
+            var hasOrders = Orders.Any(o => o.PatientId == patient.PatientId);
+
+            string message = "Are you sure you want to delete patient '" + patient.FullName + "' (UHID: " + patient.Uhid + ")?";
+            if (hasOrders)
+            {
+                message += "\n\nThis patient has existing orders. Deleting will also remove all associated orders, results, and invoices.";
+            }
+
+            var dialogResult = MessageBox.Show(message, "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (dialogResult != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                // Cascade delete: remove orders and their children first
+                if (hasOrders)
+                {
+                    var patientOrders = Orders.Where(o => o.PatientId == patient.PatientId).ToList();
+                    foreach (var order in patientOrders)
+                    {
+                        // Delete results for this order
+                        var results = await _resultRepo.GetResultsForOrderAsync(order.OrderId);
+                        foreach (var result in results)
+                        {
+                            await _resultRepo.DeleteAsync(result.ResultId);
+                        }
+
+                        // Delete invoice for this order
+                        var invoice = await _billingService.GetInvoiceForOrderAsync(order.OrderId);
+                        if (invoice != null)
+                        {
+                            await _invoiceRepo.DeleteAsync(invoice.InvoiceId);
+                        }
+
+                        // Delete the order
+                        await _orderRepo.DeleteAsync(order.OrderId);
+                    }
+                }
+
+                await _patientRepo.DeleteAsync(patient.PatientId);
+                Log.Information("Deleted patient: {PatientName} (UHID: {Uhid}, ID: {PatientId})", patient.FullName, patient.Uhid, patient.PatientId);
+
+                SelectedPatient = null;
+                NewPatientName = string.Empty;
+                NewPatientAge = 0;
+                NewPatientPhone = string.Empty;
+                NewPatientEmail = string.Empty;
+                NewPatientGender = "Male";
+
+                OnPropertyChanged("PatientFormTitle");
+                OnPropertyChanged("PatientFormButtonText");
+
+                await LoadDataAsync();
+                MessageBox.Show("Patient deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to delete patient.");
+                MessageBox.Show("Error deleting patient: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private async Task ExecuteLoadPatientHistoryAsync()
         {
             if (SelectedPatient == null)

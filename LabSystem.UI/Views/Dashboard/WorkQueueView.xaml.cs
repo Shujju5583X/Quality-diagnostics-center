@@ -81,13 +81,13 @@ namespace LabSystem.UI.Views.Dashboard
             var grid = sender as DataGrid;
             if (grid == null) return;
 
-            var currentTextBox = e.OriginalSource as TextBox;
-            if (currentTextBox == null) return;
+            var focusedElement = e.OriginalSource as DependencyObject;
+            if (focusedElement == null) return;
 
             if (e.Key != Key.Enter && e.Key != Key.Up && e.Key != Key.Down && e.Key != Key.Tab)
                 return;
 
-            var row = FindVisualParent<DataGridRow>(currentTextBox);
+            var row = FindVisualParent<DataGridRow>(focusedElement);
             if (row == null) return;
 
             int rowIndex = grid.ItemContainerGenerator.IndexFromContainer(row);
@@ -105,7 +105,7 @@ namespace LabSystem.UI.Views.Dashboard
             {
                 if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
                 {
-                    var cell = FindVisualParent<DataGridCell>(currentTextBox);
+                    var cell = FindVisualParent<DataGridCell>(focusedElement);
                     if (cell != null)
                     {
                         e.Handled = true;
@@ -121,7 +121,7 @@ namespace LabSystem.UI.Views.Dashboard
                 }
                 else
                 {
-                    var cell = FindVisualParent<DataGridCell>(currentTextBox);
+                    var cell = FindVisualParent<DataGridCell>(focusedElement);
                     if (cell != null)
                     {
                         e.Handled = true;
@@ -151,10 +151,18 @@ namespace LabSystem.UI.Views.Dashboard
                 if (nextRow != null)
                 {
                     var textBox = FindVisualChild<TextBox>(nextRow);
-                    if (textBox != null)
+                    if (textBox != null && textBox.Visibility == Visibility.Visible)
                     {
                         textBox.Focus();
                         textBox.SelectAll();
+                    }
+                    else
+                    {
+                        var comboBox = FindVisualChild<ComboBox>(nextRow);
+                        if (comboBox != null && comboBox.Visibility == Visibility.Visible)
+                        {
+                            comboBox.Focus();
+                        }
                     }
                 }
             }

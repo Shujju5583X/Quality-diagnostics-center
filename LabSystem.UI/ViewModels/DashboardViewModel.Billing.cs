@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using LabSystem.Core.Models;
 using Serilog;
 
 namespace LabSystem.UI.ViewModels
@@ -133,6 +134,86 @@ namespace LabSystem.UI.ViewModels
             {
                 Log.Error(ex, "Failed to generate bill.");
                 MessageBox.Show("Error generating bill: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteVoidInvoiceAsync()
+        {
+            if (SelectedInvoice == null)
+            {
+                MessageBox.Show("Please select an invoice to void.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (SelectedInvoice.Status == "Voided")
+            {
+                MessageBox.Show("This invoice is already voided.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var patientName = SelectedInvoice.Order != null && SelectedInvoice.Order.Patient != null
+                ? SelectedInvoice.Order.Patient.FullName : "Unknown";
+
+            var message = "Are you sure you want to void Invoice #" + SelectedInvoice.InvoiceId + " for patient '" + patientName + "'?";
+            if (SelectedInvoice.AmountPaid > 0)
+            {
+                message += "\n\nThis will remove " + SelectedInvoice.AmountPaid.ToString("N2") + " in recorded payments.";
+            }
+
+            var dialogResult = MessageBox.Show(message, "Confirm Void Invoice", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (dialogResult != MessageBoxResult.Yes) return;
+
+            try
+            {
+                int invoiceId = SelectedInvoice.InvoiceId;
+                await _billingService.VoidInvoiceAsync(invoiceId);
+                Log.Information("Voided invoice {InvoiceId}", invoiceId);
+                await LoadInvoicesAsync();
+                MessageBox.Show("Invoice voided successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to void invoice.");
+                MessageBox.Show("Error voiding invoice: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ExecuteVoidPaymentAsync(object obj)
+        {
+            int paymentId = 0;
+            var payment = obj as Payment;
+            if (payment != null)
+            {
+                paymentId = payment.PaymentId;
+            }
+            else if (obj is int)
+            {
+                paymentId = (int)obj;
+            }
+
+            if (paymentId <= 0)
+            {
+                MessageBox.Show("Please select a payment to void.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var dialogResult = MessageBox.Show(
+                "Are you sure you want to void this payment?\n\nThe invoice status will be recalculated.",
+                "Confirm Void Payment", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+            if (dialogResult != MessageBoxResult.Yes) return;
+
+            try
+            {
+                await _billingService.VoidPaymentAsync(paymentId);
+                Log.Information("Voided payment {PaymentId}", paymentId);
+                await LoadInvoicesAsync();
+                MessageBox.Show("Payment voided successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to void payment.");
+                MessageBox.Show("Error voiding payment: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

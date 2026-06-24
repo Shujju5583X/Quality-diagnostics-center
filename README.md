@@ -6,6 +6,13 @@ This powerful WPF application handles complete day-to-day laboratory operations 
 
 ---
 
+## 📢 Recent Updates (June 2026)
+*   **Test Catalog Optimization:** Streamlined the master test catalog from 84 to ~57 core parameters, removing unused tests (like Malaria and HIV screening).
+*   **New Tests & Panels:** Added HbA1c, ASO Titer, Culture & Sensitivity (C/S), and a comprehensive Urine Routine/Complete group. Refined standard panels (CBC, Electrolytes, KFT, LFT, Lipid Profile).
+*   **Project Cleanup:** Removed obsolete logs, outdated tracking files, and old build artifacts for a cleaner repository.
+
+---
+
 ## ✨ Key Features
 
 ### 👤 Patient Management

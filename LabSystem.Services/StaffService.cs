@@ -72,5 +72,17 @@ namespace LabSystem.Services
         {
             return await _staffRepo.GetAllAsync(cancellationToken);
         }
+
+        public async Task DeleteStaffAsync(int staffId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var staff = await _staffRepo.GetByIdAsync(staffId, cancellationToken);
+            if (staff == null)
+                throw new InvalidOperationException("Staff not found.");
+
+            if (staffId == 1)
+                throw new InvalidOperationException("Cannot delete the default operator account.");
+
+            await _staffRepo.DeleteAsync(staffId, cancellationToken);
+        }
     }
 }

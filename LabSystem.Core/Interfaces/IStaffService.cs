@@ -13,5 +13,6 @@ namespace LabSystem.Core.Interfaces
         Task ResetPinAsync(int staffId, string newPin, CancellationToken cancellationToken = default(CancellationToken));
         Task ToggleLockoutAsync(int staffId, bool lockout, CancellationToken cancellationToken = default(CancellationToken));
         Task<IEnumerable<Staff>> GetAllStaffAsync(CancellationToken cancellationToken = default(CancellationToken));
+        Task DeleteStaffAsync(int staffId, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

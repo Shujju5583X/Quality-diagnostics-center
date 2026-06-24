@@ -86,6 +86,19 @@ namespace LabSystem.Services
             await _resultRepo.UpdateAsync(result, cancellationToken);
         }
 
+        public async Task DeleteResultAsync(int resultId, string reason, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+                throw new ArgumentException("A reason is required to delete a result.");
+
+            var result = await _resultRepo.GetByIdAsync(resultId, cancellationToken);
+            if (result == null)
+                throw new InvalidOperationException("Result not found.");
+
+            await _resultRepo.DeleteAsync(resultId, cancellationToken);
+            Serilog.Log.Information("Deleted result {ResultId} for order {OrderId}, reason: {Reason}", resultId, result.OrderId, reason);
+        }
+
         private bool EvaluateIsAbnormal(double? value, TestType testType, Patient patient)
         {
             return ReferenceRangeEvaluator.IsAbnormal(value, testType, patient);

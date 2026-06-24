@@ -108,11 +108,7 @@ namespace LabSystem.Core.Services
             {
                 return "Absent";
             }
-            if (tt.Name != null && tt.Name.Contains("Malarial Parasite"))
-            {
-                return "Not Detected";
-            }
-            if (tt.Name != null && (tt.Name.Contains("Rapid Malaria") || tt.Name.Contains("HBsAg") || tt.Name.Contains("HCV") || tt.Name.Contains("VDRL") || tt.Name.Contains("HIV")))
+            if (tt.Name != null && (tt.Name.Contains("HBsAg") || tt.Name.Contains("HCV") || tt.Name.Contains("VDRL")))
             {
                 return "Negative";
             }

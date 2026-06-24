@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
@@ -205,6 +206,64 @@ namespace LabSystem.Services
                     .Sum(i => i.GrandTotal)
             };
             return stats;
+        }
+
+        public async Task VoidInvoiceAsync(int invoiceId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
+            if (invoice == null)
+                throw new InvalidOperationException("Invoice not found.");
+
+            if (invoice.Status == "Voided")
+                throw new InvalidOperationException("Invoice is already voided.");
+
+            // Delete all associated payments
+            var payments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
+            foreach (var payment in payments)
+            {
+                await _paymentRepo.DeleteAsync(payment.PaymentId, cancellationToken);
+            }
+
+            invoice.Status = "Voided";
+            invoice.AmountPaid = 0;
+            invoice.IsPaid = false;
+            invoice.PaidAt = null;
+            invoice.PaymentMethod = null;
+            invoice.UpdatedAt = DateTime.UtcNow;
+            await _invoiceRepo.UpdateAsync(invoice);
+
+            Log.Information("Voided invoice {InvoiceId} (order {OrderId}), removed {Count} payments", invoiceId, invoice.OrderId, payments.Count());
+        }
+
+        public async Task VoidPaymentAsync(int paymentId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var payment = await _paymentRepo.GetByIdAsync(paymentId);
+            if (payment == null)
+                throw new InvalidOperationException("Payment not found.");
+
+            var invoiceId = payment.InvoiceId;
+            await _paymentRepo.DeleteAsync(paymentId, cancellationToken);
+
+            // Recalculate invoice totals
+            var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
+            if (invoice != null)
+            {
+                var remainingPayments = await _paymentRepo.GetByInvoiceIdAsync(invoiceId);
+                decimal paidAmount = remainingPayments.Sum(p => p.Amount);
+
+                invoice.AmountPaid = paidAmount;
+                invoice.IsPaid = paidAmount >= invoice.GrandTotal;
+                invoice.Status = invoice.IsPaid ? "Paid" : (paidAmount > 0 ? "Partial" : "Pending");
+                if (!invoice.IsPaid)
+                {
+                    invoice.PaidAt = null;
+                    invoice.PaymentMethod = null;
+                }
+                invoice.UpdatedAt = DateTime.UtcNow;
+                await _invoiceRepo.UpdateAsync(invoice);
+
+                Log.Information("Voided payment {PaymentId} from invoice {InvoiceId}, new paid amount: {PaidAmount}", paymentId, invoiceId, paidAmount);
+            }
         }
     }
 }

@@ -52,11 +52,18 @@
                         <DataGridTemplateColumn Header="Action" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="Edit"
-                                            Command="{Binding DataContext.EditPatientCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                            CommandParameter="{Binding}"
-                                            Style="{StaticResource MaterialDesignFlatButton}"
-                                            Padding="4" Height="24" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Edit"
+                                                Command="{Binding DataContext.EditPatientCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                Padding="4" Height="24" />
+                                        <Button Command="{Binding DataContext.DeletePatientCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource DangerButtonStyle}" Padding="4" Height="24" Width="24" FontSize="11">
+                                            <materialDesign:PackIcon Kind="Delete" Width="14" Height="14" />
+                                        </Button>
+                                    </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

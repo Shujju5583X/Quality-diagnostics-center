@@ -21,7 +21,7 @@ namespace LabSystem.Data
                 WHERE DepartmentId IS NULL OR DepartmentId = 0;
 
                 UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'HEMATOLOGY';
-                UPDATE TestTypes SET SampleType = 'Serum' WHERE (SampleType IS NULL OR SampleType = '') AND Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
+                UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
                 UPDATE TestTypes SET SampleType = 'Urine' WHERE (SampleType IS NULL OR SampleType = '') AND Category = 'CLINICAL PATHOLOGY';
                 UPDATE TestTypes SET SampleType = 'Blood' WHERE (SampleType IS NULL OR SampleType = '') AND Name = 'Blood Grouping & Rh';
             "),
@@ -48,31 +48,31 @@ namespace LabSystem.Data
             "),
             new Migration(4, "Seed test panels", @"
                 INSERT OR IGNORE INTO TestPanels (Name, Description, Price) VALUES
-                ('Lipid Profile Panel', 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, VLDL, and non-HDL cholesterol.', 1200.00),
+                ('Lipid Profile Panel', 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, and VLDL.', 1200.00),
                 ('Thyroid Profile Panel', 'Thyroid Function Test including T3, T4, and TSH screening.', 900.00),
-                ('CBC Panel', 'Complete Blood Count including Haemoglobin, Haematocrit, RBC, WBC, Platelet, and differential counts.', 800.00),
-                ('KFT Panel', 'Kidney Function Test including Blood Urea, Creatinine, Uric Acid, and BUN.', 600.00),
-                ('LFT Panel', 'Liver Function Test including SGOT, SGPT, ALP, Bilirubin, Protein, Albumin, and Globulin.', 700.00),
-                ('Electrolyte Panel', 'Serum Electrolytes including Sodium, Potassium, Chloride, and Bicarbonate.', 400.00);
+                ('CBC Panel', 'Complete Blood Count including Haemoglobin, RBC, WBC, ESR, and Eosinophils.', 800.00),
+                ('KFT Panel', 'Kidney Function Test including Blood Urea, Creatinine, and Uric Acid.', 600.00),
+                ('LFT Panel', 'Liver Function Test including SGOT, SGPT, ALP, and Bilirubin.', 700.00),
+                ('Electrolyte Panel', 'Serum Electrolytes including Sodium, Potassium, and Chloride.', 400.00);
             "),
             new Migration(5, "Link panel test types", @"
                 INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
-                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'Lipid Profile Panel' AND t.Name IN ('Cholesterol, Total', 'Triglycerides', 'HDL Cholesterol', 'LDL Cholesterol', 'VLDL Cholesterol', 'Non-HDL Cholesterol');
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'Lipid Profile Panel' AND t.Name IN ('Cholesterol, Total', 'Triglycerides', 'HDL Cholesterol', 'LDL Cholesterol', 'VLDL Cholesterol');
 
                 INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
                 SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'Thyroid Profile Panel' AND t.Name IN ('Triiodothyronine (T3)', 'Thyroxine (T4)', 'TSH (Thyroid Stimulating Hormone)');
 
                 INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
-                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'CBC Panel' AND t.Name IN ('Hemoglobin (Hb)', 'Packed Cell Volume (PCV)', 'Total RBC count', 'Total WBC count', 'Platelet Count', 'Mean Corpuscular Volume (MCV)', 'Mean Corpuscular Hb (MCH)', 'Mean Corpuscular Hb Concn. (MCHC)', 'RDW', 'Neutrophils', 'Lymphocytes', 'Eosinophils', 'Monocytes', 'Basophils');
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'CBC Panel' AND t.Name IN ('Hemoglobin (Hb)', 'Total RBC count', 'Total WBC count', 'ESR', 'Eosinophils');
 
                 INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
-                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'KFT Panel' AND t.Name IN ('Urea (KFT)', 'Creatinine (KFT)', 'Uric Acid (KFT)', 'Calcium, Total (KFT)');
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'KFT Panel' AND t.Name IN ('Urea (KFT)', 'Creatinine (KFT)', 'Uric Acid (KFT)');
 
                 INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
-                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'LFT Panel' AND t.Name IN ('AST (SGOT)', 'ALT (SGPT)', 'Alkaline Phosphatase (LFT)', 'Bilirubin Total', 'Bilirubin Direct', 'Bilirubin Indirect', 'Total Protein (LFT)', 'Albumin (LFT)');
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'LFT Panel' AND t.Name IN ('AST (SGOT)', 'ALT (SGPT)', 'Alkaline Phosphatase (LFT)', 'Bilirubin Total', 'Bilirubin Direct', 'Bilirubin Indirect');
 
                 INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
-                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'Electrolyte Panel' AND t.Name IN ('Sodium', 'Potassium', 'Chloride', 'Bicarbonate');
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t WHERE p.Name = 'Electrolyte Panel' AND t.Name IN ('Sodium', 'Potassium', 'Chloride');
             "),
             new Migration(6, "Convert legacy -999.0 sentinel values in Results", @"
                 UPDATE Results SET Value = NULL WHERE Value = -999.0;
@@ -88,6 +88,29 @@ namespace LabSystem.Data
             "),
             new Migration(9, "Add DoctorId column to TestOrders", @"
                 ALTER TABLE TestOrders ADD COLUMN DoctorId INTEGER REFERENCES Doctors(DoctorId) ON DELETE SET NULL;
+            "),
+            new Migration(10, "Test Catalog Cleanup", @"
+                DELETE FROM TestTypes WHERE Name IN ('Packed Cell Volume (PCV)', 'Mean Corpuscular Volume (MCV)', 'Mean Corpuscular Hb (MCH)', 'Mean Corpuscular Hb Concn. (MCHC)', 'RDW', 'Neutrophils', 'Lymphocytes', 'Monocytes', 'Basophils', 'Platelet Count', 'Dengue Fever Antibody, IgG', 'Dengue Fever Antibody, IgM', 'Bicarbonate', 'Magnesium', 'HIV 1 Antibody Screening', 'HIV 2 Antibody Screening', 'Calcium, Total (KFT)', 'Phosphorus (KFT)', 'Alkaline Phosphatase (KFT)', 'Sodium (KFT)', 'Potassium (KFT)', 'Chloride (KFT)', 'Non-HDL Cholesterol', 'AST:ALT Ratio', 'GGTP', 'Total Protein (LFT)', 'Albumin (LFT)', 'A : G Ratio', 'Vitamin B12', 'Vitamin D3 (25-Hydroxy)', 'Serum Iron', 'Total Iron Binding Capacity (TIBC)', 'Transferrin Saturation', 'Rapid Malaria (HRP-2/pLDH)', 'PBS Malarial Parasite', 'Patient Prothrombin Time', 'INR');
+                UPDATE TestTypes SET Name = 'Total Protein', GroupName = 'Biochemistry' WHERE Name = 'Total Protein (KFT)';
+                UPDATE TestTypes SET Name = 'Albumin', GroupName = 'Biochemistry' WHERE Name = 'Albumin (KFT)';
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('HbA1c', '%', 4.0, 5.6, 1, 'BIOCHEMISTRY', 'HBA1C', 'HPLC', 'Normal: < 5.7%, Pre-diabetes: 5.7-6.4%, Diabetes: >= 6.5%', 1, 400.00, 'Blood', 0);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('ASO Titer', 'IU/mL', 0.0, 200.0, 1, 'SEROLOGY', 'ASO Titer', 'Turbidimetry', 'Negative: < 200 IU/mL. Positive suggests recent streptococcal infection.', 1, 300.00, 'Blood', 0);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Color', 'Color', NULL, NULL, 1, 'CLINICAL PATHOLOGY', 'Urine Complete', 'Visual', 'Normal: Yellow to Amber.', 1, 100.00, 'Urine', 0);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Appearance', 'Appearance', NULL, NULL, 1, 'CLINICAL PATHOLOGY', 'Urine Complete', 'Visual', 'Normal: Clear.', 2, 100.00, 'Urine', 0);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Reaction', 'pH', 5.0, 8.0, 1, 'CLINICAL PATHOLOGY', 'Urine Complete', 'pH Strip', 'Normal: 5.0 - 8.0.', 3, 100.00, 'Urine', 0);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Ketone Bodies', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Complete', 'Reagent Strip', '0 = Absent, 1 = Present.', 4, 100.00, 'Urine', 1);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Urobilinogen', 'mg/dL', 0.0, 1.0, 1, 'CLINICAL PATHOLOGY', 'Urine Complete', 'Reagent Strip', 'Normal: 0.1 - 1.0 mg/dL.', 5, 100.00, 'Urine', 0);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Nitrite', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Complete', 'Reagent Strip', '0 = Negative, 1 = Positive.', 6, 100.00, 'Urine', 1);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Leukocyte Esterase', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Complete', 'Reagent Strip', '0 = Negative, 1 = Positive.', 7, 100.00, 'Urine', 1);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Bile Salts', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Routine', 'Reagent Strip', '0 = Absent, 1 = Present.', 7, 100.00, 'Urine', 1);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Urine Bile Pigments', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Routine', 'Reagent Strip', '0 = Absent, 1 = Present.', 8, 100.00, 'Urine', 1);
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType) VALUES ('Culture & Sensitivity', 'Report', NULL, NULL, 1, 'MICROBIOLOGY', 'Culture & Sensitivity', 'Culture', 'Organism identification and antibiotic sensitivity pattern.', 1, 500.00, 'Blood', 3);
+                UPDATE TestPanels SET Description = 'Comprehensive assessment of total cholesterol, triglycerides, HDL, LDL, and VLDL.' WHERE Name = 'Lipid Profile Panel';
+                UPDATE TestPanels SET Description = 'Complete Blood Count including Haemoglobin, RBC, WBC, ESR, and Eosinophils.' WHERE Name = 'CBC Panel';
+                UPDATE TestPanels SET Description = 'Kidney Function Test including Blood Urea, Creatinine, and Uric Acid.' WHERE Name = 'KFT Panel';
+                UPDATE TestPanels SET Description = 'Liver Function Test including SGOT, SGPT, ALP, and Bilirubin.' WHERE Name = 'LFT Panel';
+                UPDATE TestPanels SET Description = 'Serum Electrolytes including Sodium, Potassium, and Chloride.' WHERE Name = 'Electrolyte Panel';
+                UPDATE TestTypes SET SampleType = 'Blood' WHERE Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
             ")
         };
 
