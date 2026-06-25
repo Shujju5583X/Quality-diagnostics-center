@@ -27,7 +27,6 @@ namespace LabSystem.Tests
         private Mock<IRepository<Doctor>> _mockDoctorRepo;
         private Mock<IRepository<Department>> _mockDepartmentRepo;
         private Mock<IRepository<Setting>> _mockSettingRepo;
-        private Mock<IUnitOfWork> _mockUnitOfWork;
         private Mock<IPaymentRepository> _mockPaymentRepo;
         private Mock<IRepository<DoctorCommission>> _mockCommissionRepo;
         private Mock<ICsvBackupService> _mockCsvBackupService;
@@ -51,7 +50,6 @@ namespace LabSystem.Tests
             _mockDoctorRepo = new Mock<IRepository<Doctor>>();
             _mockDepartmentRepo = new Mock<IRepository<Department>>();
             _mockSettingRepo = new Mock<IRepository<Setting>>();
-            _mockUnitOfWork = new Mock<IUnitOfWork>();
             _mockPaymentRepo = new Mock<IPaymentRepository>();
             _mockCommissionRepo = new Mock<IRepository<DoctorCommission>>();
             _mockCsvBackupService = new Mock<ICsvBackupService>();
@@ -91,7 +89,6 @@ namespace LabSystem.Tests
                 _mockDoctorRepo.Object,
                 _mockDepartmentRepo.Object,
                 _mockSettingRepo.Object,
-                _mockUnitOfWork.Object,
                 _mockPaymentRepo.Object,
                 _mockCommissionRepo.Object,
                 _mockCsvBackupService.Object,

@@ -2,6 +2,7 @@ using System.Windows.Input;
 using LabSystem.Core.Interfaces;
 using Serilog;
 using LabSystem.Core;
+using System.Threading.Tasks;
 
 namespace LabSystem.UI.ViewModels
 {
@@ -23,7 +24,9 @@ namespace LabSystem.UI.ViewModels
             // Start on the login screen
             Log.Information("Resolving LoginViewModel...");
             var loginVm = App.Container.GetInstance<LoginViewModel>();
-            loginVm.InitializeAsync().GetAwaiter().GetResult();
+            // ponytail: fire-and-forget — staff list populates the dropdown asynchronously,
+            // user can't log in until it loads anyway (LoginCommand checks SelectedStaff != null)
+            var _ = loginVm.InitializeAsync();
             loginVm.LoginSuccessAction = () =>
             {
                 Log.Information("Login successful. Switching to Dashboard...");

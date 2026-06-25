@@ -62,11 +62,23 @@ namespace LabSystem.Services
             sb.AppendLine();
 
             sb.AppendLine("=== PATIENTS ===");
-            sb.AppendLine("PatientId,Uhid,FullName,Gender,Age,ContactPhone,ContactEmail,CreatedAt");
+            sb.AppendLine("PatientId,Uhid,FullName,Gender,Age,ContactPhone,ContactEmail,CreatedAt,Title,AgeYears,AgeMonths,AgeDays");
             var patients = await _patientRepo.GetAllAsync(cancellationToken);
             foreach (var p in patients)
             {
-                sb.AppendLine(string.Format("{0},{1},{2},{3},{4},{5},{6},{7}", p.PatientId, EscapeCsv(p.Uhid), EscapeCsv(p.FullName), EscapeCsv(p.Gender), p.Age, EscapeCsv(p.ContactPhone), EscapeCsv(p.ContactEmail), p.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")));
+                sb.AppendLine(string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11}", 
+                    p.PatientId, 
+                    EscapeCsv(p.Uhid), 
+                    EscapeCsv(p.FullName), 
+                    EscapeCsv(p.Gender), 
+                    p.Age, 
+                    EscapeCsv(p.ContactPhone), 
+                    EscapeCsv(p.ContactEmail), 
+                    p.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                    EscapeCsv(p.Title),
+                    p.AgeYears,
+                    p.AgeMonths,
+                    p.AgeDays));
             }
             sb.AppendLine();
 
@@ -220,11 +232,29 @@ namespace LabSystem.Services
                             {
                                 int age = 0;
                                 DateTime? dob = null;
-                                if (cols.Count > 4 && int.TryParse(cols[4], out age))
+                                string title = null;
+                                int? ageYears = null;
+                                int? ageMonths = null;
+                                int? ageDays = null;
+
+                                if (cols.Count > 8)
+                                {
+                                    title = string.IsNullOrWhiteSpace(cols[8]) ? null : cols[8];
+                                    int y;
+                                    if (int.TryParse(cols[9], out y)) ageYears = y;
+                                    int m;
+                                    if (int.TryParse(cols[10], out m)) ageMonths = m;
+                                    int d;
+                                    if (int.TryParse(cols[11], out d)) ageDays = d;
+
+                                    dob = DateTime.Today.AddYears(-(ageYears ?? 0)).AddMonths(-(ageMonths ?? 0)).AddDays(-(ageDays ?? 0));
+                                }
+                                else if (cols.Count > 4 && int.TryParse(cols[4], out age))
                                 {
                                     dob = DateTime.Today.AddYears(-age);
+                                    ageYears = age;
                                 }
-                                using (var cmd = new System.Data.SQLite.SQLiteCommand("INSERT INTO Patients (PatientId, Uhid, FullName, Gender, DateOfBirth, ContactPhone, ContactEmail, CreatedAt) VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7)", connection, transaction))
+                                using (var cmd = new System.Data.SQLite.SQLiteCommand("INSERT INTO Patients (PatientId, Uhid, FullName, Gender, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Title, AgeYears, AgeMonths, AgeDays) VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11)", connection, transaction))
                                 {
                                     cmd.Parameters.AddWithValue("@p0", cols[0]);
                                     cmd.Parameters.AddWithValue("@p1", cols[1]);
@@ -234,6 +264,10 @@ namespace LabSystem.Services
                                     cmd.Parameters.AddWithValue("@p5", cols[5]);
                                     cmd.Parameters.AddWithValue("@p6", cols[6]);
                                     cmd.Parameters.AddWithValue("@p7", cols[7]);
+                                    cmd.Parameters.AddWithValue("@p8", (object)title ?? DBNull.Value);
+                                    cmd.Parameters.AddWithValue("@p9", (object)ageYears ?? DBNull.Value);
+                                    cmd.Parameters.AddWithValue("@p10", (object)ageMonths ?? DBNull.Value);
+                                    cmd.Parameters.AddWithValue("@p11", (object)ageDays ?? DBNull.Value);
                                     await cmd.ExecuteNonQueryAsync(cancellationToken);
                                 }
                             }

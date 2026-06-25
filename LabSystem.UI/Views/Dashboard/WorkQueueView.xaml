@@ -251,7 +251,7 @@
                                                 </TextBox.Style>
                                             </TextBox>
                                             <ComboBox ItemsSource="{Binding Options}"
-                                                      SelectedItem="{Binding SelectedOption}"
+                                                      SelectedItem="{Binding SelectedOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       DisplayMemberPath="Display"
                                                       IsEnabled="{Binding IsReadOnly, Converter={StaticResource InvertBool}}"
                                                       BorderThickness="0" Background="Transparent"

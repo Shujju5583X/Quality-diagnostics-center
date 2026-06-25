@@ -6,18 +6,6 @@ namespace LabSystem.Core.Services
 {
     public static class ReferenceRangeEvaluator
     {
-        public static int CalculateAge(DateTime? dob, DateTime relativeTo)
-        {
-            if (!dob.HasValue) return 30;
-            var birthDate = dob.Value;
-            int age = relativeTo.Year - birthDate.Year;
-            if (relativeTo.Month < birthDate.Month || (relativeTo.Month == birthDate.Month && relativeTo.Day < birthDate.Day))
-            {
-                age--;
-            }
-            return age < 0 ? 0 : age;
-        }
-
         public static ReferenceRange FindMatchingRange(TestType tt, Patient patient)
         {
             if (tt == null || tt.ReferenceRanges == null || tt.ReferenceRanges.Count == 0 || patient == null)
@@ -107,6 +95,10 @@ namespace LabSystem.Core.Services
             if (tt.Unit == "Qualitative" || (tt.Name != null && (tt.Name.Contains("Urine Sugar") || tt.Name.Contains("Urine Protein"))))
             {
                 return "Absent";
+            }
+            if (tt.Name != null && tt.Name.Contains("Malaria"))
+            {
+                return "negative";
             }
             if (tt.Name != null && (tt.Name.Contains("HBsAg") || tt.Name.Contains("HCV") || tt.Name.Contains("VDRL")))
             {

@@ -17,44 +17,31 @@ namespace LabSystem.Tests
     {
         private Mock<IResultRepository> _mockResultRepo;
         private Mock<IRepository<TestType>> _mockTestTypeRepo;
+        private Mock<IRepository<Setting>> _mockSettingRepo;
+        private Mock<ITestOrderRepository> _mockOrderRepo;
         private PdfReportService _service;
-        private string _logoPath;
 
         [SetUp]
         public void SetUp()
         {
             _mockResultRepo = new Mock<IResultRepository>();
             _mockTestTypeRepo = new Mock<IRepository<TestType>>();
-            
-            var testDataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TestData");
-            Directory.CreateDirectory(testDataDir);
-            _logoPath = Path.Combine(testDataDir, "test_logo.png");
+            _mockSettingRepo = new Mock<IRepository<Setting>>();
+            _mockSettingRepo.Setup(r => r.GetAllAsync(default(CancellationToken)))
+                           .ReturnsAsync(new List<Setting>());
 
-            // Generate 1x1 white pixel PNG programmatically using System.Drawing
-            using (var bitmap = new System.Drawing.Bitmap(1, 1))
-            {
-                bitmap.SetPixel(0, 0, System.Drawing.Color.White);
-                bitmap.Save(_logoPath, System.Drawing.Imaging.ImageFormat.Png);
-            }
+            _mockOrderRepo = new Mock<ITestOrderRepository>();
+            _mockOrderRepo.Setup(r => r.GetDailySequenceNumberAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                          .ReturnsAsync((int oId, DateTime dt, CancellationToken ct) => oId);
 
-            _service = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object, null, _logoPath);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            if (File.Exists(_logoPath))
-            {
-                try { File.Delete(_logoPath); } catch { }
-            }
+            _service = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object, null, _mockSettingRepo.Object, _mockOrderRepo.Object);
         }
 
         [Test]
         public async Task GenerateReport_ShouldGeneratePdf_WhenLogoDoesNotExist()
         {
             // Arrange: Temporary service instance with non-existent logo path
-            var nonExistentLogoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "non_existent.png");
-            var tempService = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object, null, nonExistentLogoPath);
+            var tempService = new PdfReportService(_mockResultRepo.Object, _mockTestTypeRepo.Object, null, _mockSettingRepo.Object, _mockOrderRepo.Object);
 
             var order = new TestOrder
             {
@@ -236,6 +223,50 @@ namespace LabSystem.Tests
             Assert.IsTrue(File.Exists(filepath));
             Assert.IsTrue(new FileInfo(filepath).Length > 0);
             File.Delete(filepath);
+        }
+
+        [Test]
+        public async Task GenerateReport_ShouldIncludeInstruments_ForCbcTest()
+        {
+            // Arrange
+            var order = new TestOrder
+            {
+                OrderId = 8,
+                OrderedAt = DateTime.Now,
+                Patient = new Patient { PatientId = 8, FullName = "CBC Patient", Age = 25 }
+            };
+
+            _mockResultRepo.Setup(r => r.GetResultsForOrderAsync(8, default(CancellationToken)))
+                           .ReturnsAsync(new List<Result>
+                           {
+                               new Result 
+                               { 
+                                   ResultId = 8, 
+                                   Value = 14.5, 
+                                   TestType = new TestType 
+                                   { 
+                                       Name = "Hemoglobin (Hb)", 
+                                       Unit = "g/dL", 
+                                       ReferenceRangeLow = 13, 
+                                       ReferenceRangeHigh = 17,
+                                       GroupName = "Complete Blood Count (CBC)",
+                                       Category = "HEMATOLOGY"
+                                   } 
+                               }
+                           });
+
+            // Act
+            string filepath = await _service.GenerateReportAsync(order);
+
+            // Assert
+            Assert.IsTrue(File.Exists(filepath));
+            Assert.IsTrue(new FileInfo(filepath).Length > 0);
+
+            // Clean up report
+            if (File.Exists(filepath))
+            {
+                File.Delete(filepath);
+            }
         }
     }
 

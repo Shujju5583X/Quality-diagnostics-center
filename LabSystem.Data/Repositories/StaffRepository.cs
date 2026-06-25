@@ -11,14 +11,5 @@ namespace LabSystem.Data.Repositories
     public class StaffRepository : Repository<Staff>, IStaffRepository
     {
         public StaffRepository(LabDbContext context) : base(context) { }
-
-        public async Task<Staff> GetByFullNameAsync(string fullName, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (string.IsNullOrWhiteSpace(fullName))
-                return null;
-
-            return await _dbSet.AsNoTracking()
-                         .FirstOrDefaultAsync(s => s.FullName == fullName, cancellationToken);
-        }
     }
 }

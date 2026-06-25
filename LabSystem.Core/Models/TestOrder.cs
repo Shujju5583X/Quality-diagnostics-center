@@ -39,20 +39,5 @@ namespace LabSystem.Core.Models
         public DateTime UpdatedAt { get; set; }
 
         public virtual ICollection<TestType> TestTypes { get; set; }
-
-        [NotMapped]
-        public string TestNamesSummary
-        {
-            get
-            {
-                if (TestTypes == null || TestTypes.Count == 0) return "";
-                var names = new List<string>();
-                foreach (var t in TestTypes)
-                {
-                    names.Add(t.Name);
-                }
-                return string.Join(", ", names);
-            }
-        }
     }
 }

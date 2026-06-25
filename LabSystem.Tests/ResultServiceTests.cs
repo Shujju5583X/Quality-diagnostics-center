@@ -146,5 +146,39 @@ namespace LabSystem.Tests
             // Assert
             Assert.IsTrue(result.IsAbnormal);
         }
+
+        [Test]
+        public async Task AddResult_ShouldFlagAbnormal_WhenMalariaTestAndNotNegative()
+        {
+            // Arrange
+            var testType = new TestType { TypeId = 2, Name = "Rapid Malaria Test" };
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(2, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+
+            var result = new Result { TypeId = 2, ValueText = "pv-positive" };
+
+            // Act
+            await _service.AddResultAsync(result);
+
+            // Assert
+            Assert.IsTrue(result.IsAbnormal);
+        }
+
+        [Test]
+        public async Task AddResult_ShouldNotFlagAbnormal_WhenMalariaTestAndNegative()
+        {
+            // Arrange
+            var testType = new TestType { TypeId = 2, Name = "Rapid Malaria Test" };
+            _mockTestTypeRepo.Setup(r => r.GetByIdAsync(2, It.IsAny<CancellationToken>())).ReturnsAsync(testType);
+            _mockResultRepo.Setup(r => r.AddAsync(It.IsAny<Result>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult(0));
+
+            var result = new Result { TypeId = 2, ValueText = "negative" };
+
+            // Act
+            await _service.AddResultAsync(result);
+
+            // Assert
+            Assert.IsFalse(result.IsAbnormal);
+        }
     }
 }

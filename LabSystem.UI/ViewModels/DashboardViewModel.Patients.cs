@@ -18,10 +18,73 @@ namespace LabSystem.UI.ViewModels
             set { _newPatientName = value; OnPropertyChanged(); }
         }
 
-        public int NewPatientAge
+        private System.Collections.Generic.List<string> _titles;
+        public System.Collections.Generic.List<string> Titles
         {
-            get { return _newPatientAge; }
-            set { _newPatientAge = value; OnPropertyChanged(); }
+            get
+            {
+                if (_titles == null)
+                {
+                    _titles = new System.Collections.Generic.List<string> { "Select Title", "Mr", "Mrs", "Ms", "Master", "Baby", "Baby of" };
+                }
+                return _titles;
+            }
+        }
+
+        public string NewPatientTitle
+        {
+            get { return _newPatientTitle; }
+            set
+            {
+                _newPatientTitle = value;
+                OnPropertyChanged();
+                OnPropertyChanged("IsDetailedAgeVisible");
+                OnPropertyChanged("IsSimpleAgeVisible");
+
+                // Auto-gender selection
+                if (_newPatientTitle == "Mr" || _newPatientTitle == "Master")
+                {
+                    NewPatientGender = "Male";
+                }
+                else if (_newPatientTitle == "Mrs" || _newPatientTitle == "Ms")
+                {
+                    NewPatientGender = "Female";
+                }
+            }
+        }
+
+        public string NewPatientAgeYears
+        {
+            get { return _newPatientAgeYears; }
+            set { _newPatientAgeYears = value; OnPropertyChanged(); }
+        }
+
+        public string NewPatientAgeMonths
+        {
+            get { return _newPatientAgeMonths; }
+            set { _newPatientAgeMonths = value; OnPropertyChanged(); }
+        }
+
+        public string NewPatientAgeDays
+        {
+            get { return _newPatientAgeDays; }
+            set { _newPatientAgeDays = value; OnPropertyChanged(); }
+        }
+
+        public bool IsDetailedAgeVisible
+        {
+            get
+            {
+                return _newPatientTitle == "Master" || _newPatientTitle == "Baby" || _newPatientTitle == "Baby of";
+            }
+        }
+
+        public bool IsSimpleAgeVisible
+        {
+            get
+            {
+                return !IsDetailedAgeVisible;
+            }
         }
 
         public string NewPatientPhone
@@ -173,7 +236,10 @@ namespace LabSystem.UI.ViewModels
             {
                 _editingPatient = patient;
                 NewPatientName = patient.FullName;
-                NewPatientAge = patient.Age;
+                NewPatientTitle = patient.Title ?? "Select Title";
+                NewPatientAgeYears = patient.AgeYears.HasValue ? patient.AgeYears.Value.ToString() : "";
+                NewPatientAgeMonths = patient.AgeMonths.HasValue ? patient.AgeMonths.Value.ToString() : "";
+                NewPatientAgeDays = patient.AgeDays.HasValue ? patient.AgeDays.Value.ToString() : "";
                 NewPatientGender = patient.Gender;
                 NewPatientPhone = patient.ContactPhone;
                 NewPatientEmail = patient.ContactEmail;
@@ -188,6 +254,12 @@ namespace LabSystem.UI.ViewModels
             if (string.IsNullOrWhiteSpace(NewPatientName))
             {
                 MessageBox.Show("Please enter the patient's full name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(NewPatientTitle) || NewPatientTitle == "Select Title")
+            {
+                MessageBox.Show("Please select a patient title.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -213,16 +285,86 @@ namespace LabSystem.UI.ViewModels
                 }
             }
 
+            int? years = null;
+            int? months = null;
+            int? days = null;
+
+            if (NewPatientTitle == "Master" || NewPatientTitle == "Baby" || NewPatientTitle == "Baby of")
+            {
+                if (string.IsNullOrWhiteSpace(NewPatientAgeYears) && 
+                    string.IsNullOrWhiteSpace(NewPatientAgeMonths) && 
+                    string.IsNullOrWhiteSpace(NewPatientAgeDays))
+                {
+                    MessageBox.Show("Please enter at least one age value (Years, Months, or Days).", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(NewPatientAgeYears))
+                {
+                    int y;
+                    if (!int.TryParse(NewPatientAgeYears, out y) || y < 0)
+                    {
+                        MessageBox.Show("Please enter a valid non-negative integer for Years.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    years = y;
+                }
+
+                if (!string.IsNullOrWhiteSpace(NewPatientAgeMonths))
+                {
+                    int m;
+                    if (!int.TryParse(NewPatientAgeMonths, out m) || m < 0)
+                    {
+                        MessageBox.Show("Please enter a valid non-negative integer for Months.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    months = m;
+                }
+
+                if (!string.IsNullOrWhiteSpace(NewPatientAgeDays))
+                {
+                    int d;
+                    if (!int.TryParse(NewPatientAgeDays, out d) || d < 0)
+                    {
+                        MessageBox.Show("Please enter a valid non-negative integer for Days.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    days = d;
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(NewPatientAgeYears))
+                {
+                    MessageBox.Show("Please enter the patient's age in years.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                int y;
+                if (!int.TryParse(NewPatientAgeYears, out y) || y < 0)
+                {
+                    MessageBox.Show("Please enter a valid non-negative integer for Age.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                years = y;
+            }
+
+            var dob = DateTime.Today.AddYears(-(years ?? 0)).AddMonths(-(months ?? 0)).AddDays(-(days ?? 0));
+
             try
             {
                 if (_editingPatient != null)
                 {
                     // Update existing patient
                     _editingPatient.FullName = NewPatientName.Trim();
-                    _editingPatient.Age = NewPatientAge;
+                    _editingPatient.Title = NewPatientTitle;
+                    _editingPatient.AgeYears = years;
+                    _editingPatient.AgeMonths = months;
+                    _editingPatient.AgeDays = days;
                     _editingPatient.Gender = NewPatientGender ?? "Male";
                     _editingPatient.ContactPhone = NewPatientPhone ?? "";
                     _editingPatient.ContactEmail = NewPatientEmail ?? "";
+                    _editingPatient.DateOfBirth = dob;
 
                     await _patientRepo.UpdateAsync(_editingPatient);
                     Log.Information("Updated patient: {PatientName} with UHID {Uhid}", NewPatientName, _editingPatient.Uhid);
@@ -256,11 +398,15 @@ namespace LabSystem.UI.ViewModels
                     {
                         Uhid = uhid,
                         FullName = NewPatientName,
-                        Age = NewPatientAge,
+                        Title = NewPatientTitle,
+                        AgeYears = years,
+                        AgeMonths = months,
+                        AgeDays = days,
                         Gender = NewPatientGender ?? "Male",
                         ContactPhone = NewPatientPhone ?? "",
                         ContactEmail = NewPatientEmail ?? "",
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.UtcNow,
+                        DateOfBirth = dob
                     };
 
                     await _patientRepo.AddAsync(patient);
@@ -270,7 +416,10 @@ namespace LabSystem.UI.ViewModels
 
                 // Reset fields
                 NewPatientName = string.Empty;
-                NewPatientAge = 0;
+                NewPatientTitle = "Select Title";
+                NewPatientAgeYears = string.Empty;
+                NewPatientAgeMonths = string.Empty;
+                NewPatientAgeDays = string.Empty;
                 NewPatientPhone = string.Empty;
                 NewPatientEmail = string.Empty;
                 NewPatientGender = "Male";
@@ -356,7 +505,10 @@ namespace LabSystem.UI.ViewModels
 
                 SelectedPatient = null;
                 NewPatientName = string.Empty;
-                NewPatientAge = 0;
+                NewPatientTitle = "Select Title";
+                NewPatientAgeYears = string.Empty;
+                NewPatientAgeMonths = string.Empty;
+                NewPatientAgeDays = string.Empty;
                 NewPatientPhone = string.Empty;
                 NewPatientEmail = string.Empty;
                 NewPatientGender = "Male";

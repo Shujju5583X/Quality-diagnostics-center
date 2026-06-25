@@ -107,8 +107,6 @@ namespace LabSystem.UI
 
             // Register DbContext
             Container.Register<LabDbContext>(() => new LabDbContext(), Lifestyle.Transient);
-            Container.Register<IUnitOfWork, UnitOfWork>(Lifestyle.Transient);
-
             // Register Repositories
             Container.Register<IPatientRepository, PatientRepository>(Lifestyle.Transient);
             Container.Register<ITestOrderRepository, TestOrderRepository>(Lifestyle.Transient);
@@ -118,28 +116,15 @@ namespace LabSystem.UI
             Container.Register<IStaffRepository, StaffRepository>(Lifestyle.Transient);
             Container.Register<IInvoiceRepository, InvoiceRepository>(Lifestyle.Transient);
             Container.Register<IPaymentRepository, PaymentRepository>(Lifestyle.Transient);
-            Container.Register<IReportRepository, ReportRepository>(Lifestyle.Transient);
             // Fallback for any other IRepository<T>
             Container.RegisterConditional(typeof(IRepository<>), typeof(Repository<>), Lifestyle.Transient, c => !c.Handled);
 
             // Register Services
             Container.Register<IOrderService, OrderService>(Lifestyle.Transient);
             Container.Register<IResultService, ResultService>(Lifestyle.Transient);
-            Container.Register<IPdfReportService>(() => new PdfReportService(
-                Container.GetInstance<IResultRepository>(),
-                Container.GetInstance<IRepository<LabSystem.Core.Models.TestType>>(),
-                Container.GetInstance<IRepository<LabSystem.Core.Models.TestPanel>>(),
-                GetLetterheadPath(),
-                Container.GetInstance<IRepository<LabSystem.Core.Models.Setting>>()), Lifestyle.Transient);
+            Container.Register<IPdfReportService, PdfReportService>(Lifestyle.Transient);
             Container.Register<IBackupService, SqliteBackupService>(Lifestyle.Transient);
-            Container.Register<IBillingService>(() => new BillingService(
-                Container.GetInstance<IInvoiceRepository>(),
-                Container.GetInstance<IPaymentRepository>(),
-                Container.GetInstance<ITestOrderRepository>(),
-                Container.GetInstance<IRepository<TestPanel>>(),
-                Container.GetInstance<IRepository<DoctorCommission>>(),
-                Container.GetInstance<IRepository<Doctor>>(),
-                Container.GetInstance<IUnitOfWork>()), Lifestyle.Transient);
+            Container.Register<IBillingService, BillingService>(Lifestyle.Transient);
             Container.Register<IStaffService, StaffService>(Lifestyle.Transient);
             Container.Register<ICsvBackupService, CsvBackupService>(Lifestyle.Transient);
 
@@ -159,7 +144,6 @@ namespace LabSystem.UI
                 Container.GetInstance<IRepository<Doctor>>(),
                 Container.GetInstance<IRepository<Department>>(),
                 Container.GetInstance<IRepository<Setting>>(),
-                Container.GetInstance<IUnitOfWork>(),
                 Container.GetInstance<IPaymentRepository>(),
                 Container.GetInstance<IRepository<DoctorCommission>>(),
                 Container.GetInstance<ICsvBackupService>(),
@@ -230,32 +214,6 @@ namespace LabSystem.UI
 
             Log.CloseAndFlush();
             base.OnExit(e);
-        }
-
-        private static string GetLetterheadPath()
-        {
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            var candidates = new[]
-            {
-                Path.Combine(baseDir, "Assets", "letterhead.jpg"),
-                Path.Combine(baseDir, "Assets", "letterhead.jpeg"),
-                Path.Combine(baseDir, "Assets", "letterhead.png"),
-                Path.Combine(baseDir, "letterhead.jpg"),
-                Path.Combine(baseDir, "letterhead.jpeg"),
-                Path.Combine(baseDir, "letterhead.png"),
-            };
-
-            foreach (var candidate in candidates)
-            {
-                if (File.Exists(candidate))
-                    return candidate;
-            }
-
-            var path = FileUtilities.FindFileUpwards("Sample reports", "10 001.jpg.jpeg");
-            if (path != null && File.Exists(path))
-                return path;
-
-            return candidates[0];
         }
 
         private static void InitializeDatabase()

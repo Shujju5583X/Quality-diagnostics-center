@@ -58,31 +58,6 @@ namespace LabSystem.Tests
         }
 
         [Test]
-        public void CalculateAge_WithDob_ReturnsCorrectAge()
-        {
-            var dob = new DateTime(1990, 1, 1);
-            var relativeTo = new DateTime(2026, 6, 17);
-            int age = ReferenceRangeEvaluator.CalculateAge(dob, relativeTo);
-            Assert.That(age, Is.EqualTo(36));
-        }
-
-        [Test]
-        public void CalculateAge_BeforeBirthday_ReturnsAgeMinusOne()
-        {
-            var dob = new DateTime(1990, 12, 31);
-            var relativeTo = new DateTime(2026, 6, 17);
-            int age = ReferenceRangeEvaluator.CalculateAge(dob, relativeTo);
-            Assert.That(age, Is.EqualTo(35));
-        }
-
-        [Test]
-        public void CalculateAge_NullDob_ReturnsDefault30()
-        {
-            int age = ReferenceRangeEvaluator.CalculateAge(null, DateTime.Now);
-            Assert.That(age, Is.EqualTo(30));
-        }
-
-        [Test]
         public void FindMatchingRange_ByGender_ReturnsCorrectRange()
         {
             var range = ReferenceRangeEvaluator.FindMatchingRange(_testType, _malePatient);
@@ -240,6 +215,14 @@ namespace LabSystem.Tests
             Assert.That(range, Is.Not.Null);
             Assert.That(range.AgeMin, Is.EqualTo(0));
             Assert.That(range.AgeMax, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void FormatRange_Malaria_ReturnsNegativeString()
+        {
+            var testType = new TestType { Name = "Rapid Malaria Test" };
+            var range = ReferenceRangeEvaluator.FormatRange(testType, _malePatient);
+            Assert.That(range, Is.EqualTo("negative"));
         }
     }
 }

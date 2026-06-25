@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LabSystem.Core.Interfaces;
 using LabSystem.Core.Models;
+using LabSystem.Core.Services;
 using Serilog;
 
 namespace LabSystem.Services
@@ -17,7 +18,6 @@ namespace LabSystem.Services
         private readonly IRepository<TestPanel> _panelRepo;
         private readonly IRepository<DoctorCommission> _commissionRepo;
         private readonly IRepository<Doctor> _doctorRepo;
-        private readonly IUnitOfWork _unitOfWork;
 
         public BillingService(
             IInvoiceRepository invoiceRepo,
@@ -25,8 +25,7 @@ namespace LabSystem.Services
             ITestOrderRepository orderRepo,
             IRepository<TestPanel> panelRepo,
             IRepository<DoctorCommission> commissionRepo,
-            IRepository<Doctor> doctorRepo,
-            IUnitOfWork unitOfWork)
+            IRepository<Doctor> doctorRepo)
         {
             _invoiceRepo = invoiceRepo;
             _paymentRepo = paymentRepo;
@@ -34,7 +33,6 @@ namespace LabSystem.Services
             _panelRepo = panelRepo;
             _commissionRepo = commissionRepo;
             _doctorRepo = doctorRepo;
-            _unitOfWork = unitOfWork;
         }
 
         public async Task<Invoice> GenerateInvoiceAsync(int orderId)
@@ -50,32 +48,22 @@ namespace LabSystem.Services
 
                 // Load all test panels with their test types eager-loaded
                 var panels = await _panelRepo.GetAllAsync();
-
-                var orderedTestTypeIds = new HashSet<int>(order.TestTypes.Select(t => t.TypeId));
+                var panelMatches = PanelMatcher.MatchPanels(order.TestTypes, panels);
                 decimal total = 0;
-                var testTypesAppliedToPanels = new HashSet<int>();
 
-                // Sort panels by number of tests descending to match larger panels first
-                foreach (var panel in panels.OrderByDescending(p => p.TestTypes.Count))
+                foreach (var match in panelMatches)
                 {
-                    var panelTestTypeIds = panel.TestTypes.Select(t => t.TypeId).ToList();
-                    if (panelTestTypeIds.Count > 0 && panelTestTypeIds.All(id => orderedTestTypeIds.Contains(id) && !testTypesAppliedToPanels.Contains(id)))
-                    {
-                        total += panel.Price;
-                        decimal distributedCost = panel.Price / panelTestTypeIds.Count;
-                        
-                        foreach (var id in panelTestTypeIds)
-                        {
-                            testTypesAppliedToPanels.Add(id);
-                            await _orderRepo.UpdateOrderTestPricingAsync(orderId, id, panel.PanelId, distributedCost);
-                        }
-                    }
+                    total += match.Price;
+                    decimal distributedCost = match.Price / match.MatchedTypeIds.Count;
+                    foreach (var id in match.MatchedTypeIds)
+                        await _orderRepo.UpdateOrderTestPricingAsync(orderId, id, match.Panel.PanelId, distributedCost);
                 }
 
                 // Add remaining individual test type prices
+                var appliedIds = new HashSet<int>(panelMatches.SelectMany(m => m.MatchedTypeIds));
                 foreach (var testType in order.TestTypes)
                 {
-                    if (!testTypesAppliedToPanels.Contains(testType.TypeId))
+                    if (!appliedIds.Contains(testType.TypeId))
                     {
                         total += testType.Price;
                         await _orderRepo.UpdateOrderTestPricingAsync(orderId, testType.TypeId, null, testType.Price);

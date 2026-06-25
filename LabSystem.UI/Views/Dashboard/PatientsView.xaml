@@ -47,7 +47,7 @@
                         <DataGridTextColumn Header="UHID" Binding="{Binding Uhid}" Width="Auto" />
                         <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*" />
                         <DataGridTextColumn Header="Gender" Binding="{Binding Gender, TargetNullValue='Male'}" Width="Auto" />
-                        <DataGridTextColumn Header="Age" Binding="{Binding Age}" Width="Auto" />
+                        <DataGridTextColumn Header="Age" Binding="{Binding AgeDisplay}" Width="Auto" />
                         <DataGridTextColumn Header="Phone" Binding="{Binding ContactPhone}" Width="Auto" />
                         <DataGridTemplateColumn Header="Action" Width="Auto">
                             <DataGridTemplateColumn.CellTemplate>
@@ -94,6 +94,11 @@
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                              Margin="0 0 0 20" />
 
+                    <ComboBox materialDesign:HintAssist.Hint="Title *"
+                              ItemsSource="{Binding Titles}"
+                              SelectedValue="{Binding NewPatientTitle}"
+                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 20" />
+
                     <ComboBox materialDesign:HintAssist.Hint="Gender"
                               SelectedValue="{Binding NewPatientGender}" SelectedValuePath="Content"
                               Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 20">
@@ -103,10 +108,30 @@
                         <ComboBoxItem Content="Others" />
                     </ComboBox>
 
-                    <TextBox materialDesign:HintAssist.Hint="Age *"
-                             Text="{Binding NewPatientAge, UpdateSourceTrigger=PropertyChanged}"
+                    <TextBox materialDesign:HintAssist.Hint="Age (Years) *"
+                             Text="{Binding NewPatientAgeYears, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding IsSimpleAgeVisible, Converter={StaticResource BoolToVis}}"
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                              Margin="0 0 0 20" />
+
+                    <Grid Visibility="{Binding IsDetailedAgeVisible, Converter={StaticResource BoolToVis}}" Margin="0 0 0 20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Years"
+                                 Text="{Binding NewPatientAgeYears, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Months"
+                                 Text="{Binding NewPatientAgeMonths, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+                        <TextBox Grid.Column="4" materialDesign:HintAssist.Hint="Days"
+                                 Text="{Binding NewPatientAgeDays, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+                    </Grid>
 
                     <TextBox materialDesign:HintAssist.Hint="Contact Phone"
                              Text="{Binding NewPatientPhone, UpdateSourceTrigger=PropertyChanged}"

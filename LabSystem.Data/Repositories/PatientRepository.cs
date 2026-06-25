@@ -13,13 +13,6 @@ namespace LabSystem.Data.Repositories
     {
         public PatientRepository(LabDbContext context) : base(context) { }
 
-        public async Task<IEnumerable<Patient>> SearchByNameAsync(string query, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (string.IsNullOrWhiteSpace(query))
-                return await GetAllAsync(cancellationToken);
-            return await _dbSet.Where(p => p.FullName.Contains(query)).ToListAsync(cancellationToken);
-        }
-
         public async Task<IEnumerable<Patient>> SearchPatientsAsync(string query, DateTime? startDate, DateTime? endDate, int page, int pageSize, CancellationToken cancellationToken = default(CancellationToken))
         {
             var q = _dbSet.AsNoTracking().AsQueryable();

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Serilog;
 using LabSystem.Core;
 
@@ -111,6 +110,34 @@ namespace LabSystem.Data
                 UPDATE TestPanels SET Description = 'Liver Function Test including SGOT, SGPT, ALP, and Bilirubin.' WHERE Name = 'LFT Panel';
                 UPDATE TestPanels SET Description = 'Serum Electrolytes including Sodium, Potassium, and Chloride.' WHERE Name = 'Electrolyte Panel';
                 UPDATE TestTypes SET SampleType = 'Blood' WHERE Category IN ('SEROLOGY', 'IMMUNOASSAY', 'ENDOCRINOLOGY', 'BIOCHEMISTRY');
+            "),
+            new Migration(11, "Add Patient Title and Detailed Age Columns", @"
+                ALTER TABLE Patients ADD COLUMN Title TEXT;
+                ALTER TABLE Patients ADD COLUMN AgeYears INTEGER;
+                ALTER TABLE Patients ADD COLUMN AgeMonths INTEGER;
+                ALTER TABLE Patients ADD COLUMN AgeDays INTEGER;
+
+                -- Migrate existing patients' DOB to AgeYears using julianday to calculate age in years
+                UPDATE Patients 
+                SET AgeYears = CAST((julianday('now') - julianday(DateOfBirth)) / 365.25 AS INTEGER)
+                WHERE DateOfBirth IS NOT NULL;
+            "),
+            new Migration(12, "Add Rapid Malaria Test type", @"
+                INSERT OR IGNORE INTO Departments (Name) VALUES ('SEROLOGY');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'Rapid Malaria Test', '', NULL, NULL, 1, 'SEROLOGY', 'Rapid Malaria Test', 'Immunochromatography', 'Negative: pv-positive/pf-positive/pv pf- positive not detected.\nPositive: Plasmodium vivax (pv) or Plasmodium falciparum (pf) antigen detected.', 1, 200.00, 'Blood', 3, DepartmentId
+                FROM Departments WHERE Name = 'SEROLOGY'
+                AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Rapid Malaria Test');
+            "),
+            new Migration(13, "Add Widal Test panel and link test types", @"
+                INSERT OR IGNORE INTO TestPanels (Name, Description, Price) VALUES
+                ('Widal Test', 'Widal test package containing all Widal-related agglutination tests.', 400.00);
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'Widal Test' 
+                AND t.Name IN ('S. Typhi O Agglutination', 'S. Typhi H Agglutination', 'S. Paratyphi A(H) Agglutination', 'S. Paratyphi B(H) Agglutination');
             ")
         };
 
@@ -148,81 +175,26 @@ namespace LabSystem.Data
             }
         }
 
-        private static string LoadFromResource(string suffix)
-        {
-            var assemblies = new[] { 
-                Assembly.GetExecutingAssembly(), 
-                Assembly.GetEntryAssembly(),
-                Assembly.GetCallingAssembly()
-            }.Where(a => a != null).Distinct();
-
-            foreach (var assembly in assemblies)
-            {
-                try
-                {
-                    var resourceName = assembly.GetManifestResourceNames()
-                        .FirstOrDefault(name => name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
-                    if (resourceName != null)
-                    {
-                        using (var stream = assembly.GetManifestResourceStream(resourceName))
-                        {
-                            if (stream != null)
-                            {
-                                using (var reader = new StreamReader(stream))
-                                {
-                                    return reader.ReadToEnd();
-                                }
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                    // Ignore errors during assembly inspection
-                }
-            }
-            return null;
-        }
-
         private static void InitializeSchema(LabDbContext db)
         {
-            string sql = LoadFromResource("V1__init.sql");
-            string seedSql = LoadFromResource("seed.sql");
-
-            if (string.IsNullOrEmpty(sql))
+            var scriptPath = FileUtilities.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
+            if (scriptPath != null && File.Exists(scriptPath))
             {
-                var scriptPath = FileUtilities.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
-                if (scriptPath != null && File.Exists(scriptPath))
-                {
-                    sql = File.ReadAllText(scriptPath);
-                    Log.Information("Loaded schema from: {Path}", scriptPath);
-                }
-            }
-
-            if (string.IsNullOrEmpty(seedSql))
-            {
-                var seedPath = FileUtilities.FindFileUpwards("", "seed.sql");
-                if (seedPath != null && File.Exists(seedPath))
-                {
-                    seedSql = File.ReadAllText(seedPath);
-                    Log.Information("Loaded seed data from: {Path}", seedPath);
-                }
-            }
-
-            if (!string.IsNullOrEmpty(sql))
-            {
+                var sql = File.ReadAllText(scriptPath);
                 db.Database.ExecuteSqlCommand(sql);
-                Log.Information("Database schema initialized.");
+                Log.Information("Database schema initialized from: {Path}", scriptPath);
             }
             else
             {
                 Log.Warning("Could not find V1__init.sql schema file.");
             }
 
-            if (!string.IsNullOrEmpty(seedSql))
+            var seedPath = FileUtilities.FindFileUpwards("", "seed.sql");
+            if (seedPath != null && File.Exists(seedPath))
             {
+                var seedSql = File.ReadAllText(seedPath);
                 db.Database.ExecuteSqlCommand(seedSql);
-                Log.Information("Seed data applied.");
+                Log.Information("Seed data applied from: {Path}", seedPath);
             }
         }
 

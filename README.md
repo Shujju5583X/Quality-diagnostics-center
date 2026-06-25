@@ -79,39 +79,32 @@ graph TD
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
-*   **Language & Runtime:** C# 10 / .NET 6.0
+*   **Language & Runtime:** C# 5 / .NET Framework 4.5.1
 *   **User Interface:** WPF (Windows Presentation Foundation) with MaterialDesignThemes
-*   **Database & ORM:** SQLite and Entity Framework Core
+*   **Database & ORM:** SQLite and Entity Framework 6
 *   **Spreadsheet Engine:** ClosedXML
 *   **PDF Engine:** PDFsharp & MigraDoc
-*   **Dependency Injection:** Microsoft.Extensions.DependencyInjection
+*   **Dependency Injection:** SimpleInjector
 *   **Logging:** Serilog with rolling daily file sinks
 *   **Testing:** NUnit and Moq
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-1.  **.NET SDK 6.0 or higher**
-2.  **Powershell 5.1+** (for setup automation).
+1.  **Visual Studio 2019+** with the **.NET desktop development** workload
+2.  **.NET Framework 4.5.1 targeting pack** (included with Visual Studio)
 
 ### Setup and Database Bootstrapping
-The application automatically provisions a local SQLite database (`lab.db`) on startup if it is not found in the output directory, applying migration scripts and populating seed values.
+The application automatically provisions a local SQLite database (`lab.db`) on first launch if it is not found, applying migration scripts and populating seed values.
 
-### Building and Running the Application
-To restore packages, build the solution, and run the WPF application using the dotnet CLI:
+### Building and Running
+Open `LabSystem.sln` in Visual Studio and press **F5** to run, or build from the command line:
 ```bash
-# Restore package dependencies
-dotnet restore
-
-# Build the solution
-dotnet build
-
-# Launch the WPF desktop application
-dotnet run --project LabSystem.UI
+msbuild LabSystem.sln /p:Configuration=Release
 ```
 
 ---

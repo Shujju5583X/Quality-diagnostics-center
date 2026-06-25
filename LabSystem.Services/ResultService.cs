@@ -33,7 +33,14 @@ namespace LabSystem.Services
             if (testType != null)
             {
                 var patient = order != null ? order.Patient : null;
-                result.IsAbnormal = EvaluateIsAbnormal(result.Value, testType, patient);
+                if (testType.Name != null && testType.Name.Contains("Malaria"))
+                {
+                    result.IsAbnormal = !string.Equals(result.ValueText, "negative", StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    result.IsAbnormal = ReferenceRangeEvaluator.IsAbnormal(result.Value, testType, patient);
+                }
             }
 
             // Validate that the test type belongs to this order
@@ -81,7 +88,14 @@ namespace LabSystem.Services
 
             var order = await _orderRepo.GetByIdAsync(result.OrderId, cancellationToken);
             var patient = order != null ? order.Patient : null;
-            result.IsAbnormal = EvaluateIsAbnormal(result.Value, testType, patient);
+            if (testType != null && testType.Name != null && testType.Name.Contains("Malaria"))
+            {
+                result.IsAbnormal = !string.Equals(result.ValueText, "negative", StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                result.IsAbnormal = ReferenceRangeEvaluator.IsAbnormal(result.Value, testType, patient);
+            }
 
             await _resultRepo.UpdateAsync(result, cancellationToken);
         }
@@ -97,11 +111,6 @@ namespace LabSystem.Services
 
             await _resultRepo.DeleteAsync(resultId, cancellationToken);
             Serilog.Log.Information("Deleted result {ResultId} for order {OrderId}, reason: {Reason}", resultId, result.OrderId, reason);
-        }
-
-        private bool EvaluateIsAbnormal(double? value, TestType testType, Patient patient)
-        {
-            return ReferenceRangeEvaluator.IsAbnormal(value, testType, patient);
         }
     }
 }

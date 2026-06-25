@@ -29,7 +29,6 @@ namespace LabSystem.UI.ViewModels
         private readonly IRepository<Doctor> _doctorRepo;
         private readonly IRepository<Department> _departmentRepo;
         private readonly IRepository<Setting> _settingRepo;
-        private readonly IUnitOfWork _unitOfWork;
         private readonly IPaymentRepository _paymentRepo;
         private readonly IRepository<DoctorCommission> _commissionRepo;
         private readonly IStaffService _staffService;
@@ -47,7 +46,10 @@ namespace LabSystem.UI.ViewModels
 
         // Patient tab fields
         private string _newPatientName;
-        private int _newPatientAge;
+        private string _newPatientTitle = "Select Title";
+        private string _newPatientAgeYears;
+        private string _newPatientAgeMonths;
+        private string _newPatientAgeDays;
         private string _newPatientPhone;
         private string _newPatientEmail;
         private string _newPatientGender = "Male";
@@ -119,15 +121,31 @@ namespace LabSystem.UI.ViewModels
             {
                 _isSidebarPinned = value;
                 OnPropertyChanged();
-                try
+                // ponytail: fire-and-forget — setting persistence is non-critical
+                var _ = SaveSidebarPinStateAsync(value);
+            }
+        }
+
+        private async Task SaveSidebarPinStateAsync(bool pinned)
+        {
+            try
+            {
+                var settingsList = (await _settingRepo.GetAllAsync()).ToList();
+                var setting = settingsList.FirstOrDefault(s => s.Key == "sidebar_pinned");
+                if (setting == null)
                 {
-                    var path = System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "sidebar_pinned.txt");
-                    System.IO.File.WriteAllText(path, value.ToString());
+                    setting = new Setting { Key = "sidebar_pinned", Value = pinned.ToString() };
+                    await _settingRepo.AddAsync(setting);
                 }
-                catch (Exception ex)
+                else
                 {
-                    Log.Error(ex, "Failed to save sidebar pin state.");
+                    setting.Value = pinned.ToString();
+                    await _settingRepo.UpdateAsync(setting);
                 }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to save sidebar pin state.");
             }
         }
 
@@ -301,7 +319,7 @@ namespace LabSystem.UI.ViewModels
             {
                 _selectedOrder = value;
                 OnPropertyChanged();
-                var unused = LoadResultsForSelectedOrderSafeAsync();
+                var _ = LoadResultsForSelectedOrderAsync();
             }
         }
 
@@ -494,7 +512,6 @@ namespace LabSystem.UI.ViewModels
             IRepository<Doctor> doctorRepo,
             IRepository<Department> departmentRepo,
             IRepository<Setting> settingRepo,
-            IUnitOfWork unitOfWork,
             IPaymentRepository paymentRepo,
             IRepository<DoctorCommission> commissionRepo,
             ICsvBackupService csvBackupService,
@@ -518,7 +535,6 @@ namespace LabSystem.UI.ViewModels
             _doctorRepo = doctorRepo;
             _departmentRepo = departmentRepo;
             _settingRepo = settingRepo;
-            _unitOfWork = unitOfWork;
             _paymentRepo = paymentRepo;
             _commissionRepo = commissionRepo;
             _csvBackupService = csvBackupService;
@@ -540,19 +556,7 @@ namespace LabSystem.UI.ViewModels
             SettingsCollection = new ObservableCollection<Setting>();
             ReferredByHistory = new ObservableCollection<string>();
 
-            // Load sidebar pin state
-            try
-            {
-                var path = System.IO.Path.Combine(FileUtilities.GetWritableDataDirectory(), "sidebar_pinned.txt");
-                if (System.IO.File.Exists(path))
-                {
-                    bool.TryParse(System.IO.File.ReadAllText(path), out _isSidebarPinned);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load sidebar pin state.");
-            }
+            // Load sidebar pin state — moved to LoadDataAsync()
 
             SaveResultsCommand = new AsyncRelayCommand(async o => await ExecuteSaveResultsAsync(o));
             GenerateReportCommand = new RelayCommand(ExecuteGenerateReport);
@@ -666,6 +670,11 @@ namespace LabSystem.UI.ViewModels
                 var lastBackupSetting = settingsList.FirstOrDefault(s => s.Key == "last_backup");
                 var lastBackup = lastBackupSetting != null ? lastBackupSetting.Value : null;
                 LastBackupTime = string.IsNullOrEmpty(lastBackup) ? "No backup has been created yet." : lastBackup;
+
+                // Load sidebar pin state
+                var sidebarSetting = settingsList.FirstOrDefault(s => s.Key == "sidebar_pinned");
+                if (sidebarSetting != null)
+                    bool.TryParse(sidebarSetting.Value, out _isSidebarPinned);
 
                 // Load Settings Collection for management UI
                 SettingsCollection.Clear();

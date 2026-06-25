@@ -309,7 +309,14 @@ namespace LabSystem.UI.ViewModels
                     ri.Options.Add(new ResultOption { Display = "AB Rh Negative", Value = "8" });
                     break;
                 case ResultInputType.Categorical:
-                    if (ri.TestName.Contains("HBsAg") || ri.TestName.Contains("HCV") || ri.TestName.Contains("VDRL"))
+                    if (ri.TestName.Contains("Malaria"))
+                    {
+                        ri.Options.Add(new ResultOption { Display = "pv-positive", Value = "pv-positive" });
+                        ri.Options.Add(new ResultOption { Display = "pf-positive", Value = "pf-positive" });
+                        ri.Options.Add(new ResultOption { Display = "pv pf- positive", Value = "pv pf- positive" });
+                        ri.Options.Add(new ResultOption { Display = "negative", Value = "negative" });
+                    }
+                    else if (ri.TestName.Contains("HBsAg") || ri.TestName.Contains("HCV") || ri.TestName.Contains("VDRL"))
                     {
                         ri.Options.Add(new ResultOption { Display = "Negative", Value = "0" });
                         ri.Options.Add(new ResultOption { Display = "Positive", Value = "1" });
@@ -336,18 +343,6 @@ namespace LabSystem.UI.ViewModels
                 ri.SelectedOption = ri.Options.FirstOrDefault(o =>
                     o.Value == ri.ValueText ||
                     (double.TryParse(o.Value, out parsedOVal) && double.TryParse(ri.ValueText, out parsedRVal) && Math.Abs(parsedOVal - parsedRVal) < 0.001));
-            }
-        }
-
-        private async Task LoadResultsForSelectedOrderSafeAsync()
-        {
-            try
-            {
-                await LoadResultsForSelectedOrderAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to load results for selected order.");
             }
         }
     }

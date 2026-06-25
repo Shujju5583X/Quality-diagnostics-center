@@ -28,24 +28,6 @@ namespace LabSystem.Data.Repositories
                          .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<TestOrder>> GetOrdersForPatientAsync(int patientId, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return await _dbSet.AsNoTracking()
-                         .Include(o => o.Patient)
-                         .Include(o => o.TestTypes)
-                         .Where(o => o.PatientId == patientId)
-                         .ToListAsync(cancellationToken);
-        }
-
-        public async Task<IEnumerable<TestOrder>> GetByStatusAsync(string status, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return await _dbSet.AsNoTracking()
-                         .Include(o => o.Patient)
-                         .Include(o => o.TestTypes)
-                         .Where(o => o.Status == status)
-                         .ToListAsync(cancellationToken);
-        }
-
         public async Task AddOrderWithTestTypesAsync(TestOrder order, List<int> testTypeIds, CancellationToken cancellationToken = default(CancellationToken))
         {
             foreach (var id in testTypeIds)
@@ -93,6 +75,24 @@ namespace LabSystem.Data.Repositories
         public async Task<int> GetCountAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.CountAsync(cancellationToken);
+        }
+
+        public async Task<int> GetDailySequenceNumberAsync(int orderId, System.DateTime orderedAt, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var dayStart = orderedAt.Date;
+            var dayEnd = dayStart.AddDays(1);
+
+            if (orderId == 0)
+            {
+                int count = await _dbSet.AsNoTracking()
+                    .Where(o => o.OrderedAt >= dayStart && o.OrderedAt < dayEnd)
+                    .CountAsync(cancellationToken);
+                return count + 1;
+            }
+
+            return await _dbSet.AsNoTracking()
+                .Where(o => o.OrderedAt >= dayStart && o.OrderedAt < dayEnd && o.OrderId <= orderId)
+                .CountAsync(cancellationToken);
         }
     }
 }

@@ -21,7 +21,11 @@ namespace LabSystem.Tests
                     ContactEmail TEXT,
                     CreatedAt DATETIME NOT NULL,
                     Gender TEXT,
-                    Uhid TEXT UNIQUE
+                    Uhid TEXT UNIQUE,
+                    Title TEXT,
+                    AgeYears INTEGER,
+                    AgeMonths INTEGER,
+                    AgeDays INTEGER
                 );
 
                 CREATE TABLE IF NOT EXISTS Departments (

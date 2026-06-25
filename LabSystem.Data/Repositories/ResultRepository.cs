@@ -21,16 +21,6 @@ namespace LabSystem.Data.Repositories
                          .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Result>> GetPatientHistoryAsync(int patientId, int testTypeId)
-        {
-            return await _dbSet.AsNoTracking()
-                         .Include(r => r.Order)
-                         .Include(r => r.TestType)
-                         .Where(r => r.Order.PatientId == patientId && r.TypeId == testTypeId && r.Value != null)
-                         .OrderBy(r => r.RecordedAt)
-                         .ToListAsync();
-        }
-
         public async Task<int> CountAbnormalAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return await _dbSet.CountAsync(r => r.IsAbnormal, cancellationToken);

@@ -37,7 +37,7 @@
                             <TextBlock>
                                 <Run Text="{Binding FullName, Mode=OneWay}" FontWeight="Bold" />
                                 <Run Text=" (Age: " Foreground="{StaticResource TextSecondaryBrush}" />
-                                <Run Text="{Binding Age, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <Run Text="{Binding AgeDisplay, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}" />
                                 <Run Text=", Phone: " Foreground="{StaticResource TextSecondaryBrush}" />
                                 <Run Text="{Binding ContactPhone, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}" />
                                 <Run Text=")" Foreground="{StaticResource TextSecondaryBrush}" />

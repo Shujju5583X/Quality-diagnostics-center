@@ -311,12 +311,6 @@ namespace LabSystem.Services
                 // Save completed Excel Workbook
                 workbook.SaveAs(filePath);
             }
-
-            // Force immediate memory reclaim after heavy Excel generation
-            // Critical on 4GB RAM systems where ClosedXML can spike to 200-400MB
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
         }
 
         // ==========================================

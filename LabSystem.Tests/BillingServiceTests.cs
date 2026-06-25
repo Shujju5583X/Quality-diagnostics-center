@@ -35,8 +35,7 @@ namespace LabSystem.Tests
             var panelRepo = new TestPanelRepository(_context);
             var commissionRepo = new Repository<DoctorCommission>(_context);
             var doctorRepo = new Repository<Doctor>(_context);
-            var unitOfWork = new UnitOfWork(_context);
-            _service = new BillingService(invoiceRepo, paymentRepo, orderRepo, panelRepo, commissionRepo, doctorRepo, unitOfWork);
+            _service = new BillingService(invoiceRepo, paymentRepo, orderRepo, panelRepo, commissionRepo, doctorRepo);
         }
 
         [TearDown]

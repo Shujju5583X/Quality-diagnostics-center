@@ -132,22 +132,7 @@ namespace LabSystem.UI.ViewModels
                 var entityToUpdate = await _testTypeRepo.GetByIdAsync(SelectedCatalogTest.TypeId);
                 if (entityToUpdate == null) return;
 
-                int? targetDeptId = null;
-                string categoryName = CatalogTestCategory != null ? CatalogTestCategory.Trim() : null;
-                if (!string.IsNullOrWhiteSpace(categoryName))
-                {
-                    var matchingDept = Departments.FirstOrDefault(d => string.Equals(d.Name, categoryName, StringComparison.OrdinalIgnoreCase));
-                    if (matchingDept != null)
-                    {
-                        targetDeptId = matchingDept.DepartmentId;
-                        CatalogTestCategory = matchingDept.Name;
-                    }
-                }
-                else if (SelectedDepartment != null)
-                {
-                    targetDeptId = SelectedDepartment.DepartmentId;
-                    CatalogTestCategory = SelectedDepartment.Name;
-                }
+                var targetDeptId = ResolveTargetDepartmentId();
 
                 entityToUpdate.Name = CatalogTestName;
                 entityToUpdate.Unit = CatalogTestUnit;
@@ -199,22 +184,7 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
-                int? targetDeptId = null;
-                string categoryName = CatalogTestCategory != null ? CatalogTestCategory.Trim() : null;
-                if (!string.IsNullOrWhiteSpace(categoryName))
-                {
-                    var matchingDept = Departments.FirstOrDefault(d => string.Equals(d.Name, categoryName, StringComparison.OrdinalIgnoreCase));
-                    if (matchingDept != null)
-                    {
-                        targetDeptId = matchingDept.DepartmentId;
-                        CatalogTestCategory = matchingDept.Name;
-                    }
-                }
-                else if (SelectedDepartment != null)
-                {
-                    targetDeptId = SelectedDepartment.DepartmentId;
-                    CatalogTestCategory = SelectedDepartment.Name;
-                }
+                var targetDeptId = ResolveTargetDepartmentId();
 
                 var newTest = new TestType
                 {
@@ -294,6 +264,26 @@ namespace LabSystem.UI.ViewModels
             SelectedCatalogTest = selectTestTypeId.HasValue
                 ? CatalogTestTypes.FirstOrDefault(t => t.TypeId == selectTestTypeId.Value)
                 : null;
+        }
+
+        private int? ResolveTargetDepartmentId()
+        {
+            string categoryName = CatalogTestCategory != null ? CatalogTestCategory.Trim() : null;
+            if (!string.IsNullOrWhiteSpace(categoryName))
+            {
+                var matchingDept = Departments.FirstOrDefault(d => string.Equals(d.Name, categoryName, StringComparison.OrdinalIgnoreCase));
+                if (matchingDept != null)
+                {
+                    CatalogTestCategory = matchingDept.Name;
+                    return matchingDept.DepartmentId;
+                }
+            }
+            else if (SelectedDepartment != null)
+            {
+                CatalogTestCategory = SelectedDepartment.Name;
+                return SelectedDepartment.DepartmentId;
+            }
+            return null;
         }
     }
 }

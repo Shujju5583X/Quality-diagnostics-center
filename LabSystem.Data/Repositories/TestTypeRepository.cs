@@ -25,37 +25,5 @@ namespace LabSystem.Data.Repositories
                          .Include(t => t.ReferenceRanges)
                          .ToListAsync(cancellationToken);
         }
-
-        public async Task<IEnumerable<TestType>> GetActiveAsync(CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return await _dbSet.AsNoTracking()
-                         .Include(t => t.ReferenceRanges)
-                         .Where(t => t.IsActive)
-                         .ToListAsync(cancellationToken);
-        }
-
-        public async Task<IEnumerable<TestType>> GetByCategoryAsync(string category, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (string.IsNullOrWhiteSpace(category))
-                return await GetAllAsync(cancellationToken);
-
-            return await _dbSet.AsNoTracking()
-                         .Include(t => t.ReferenceRanges)
-                         .Where(t => t.Category == category)
-                         .ToListAsync(cancellationToken);
-        }
-
-        public async Task<IEnumerable<TestType>> GetByGroupNameAsync(string groupName, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            if (string.IsNullOrWhiteSpace(groupName))
-                return await GetAllAsync(cancellationToken);
-
-            return await _dbSet.AsNoTracking()
-                         .Include(t => t.ReferenceRanges)
-                         .Where(t => t.GroupName == groupName)
-                         .OrderBy(t => t.SortOrder)
-                         .ThenBy(t => t.Name)
-                         .ToListAsync(cancellationToken);
-        }
     }
 }

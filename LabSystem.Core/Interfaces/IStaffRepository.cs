@@ -7,6 +7,5 @@ namespace LabSystem.Core.Interfaces
 {
     public interface IStaffRepository : IRepository<Staff>
     {
-        Task<Staff> GetByFullNameAsync(string fullName, CancellationToken cancellationToken = default(CancellationToken));
     }
 }
