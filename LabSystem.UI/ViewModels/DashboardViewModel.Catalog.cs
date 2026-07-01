@@ -93,6 +93,12 @@ namespace LabSystem.UI.ViewModels
             set { _catalogTestMethod = value; OnPropertyChanged(); }
         }
 
+        public string CatalogTestInstrument
+        {
+            get { return _catalogTestInstrument; }
+            set { _catalogTestInstrument = value; OnPropertyChanged(); }
+        }
+
         public string CatalogTestInterpretation
         {
             get { return _catalogTestInterpretation; }
@@ -112,6 +118,34 @@ namespace LabSystem.UI.ViewModels
             set { _catalogTestPrice = value; OnPropertyChanged(); }
         }
 
+        private bool _catalogHasBesideRefRanges;
+        public bool CatalogHasBesideRefRanges
+        {
+            get { return _catalogHasBesideRefRanges; }
+            set { _catalogHasBesideRefRanges = value; OnPropertyChanged(); }
+        }
+
+        private bool _catalogHasTextRefRanges;
+        public bool CatalogHasTextRefRanges
+        {
+            get { return _catalogHasTextRefRanges; }
+            set { _catalogHasTextRefRanges = value; OnPropertyChanged(); }
+        }
+
+        private string _catalogTextReferenceString;
+        public string CatalogTextReferenceString
+        {
+            get { return _catalogTextReferenceString; }
+            set { _catalogTextReferenceString = value; OnPropertyChanged(); }
+        }
+
+        private string _catalogTextReferenceNormalValue;
+        public string CatalogTextReferenceNormalValue
+        {
+            get { return _catalogTextReferenceNormalValue; }
+            set { _catalogTextReferenceNormalValue = value; OnPropertyChanged(); }
+        }
+
         private void PopulateCatalogEditFields()
         {
             if (SelectedCatalogTest == null)
@@ -124,9 +158,14 @@ namespace LabSystem.UI.ViewModels
                 CatalogTestCategory = string.Empty;
                 CatalogTestGroupName = string.Empty;
                 CatalogTestMethod = string.Empty;
+                CatalogTestInstrument = string.Empty;
                 CatalogTestInterpretation = string.Empty;
                 CatalogTestSortOrder = 0;
                 CatalogTestPrice = 0;
+                CatalogHasBesideRefRanges = false;
+                CatalogHasTextRefRanges = false;
+                CatalogTextReferenceString = string.Empty;
+                CatalogTextReferenceNormalValue = string.Empty;
                 CatalogTestDepartment = SelectedDepartment;
                 return;
             }
@@ -139,9 +178,14 @@ namespace LabSystem.UI.ViewModels
             CatalogTestCategory = SelectedCatalogTest.Category;
             CatalogTestGroupName = SelectedCatalogTest.GroupName;
             CatalogTestMethod = SelectedCatalogTest.Method;
+            CatalogTestInstrument = SelectedCatalogTest.Instrument;
             CatalogTestInterpretation = SelectedCatalogTest.Interpretation;
             CatalogTestSortOrder = SelectedCatalogTest.SortOrder;
             CatalogTestPrice = SelectedCatalogTest.Price;
+            CatalogHasBesideRefRanges = SelectedCatalogTest.HasBesideRefRanges;
+            CatalogHasTextRefRanges = SelectedCatalogTest.HasTextRefRanges;
+            CatalogTextReferenceString = SelectedCatalogTest.TextReferenceString;
+            CatalogTextReferenceNormalValue = SelectedCatalogTest.TextReferenceNormalValue;
             CatalogTestDepartment = Departments.FirstOrDefault(d => d.DepartmentId == SelectedCatalogTest.DepartmentId);
         }
 
@@ -169,9 +213,14 @@ namespace LabSystem.UI.ViewModels
                 entityToUpdate.Category = CatalogTestCategory;
                 entityToUpdate.GroupName = CatalogTestGroupName;
                 entityToUpdate.Method = CatalogTestMethod;
+                entityToUpdate.Instrument = CatalogTestInstrument;
                 entityToUpdate.Interpretation = CatalogTestInterpretation;
                 entityToUpdate.SortOrder = CatalogTestSortOrder;
                 entityToUpdate.Price = CatalogTestPrice;
+                entityToUpdate.HasBesideRefRanges = CatalogHasBesideRefRanges;
+                entityToUpdate.HasTextRefRanges = CatalogHasTextRefRanges;
+                entityToUpdate.TextReferenceString = CatalogTextReferenceString;
+                entityToUpdate.TextReferenceNormalValue = CatalogTextReferenceNormalValue;
                 entityToUpdate.DepartmentId = targetDeptId;
 
                 await _testTypeRepo.UpdateAsync(entityToUpdate);
@@ -184,9 +233,14 @@ namespace LabSystem.UI.ViewModels
                 SelectedCatalogTest.Category = CatalogTestCategory;
                 SelectedCatalogTest.GroupName = CatalogTestGroupName;
                 SelectedCatalogTest.Method = CatalogTestMethod;
+                SelectedCatalogTest.Instrument = CatalogTestInstrument;
                 SelectedCatalogTest.Interpretation = CatalogTestInterpretation;
                 SelectedCatalogTest.SortOrder = CatalogTestSortOrder;
                 SelectedCatalogTest.Price = CatalogTestPrice;
+                SelectedCatalogTest.HasBesideRefRanges = CatalogHasBesideRefRanges;
+                SelectedCatalogTest.HasTextRefRanges = CatalogHasTextRefRanges;
+                SelectedCatalogTest.TextReferenceString = CatalogTextReferenceString;
+                SelectedCatalogTest.TextReferenceNormalValue = CatalogTextReferenceNormalValue;
                 SelectedCatalogTest.DepartmentId = targetDeptId;
 
                 Log.Information("Admin updated TestType {TypeId}: {TestName}", SelectedCatalogTest.TypeId, CatalogTestName);
@@ -223,9 +277,14 @@ namespace LabSystem.UI.ViewModels
                     Category = CatalogTestCategory,
                     GroupName = CatalogTestGroupName,
                     Method = CatalogTestMethod,
+                    Instrument = CatalogTestInstrument,
                     Interpretation = CatalogTestInterpretation,
                     SortOrder = CatalogTestSortOrder,
                     Price = CatalogTestPrice,
+                    HasBesideRefRanges = CatalogHasBesideRefRanges,
+                    HasTextRefRanges = CatalogHasTextRefRanges,
+                    TextReferenceString = CatalogTextReferenceString,
+                    TextReferenceNormalValue = CatalogTextReferenceNormalValue,
                     DepartmentId = targetDeptId
                 };
 

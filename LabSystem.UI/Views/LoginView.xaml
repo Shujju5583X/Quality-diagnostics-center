@@ -75,7 +75,7 @@
                     <Button Content="Exit Application"
                             Click="Exit_Click"
                             Style="{StaticResource MaterialDesignFlatButton}"
-                            Foreground="{DynamicResource MaterialDesignBodyLight}"
+                            Foreground="{StaticResource TextSecondaryBrush}"
                             Margin="0,8,0,0"
                             Height="36" />
                 </StackPanel>

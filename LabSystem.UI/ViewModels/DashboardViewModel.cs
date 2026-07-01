@@ -109,6 +109,7 @@ namespace LabSystem.UI.ViewModels
         private string _catalogTestCategory;
         private string _catalogTestGroupName;
         private string _catalogTestMethod;
+        private string _catalogTestInstrument;
         private string _catalogTestInterpretation;
         private int _catalogTestSortOrder;
 

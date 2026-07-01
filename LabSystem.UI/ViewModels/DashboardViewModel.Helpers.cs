@@ -58,6 +58,7 @@ namespace LabSystem.UI.ViewModels
         public double? HighMale { get; set; }
         public double? LowFemale { get; set; }
         public double? HighFemale { get; set; }
+        public bool HasTextRefRanges { get; set; }
         public bool HasGenderSpecificRange
         {
             get { return LowMale.HasValue || HighMale.HasValue || LowFemale.HasValue || HighFemale.HasValue; }
@@ -79,9 +80,9 @@ namespace LabSystem.UI.ViewModels
 
         private string FormatRange(double? low, double? high)
         {
-            if (low.HasValue && high.HasValue) return low.Value + " - " + high.Value;
-            if (low.HasValue) return ">= " + low.Value;
-            if (high.HasValue) return "< " + high.Value;
+            if (low.HasValue && high.HasValue) return LabSystem.Core.Services.ReferenceRangeEvaluator.FormatValue(low.Value) + " - " + LabSystem.Core.Services.ReferenceRangeEvaluator.FormatValue(high.Value);
+            if (low.HasValue) return ">= " + LabSystem.Core.Services.ReferenceRangeEvaluator.FormatValue(low.Value);
+            if (high.HasValue) return "< " + LabSystem.Core.Services.ReferenceRangeEvaluator.FormatValue(high.Value);
             return "N/A";
         }
 

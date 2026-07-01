@@ -48,7 +48,7 @@
                                             <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding LockoutEnd, Converter={StaticResource LockoutStatusConverter}}" Value="Locked">
-                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

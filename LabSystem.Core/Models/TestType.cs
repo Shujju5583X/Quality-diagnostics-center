@@ -22,9 +22,15 @@ namespace LabSystem.Core.Models
         public string Category { get; set; }
         public string GroupName { get; set; }
         public string Method { get; set; }
+        public string Instrument { get; set; }
         public string Interpretation { get; set; }
         public int SortOrder { get; set; }
         public decimal Price { get; set; }
+        
+        public bool HasBesideRefRanges { get; set; }
+        public bool HasTextRefRanges { get; set; }
+        public string TextReferenceString { get; set; }
+        public string TextReferenceNormalValue { get; set; }
         
         public string SampleType { get; set; }
         public int? DepartmentId { get; set; }

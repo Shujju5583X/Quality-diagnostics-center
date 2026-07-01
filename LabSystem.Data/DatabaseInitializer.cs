@@ -300,6 +300,42 @@ namespace LabSystem.Data
                 INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
                 SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
                 WHERE p.Name = 'KFT Panel' AND t.Name IN ('Blood Urea Nitrogen (BUN)');
+            "),
+            new Migration(19, "Add Instrument column to TestTypes and seed CBC instrument", @"
+                ALTER TABLE TestTypes ADD COLUMN Instrument TEXT;
+                UPDATE TestTypes SET Instrument = 'Fully automated cell counter ERBA H-360' WHERE Category = 'HEMATOLOGY' AND GroupName = 'Complete Blood Count (CBC)';
+            "),
+            new Migration(20, "Update CBC instrument to ERBA H-360", @"
+                UPDATE TestTypes SET Instrument = 'Fully automated cell counter ERBA H-360' WHERE Category = 'HEMATOLOGY' AND GroupName = 'Complete Blood Count (CBC)' AND Instrument = 'Fully automated cell counter - Mindray 300';
+            "),
+            new Migration(21, "Add ref ranges config fields to TestTypes", @"
+                ALTER TABLE TestTypes ADD COLUMN HasBesideRefRanges BOOLEAN DEFAULT 0;
+                ALTER TABLE TestTypes ADD COLUMN HasTextRefRanges BOOLEAN DEFAULT 0;
+                ALTER TABLE TestTypes ADD COLUMN TextReferenceString TEXT;
+                ALTER TABLE TestTypes ADD COLUMN TextReferenceNormalValue TEXT;
+            " ),
+            new Migration(22, "Add ABO Grouping and Rh Typing", @"
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'BLOOD GROUP', '', NULL, NULL, 1, 'SEROLOGY', 'ABO GROUPING & RH TYPING', 'Agglutination', '', 1, 150.00, 'Blood', 2, DepartmentId
+                FROM Departments WHERE Name = 'SEROLOGY'
+                AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'BLOOD GROUP');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'Rh TYPING', '', NULL, NULL, 1, 'SEROLOGY', 'ABO GROUPING & RH TYPING', 'Agglutination', '', 2, 100.00, 'Blood', 2, DepartmentId
+                FROM Departments WHERE Name = 'SEROLOGY'
+                AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Rh TYPING');
+            "),
+            new Migration(23, "Fix InputType for ABO Grouping and Rh Typing", @"
+                UPDATE TestTypes SET InputType = 3 WHERE Name IN ('BLOOD GROUP', 'Rh TYPING');
+            "),
+            new Migration(24, "Add ABO Grouping and Rh Typing Panel", @"
+                INSERT INTO TestPanels (Name, Description, Price)
+                SELECT 'ABO GROUPING & RH TYPING', 'ABO Grouping and Rh Typing Panel', 250.00
+                WHERE NOT EXISTS (SELECT 1 FROM TestPanels WHERE Name = 'ABO GROUPING & RH TYPING');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t
+                WHERE p.Name = 'ABO GROUPING & RH TYPING' AND t.Name IN ('BLOOD GROUP', 'Rh TYPING');
             ")
         };
 
@@ -337,26 +373,81 @@ namespace LabSystem.Data
             }
         }
 
+        private static string LoadEmbeddedResource(string filename)
+        {
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetEntryAssembly() ?? System.Reflection.Assembly.GetExecutingAssembly();
+                var resourceName = assembly.GetManifestResourceNames()
+                    .FirstOrDefault(r => r.EndsWith(filename, System.StringComparison.OrdinalIgnoreCase));
+
+                if (resourceName != null)
+                {
+                    using (var stream = assembly.GetManifestResourceStream(resourceName))
+                    {
+                        if (stream != null)
+                        {
+                            using (var reader = new StreamReader(stream))
+                            {
+                                return reader.ReadToEnd();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to load embedded resource: {Filename}", filename);
+            }
+            return null;
+        }
+
         private static void InitializeSchema(LabDbContext db)
         {
             var scriptPath = FileUtilities.FindFileUpwards("LabSystem.Data", "Migrations", "V1__init.sql");
+            string sql = null;
             if (scriptPath != null && File.Exists(scriptPath))
             {
-                var sql = File.ReadAllText(scriptPath);
-                db.Database.ExecuteSqlCommand(sql);
-                Log.Information("Database schema initialized from: {Path}", scriptPath);
+                sql = File.ReadAllText(scriptPath);
+                Log.Information("Database schema loaded from disk: {Path}", scriptPath);
             }
             else
             {
-                Log.Warning("Could not find V1__init.sql schema file.");
+                Log.Information("V1__init.sql not found on disk; attempting to load from embedded resources...");
+                sql = LoadEmbeddedResource("V1__init.sql");
+            }
+
+            if (!string.IsNullOrEmpty(sql))
+            {
+                db.Database.ExecuteSqlCommand(sql);
+                Log.Information("Database schema initialized successfully.");
+            }
+            else
+            {
+                Log.Warning("Could not find V1__init.sql schema file on disk or in embedded resources.");
             }
 
             var seedPath = FileUtilities.FindFileUpwards("", "seed.sql");
+            string seedSql = null;
             if (seedPath != null && File.Exists(seedPath))
             {
-                var seedSql = File.ReadAllText(seedPath);
+                seedSql = File.ReadAllText(seedPath);
+                Log.Information("Seed data loaded from disk: {Path}", seedPath);
+            }
+            else
+            {
+                Log.Information("seed.sql not found on disk; attempting to load from embedded resources...");
+                seedSql = LoadEmbeddedResource("seed.sql");
+            }
+
+            if (!string.IsNullOrEmpty(seedSql))
+            {
                 db.Database.ExecuteSqlCommand(seedSql);
-                Log.Information("Seed data applied from: {Path}", seedPath);
+                Log.Information("Seed data applied successfully.");
+            }
+            else
+            {
+                Log.Warning("Could not find seed.sql file on disk or in embedded resources.");
             }
         }
 

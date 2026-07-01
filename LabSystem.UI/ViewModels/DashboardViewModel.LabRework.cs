@@ -428,13 +428,13 @@ namespace LabSystem.UI.ViewModels
             var r = t.ReferenceRanges != null ? t.ReferenceRanges.FirstOrDefault(x => string.Equals(x.Gender, gender, StringComparison.OrdinalIgnoreCase)) : null;
             if (r != null)
             {
-                if (r.RangeLow.HasValue && r.RangeHigh.HasValue) return r.RangeLow.Value + " - " + r.RangeHigh.Value + " " + t.Unit;
-                if (r.RangeLow.HasValue) return ">= " + r.RangeLow.Value + " " + t.Unit;
-                if (r.RangeHigh.HasValue) return "<" + r.RangeHigh.Value + " " + t.Unit;
+                if (r.RangeLow.HasValue && r.RangeHigh.HasValue) return ReferenceRangeEvaluator.FormatValue(r.RangeLow.Value) + " - " + ReferenceRangeEvaluator.FormatValue(r.RangeHigh.Value) + " " + t.Unit;
+                if (r.RangeLow.HasValue) return ">= " + ReferenceRangeEvaluator.FormatValue(r.RangeLow.Value) + " " + t.Unit;
+                if (r.RangeHigh.HasValue) return "<" + ReferenceRangeEvaluator.FormatValue(r.RangeHigh.Value) + " " + t.Unit;
             }
-            if (t.ReferenceRangeLow.HasValue && t.ReferenceRangeHigh.HasValue) return t.ReferenceRangeLow.Value + " - " + t.ReferenceRangeHigh.Value + " " + t.Unit;
-            if (t.ReferenceRangeLow.HasValue) return ">= " + t.ReferenceRangeLow.Value + " " + t.Unit;
-            if (t.ReferenceRangeHigh.HasValue) return "<" + t.ReferenceRangeHigh.Value + " " + t.Unit;
+            if (t.ReferenceRangeLow.HasValue && t.ReferenceRangeHigh.HasValue) return ReferenceRangeEvaluator.FormatValue(t.ReferenceRangeLow.Value) + " - " + ReferenceRangeEvaluator.FormatValue(t.ReferenceRangeHigh.Value) + " " + t.Unit;
+            if (t.ReferenceRangeLow.HasValue) return ">= " + ReferenceRangeEvaluator.FormatValue(t.ReferenceRangeLow.Value) + " " + t.Unit;
+            if (t.ReferenceRangeHigh.HasValue) return "<" + ReferenceRangeEvaluator.FormatValue(t.ReferenceRangeHigh.Value) + " " + t.Unit;
             return "N/A";
         }
     }

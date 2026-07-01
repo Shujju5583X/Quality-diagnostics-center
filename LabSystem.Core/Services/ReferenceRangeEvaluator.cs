@@ -63,6 +63,13 @@ namespace LabSystem.Core.Services
             return tt.ReferenceRangeLow.HasValue && value.Value < tt.ReferenceRangeLow.Value;
         }
 
+        public static string FormatValue(double value)
+        {
+            string s = value.ToString("G");
+            if (!s.Contains(".")) return value.ToString("F1");
+            return s;
+        }
+
         public static string FormatRange(TestType tt, Patient patient)
         {
             if (tt == null) return "N/A";
@@ -72,15 +79,15 @@ namespace LabSystem.Core.Services
             {
                 if (matchingRange.RangeLow.HasValue && matchingRange.RangeHigh.HasValue)
                 {
-                    return matchingRange.RangeLow.Value + " - " + matchingRange.RangeHigh.Value;
+                    return FormatValue(matchingRange.RangeLow.Value) + " - " + FormatValue(matchingRange.RangeHigh.Value);
                 }
                 if (matchingRange.RangeLow.HasValue)
                 {
-                    return ">= " + matchingRange.RangeLow.Value;
+                    return ">= " + FormatValue(matchingRange.RangeLow.Value);
                 }
                 if (matchingRange.RangeHigh.HasValue)
                 {
-                    return "<" + matchingRange.RangeHigh.Value;
+                    return "<" + FormatValue(matchingRange.RangeHigh.Value);
                 }
             }
 
@@ -115,15 +122,15 @@ namespace LabSystem.Core.Services
 
             if (tt.ReferenceRangeLow.HasValue && tt.ReferenceRangeHigh.HasValue)
             {
-                return tt.ReferenceRangeLow.Value + " - " + tt.ReferenceRangeHigh.Value;
+                return FormatValue(tt.ReferenceRangeLow.Value) + " - " + FormatValue(tt.ReferenceRangeHigh.Value);
             }
             if (tt.ReferenceRangeLow.HasValue)
             {
-                return ">= " + tt.ReferenceRangeLow.Value;
+                return ">= " + FormatValue(tt.ReferenceRangeLow.Value);
             }
             if (tt.ReferenceRangeHigh.HasValue)
             {
-                return "<" + tt.ReferenceRangeHigh.Value;
+                return "<" + FormatValue(tt.ReferenceRangeHigh.Value);
             }
             return "N/A";
         }

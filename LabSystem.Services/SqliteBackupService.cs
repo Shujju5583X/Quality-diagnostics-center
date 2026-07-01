@@ -402,15 +402,15 @@ namespace LabSystem.Services
             
             if (tt.ReferenceRangeLow.HasValue && tt.ReferenceRangeHigh.HasValue)
             {
-                return tt.ReferenceRangeLow.Value + " - " + tt.ReferenceRangeHigh.Value;
+                return LabSystem.Core.Services.ReferenceRangeEvaluator.FormatValue(tt.ReferenceRangeLow.Value) + " - " + LabSystem.Core.Services.ReferenceRangeEvaluator.FormatValue(tt.ReferenceRangeHigh.Value);
             }
             if (tt.ReferenceRangeLow.HasValue)
             {
-                return ">= " + tt.ReferenceRangeLow.Value;
+                return ">= " + LabSystem.Core.Services.ReferenceRangeEvaluator.FormatValue(tt.ReferenceRangeLow.Value);
             }
             if (tt.ReferenceRangeHigh.HasValue)
             {
-                return "<= " + tt.ReferenceRangeHigh.Value;
+                return "<= " + LabSystem.Core.Services.ReferenceRangeEvaluator.FormatValue(tt.ReferenceRangeHigh.Value);
             }
             return "N/A";
         }

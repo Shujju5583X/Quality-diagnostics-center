@@ -1,11 +1,5 @@
--- 1. Seed Patients & Staff
-INSERT INTO Patients (FullName, DateOfBirth, ContactPhone, ContactEmail, CreatedAt, Gender, Uhid) VALUES
-('John Doe', '1980-05-15', '555-1234', 'john@example.com', '2026-06-08T00:00:00Z', 'Male', 'QDC-2026-00001'),
-('Jane Smith', '1992-11-20', '555-5678', 'jane@example.com', '2026-06-08T00:00:00Z', 'Female', 'QDC-2026-00002'),
-('Alice Johnson', '1975-02-10', '555-8765', 'alice@example.com', '2026-06-08T00:00:00Z', 'Female', 'QDC-2026-00003'),
-('Yash M. Patel', '2005-08-25', '0123456789', 'yash@example.com', '2026-06-09T00:00:00Z', 'Male', 'QDC-2026-00004');
+-- 1. Seed Patients & Staff (Cleared for clean production build)
 
-INSERT INTO Staff (FullName) VALUES ('Lab Technician');
 
 -- 2. Seed Test Catalog (TestTypes)
 -- Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType

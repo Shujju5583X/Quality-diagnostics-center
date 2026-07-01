@@ -163,7 +163,16 @@ namespace LabSystem.Tests
         public void FormatRange_WithMatchingRange_ReturnsFormattedString()
         {
             var range = ReferenceRangeEvaluator.FormatRange(_testType, _malePatient);
-            Assert.That(range, Is.EqualTo("13 - 17"));
+            Assert.That(range, Is.EqualTo("13.0 - 17.0"));
+        }
+
+        [Test]
+        public void FormatValue_DecimalAndIntegerInputs_ReturnsExpectedFormatting()
+        {
+            Assert.That(ReferenceRangeEvaluator.FormatValue(13.0), Is.EqualTo("13.0"));
+            Assert.That(ReferenceRangeEvaluator.FormatValue(13.5), Is.EqualTo("13.5"));
+            Assert.That(ReferenceRangeEvaluator.FormatValue(150000.0), Is.EqualTo("150000.0"));
+            Assert.That(ReferenceRangeEvaluator.FormatValue(0.35), Is.EqualTo("0.35"));
         }
 
         [Test]

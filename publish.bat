@@ -61,7 +61,7 @@ echo.
 
 echo [4/4] Creating zip archive %ZIP_NAME%...
 if exist "%ZIP_NAME%" del /f "%ZIP_NAME%"
-powershell -NoProfile -Command "Compress-Archive -Path '%OUTPUT_DIR%\*' -DestinationPath '%ZIP_NAME%' -Force"
+tar -a -c -f "%ZIP_NAME%" -C "%OUTPUT_DIR%" .
 if errorlevel 1 (
     echo FAILED: Zip creation failed.
     exit /b 1

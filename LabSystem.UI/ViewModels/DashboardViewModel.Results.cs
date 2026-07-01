@@ -35,7 +35,7 @@ namespace LabSystem.UI.ViewModels
                     return;
                 }
                 double parsedVal;
-                if (!r.HasOptions && !double.TryParse(r.ValueText, out parsedVal))
+                if (!r.HasOptions && !r.HasTextRefRanges && !double.TryParse(r.ValueText, out parsedVal))
                 {
                     ResultErrorMessage = "Please enter a valid numeric value for " + r.TestName + ".";
                     return;
@@ -252,6 +252,7 @@ namespace LabSystem.UI.ViewModels
                                 Unit = testType.Unit,
                                 IsAbnormal = false,
                                 IsReadOnly = false,
+                                HasTextRefRanges = testType.HasTextRefRanges,
                                 ValueText = string.Empty
                             };
                             EvaluatePatientReferenceRange(ri, testType, SelectedOrder.Patient);
@@ -278,6 +279,7 @@ namespace LabSystem.UI.ViewModels
                             InputType = r.TestType != null ? r.TestType.InputType : ResultInputType.Numeric,
                             TestName = r.TestType != null ? r.TestType.Name ?? "Unknown Test" : "Unknown Test",
                             Unit = r.TestType != null ? r.TestType.Unit ?? "" : "",
+                            HasTextRefRanges = r.TestType != null && r.TestType.HasTextRefRanges,
                             ValueText = !string.IsNullOrEmpty(r.ValueText) ? r.ValueText : (r.Value == null ? "Sample Rejected" : r.Value.ToString()),
                             IsAbnormal = r.IsAbnormal,
                             IsReadOnly = true
@@ -345,6 +347,18 @@ namespace LabSystem.UI.ViewModels
                         ri.Options.Add(new ResultOption { Display = "pf-positive", Value = "pf-positive" });
                         ri.Options.Add(new ResultOption { Display = "pv pf- positive", Value = "pv pf- positive" });
                         ri.Options.Add(new ResultOption { Display = "negative", Value = "negative" });
+                    }
+                    else if (ri.TestName.Contains("BLOOD GROUP"))
+                    {
+                        ri.Options.Add(new ResultOption { Display = "\"A\"", Value = "\"A\"" });
+                        ri.Options.Add(new ResultOption { Display = "\"B\"", Value = "\"B\"" });
+                        ri.Options.Add(new ResultOption { Display = "\"AB\"", Value = "\"AB\"" });
+                        ri.Options.Add(new ResultOption { Display = "\"O\"", Value = "\"O\"" });
+                    }
+                    else if (ri.TestName.Contains("Rh TYPING"))
+                    {
+                        ri.Options.Add(new ResultOption { Display = "POSITIVE", Value = "POSITIVE" });
+                        ri.Options.Add(new ResultOption { Display = "NEGATIVE", Value = "NEGATIVE" });
                     }
                     else if (ri.TestName.Contains("S. Typhi"))
                     {

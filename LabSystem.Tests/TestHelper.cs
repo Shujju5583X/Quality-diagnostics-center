@@ -52,6 +52,7 @@ namespace LabSystem.Tests
                     Category TEXT,
                     GroupName TEXT,
                     Method TEXT,
+                    Instrument TEXT,
                     Interpretation TEXT,
                     SortOrder INTEGER DEFAULT 0,
                     Price REAL DEFAULT 0,

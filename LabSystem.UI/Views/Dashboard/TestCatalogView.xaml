@@ -218,20 +218,45 @@
 
                                     <Grid Margin="0 0 0 12">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Ref Range Low"
+                                        <CheckBox Grid.Column="0" Content="Has Beside Ref Ranges" IsChecked="{Binding CatalogHasBesideRefRanges}" VerticalAlignment="Bottom" Margin="0 0 16 6" />
+                                        <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Ref Range Low"
                                                  Text="{Binding CatalogTestLow, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 6 0" />
-                                        <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Ref Range High"
+                                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Ref Range High"
                                                  Text="{Binding CatalogTestHigh, UpdateSourceTrigger=PropertyChanged}"
                                                  Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="6 0 0 0" />
                                     </Grid>
 
-                                    <TextBox materialDesign:HintAssist.Hint="Method (e.g. ELISA)"
-                                             Text="{Binding CatalogTestMethod, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
+                                    <CheckBox Content="Has Text Ref Ranges" IsChecked="{Binding CatalogHasTextRefRanges}" Margin="0 0 0 8" />
+                                    <Grid Margin="0 0 0 12" Visibility="{Binding CatalogHasTextRefRanges, Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Text Reference String"
+                                                 Text="{Binding CatalogTextReferenceString, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 6 0" />
+                                        <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Text Normal Value"
+                                                 Text="{Binding CatalogTextReferenceNormalValue, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="6 0 0 0" />
+                                    </Grid>
+
+                                     <Grid Margin="0 0 0 12">
+                                         <Grid.ColumnDefinitions>
+                                             <ColumnDefinition Width="*" />
+                                             <ColumnDefinition Width="*" />
+                                         </Grid.ColumnDefinitions>
+                                         <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Method (e.g. ELISA)"
+                                                  Text="{Binding CatalogTestMethod, UpdateSourceTrigger=PropertyChanged}"
+                                                  Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 6 0" />
+                                         <TextBox Grid.Column="1" materialDesign:HintAssist.Hint="Instrument"
+                                                  Text="{Binding CatalogTestInstrument, UpdateSourceTrigger=PropertyChanged}"
+                                                  Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="6 0 0 0" />
+                                     </Grid>
 
                                     <TextBox materialDesign:HintAssist.Hint="Interpretation Notes"
                                              Text="{Binding CatalogTestInterpretation, UpdateSourceTrigger=PropertyChanged}"

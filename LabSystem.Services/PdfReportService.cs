@@ -239,7 +239,7 @@ namespace LabSystem.Services
             {
                 seq = await _orderRepo.GetDailySequenceNumberAsync(order.OrderId, order.OrderedAt, cancellationToken);
             }
-            string qdcId = string.Format("{0:yy}{0:dd}{1:D2}", order.OrderedAt, seq);
+            string qdcId = string.Format("{0:yy}{0:MM}{0:dd}{1:D2}", order.OrderedAt, seq);
             var pr4 = patientTable.AddRow();
             pr4.Height = "0.6cm";
             pr4.Cells[0].AddParagraph("QDC ID").Format.Font.Bold = true;
@@ -261,197 +261,428 @@ namespace LabSystem.Services
                 .ToList();
 
             bool isFirstCategory = true;
+            MigraDoc.DocumentObjectModel.Tables.Table currentRegularTable = null;
+            bool regularHeaderAdded = false;
+
             foreach (var categoryGroup in categoryGroups)
             {
                 string categoryName = categoryGroup.Key;
 
-                // Adjust spelling of "BIOCHEMISTRY" to "BIO-CHEMISRTY" if it matches
+                var groupedResults = categoryGroup
+                    .GroupBy(r => r.TestType.GroupName ?? "General")
+                    .OrderBy(g => g.Key)
+                    .ToList();
+                
                 if (string.Equals(categoryName, "BIOCHEMISTRY", StringComparison.OrdinalIgnoreCase))
                 {
                     categoryName = "BIO-CHEMISTRY";
                 }
 
-                // Category Title (Main Heading)
-                var catPara = section.AddParagraph(categoryName.ToUpper());
-                catPara.Format.Alignment = ParagraphAlignment.Center;
-                catPara.Format.Font.Bold = true;
-                catPara.Format.Font.Underline = Underline.Single;
-                catPara.Format.Font.Size = 15.0;
-                catPara.Format.SpaceBefore = "0.4cm";
-                catPara.Format.SpaceAfter = "0.3cm";
-
                 if (!isFirstCategory)
                 {
-                    catPara.Format.PageBreakBefore = true;
+                    if (currentRegularTable != null)
+                    {
+                        var spacerRow = currentRegularTable.AddRow();
+                        spacerRow.Height = "1.0cm";
+                        spacerRow.Borders.Visible = false;
+                    }
+                    else
+                    {
+                        var catSpacer = section.AddParagraph();
+                        catSpacer.Format.SpaceBefore = "1.0cm";
+                    }
                 }
                 isFirstCategory = false;
 
-                // Create a new Table for this Category
-                var table = section.AddTable();
-                table.Borders.Width = 0; // No borders outside
-                
-                table.AddColumn("7.0cm"); // Test Description
-                table.AddColumn("3.5cm"); // Result
-                table.AddColumn("2.5cm"); // Units
-                table.AddColumn("5.0cm"); // Normal
+                if (currentRegularTable == null)
+                {
+                    currentRegularTable = section.AddTable();
+                    currentRegularTable.Borders.Width = 0;
+                    currentRegularTable.AddColumn("7.0cm");
+                    currentRegularTable.AddColumn("3.5cm");
+                    currentRegularTable.AddColumn("2.5cm");
+                    currentRegularTable.AddColumn("5.0cm");
+                    regularHeaderAdded = false;
+                }
 
-                // Parameter headings moved inside the group loop
-                var groupedResults = categoryGroup
-                    .GroupBy(r => r.TestType.GroupName ?? "General")
-                    .OrderBy(g => g.Key)
-                    .ToList();
+                // Create a beautiful gray department banner
+                var deptRow = currentRegularTable.AddRow();
+                deptRow.Cells[0].MergeRight = 3;
+                deptRow.Height = "0.7cm";
+                deptRow.VerticalAlignment = VerticalAlignment.Center;
+                deptRow.Shading.Color = Color.FromRgb(220, 220, 220); // Light gray
+                deptRow.Borders.Top.Width = 0.5;
+                deptRow.Borders.Top.Color = Colors.Black;
+                deptRow.Borders.Bottom.Width = 0.5;
+                deptRow.Borders.Bottom.Color = Colors.Black;
+                
+                var deptPara = deptRow.Cells[0].AddParagraph(categoryName.ToUpper());
+                deptPara.Format.Alignment = ParagraphAlignment.Center;
+                deptPara.Format.Font.Bold = true;
+                deptPara.Format.Font.Size = 11.0;
+                deptPara.Format.Font.Name = "Verdana";
+                
+                // Spacer below banner
+                var bannerSpacer = currentRegularTable.AddRow();
+                bannerSpacer.Cells[0].MergeRight = 3;
+                bannerSpacer.Height = "0.1cm";
+                bannerSpacer.Borders.Visible = false;
 
                 foreach (var group in groupedResults)
                 {
                     string groupName = group.Key;
                     var sortedResults = group.OrderBy(r => r.TestType.SortOrder).ToList();
                     string method = sortedResults.First().TestType.Method ?? "";
-                    string interpretation = sortedResults.First().TestType.Interpretation ?? "";
-
-                    bool shouldPrintGroupHeader = sortedResults.Count > 1 ||
-                                                  groupName.Contains("Profile") ||
-                                                  groupName.Contains("Panel") ||
-                                                  groupName.Contains("Electrolytes") ||
-                                                  groupName.Contains("Widal") ||
-                                                  groupName.Contains("Routine");
-
-                    if (shouldPrintGroupHeader)
-                    {
-                        var groupRow = table.AddRow();
-                        groupRow.Height = "0.9cm";
-                        groupRow.VerticalAlignment = VerticalAlignment.Center;
-                        var groupCell = groupRow.Cells[0];
-                        groupCell.MergeRight = 3;
-                        var groupPara = groupCell.AddParagraph(groupName.ToUpper());
-                        groupPara.Format.Font.Bold = true;
-                        groupPara.Format.Font.Underline = Underline.Single;
-                        groupPara.Format.Font.Size = 10.0;
-                    }
-                    // Headers row
-                    var header = table.AddRow();
-                    header.HeadingFormat = true;
-                    header.Height = "0.9cm";
-                    header.VerticalAlignment = VerticalAlignment.Center;
-
-                    var cell0 = header.Cells[0].AddParagraph("Test Description");
-                    cell0.Format.Font.Bold = true;
-                    cell0.Format.Font.Underline = Underline.Single;
-                    cell0.Format.Font.Size = 10.0;
-
-                    var cell1 = header.Cells[1].AddParagraph("Result");
-                    cell1.Format.Font.Bold = true;
-                    cell1.Format.Font.Underline = Underline.Single;
-                    cell1.Format.Font.Size = 10.0;
-
-                    var cell2 = header.Cells[2].AddParagraph("Units");
-                    cell2.Format.Font.Bold = true;
-                    cell2.Format.Font.Underline = Underline.Single;
-                    cell2.Format.Font.Size = 10.0;
-
-                    var cell3 = header.Cells[3].AddParagraph("Normal");
-                    cell3.Format.Font.Bold = true;
-                    cell3.Format.Font.Underline = Underline.Single;
-                    cell3.Format.Font.Size = 10.0;
-
-                    foreach (var r in sortedResults)
-                    {
-                        var row = table.AddRow();
-                        row.Height = "0.9cm";
-                        row.VerticalAlignment = VerticalAlignment.Center;
-
-                        // Clean up test name
-                        string testName = r.TestType.Name;
-                        if (testName.EndsWith(" (KFT)", StringComparison.OrdinalIgnoreCase))
-                            testName = testName.Substring(0, testName.Length - 6);
-                        if (testName.EndsWith(" (LFT)", StringComparison.OrdinalIgnoreCase))
-                            testName = testName.Substring(0, testName.Length - 6);
-                        if (testName.EndsWith(" (TFT)", StringComparison.OrdinalIgnoreCase))
-                            testName = testName.Substring(0, testName.Length - 6);
-
-                        if (string.Equals(testName, "Cholesterol, Total", StringComparison.OrdinalIgnoreCase))
-                            testName = "Total Cholesterol";
-                        else if (string.Equals(testName, "Calcium, Total", StringComparison.OrdinalIgnoreCase))
-                            testName = "Total Calcium";
-                        else if (string.Equals(testName, "Bilirubin Total", StringComparison.OrdinalIgnoreCase))
-                            testName = "Total Bilirubin";
-                        else if (string.Equals(testName, "Glucose, Fasting (Plasma)", StringComparison.OrdinalIgnoreCase))
-                            testName = "Glucose Fasting";
-                        else if (string.Equals(testName, "Glucose, Post Prandial (Plasma)", StringComparison.OrdinalIgnoreCase))
-                            testName = "Glucose Post Prandial";
-                        else if (string.Equals(testName, "Glucose, Random (Plasma)", StringComparison.OrdinalIgnoreCase))
-                            testName = "Glucose Random";
-
-                        var namePara = row.Cells[0].AddParagraph(testName.ToUpper());
-                        if (shouldPrintGroupHeader)
-                        {
-                            namePara.Format.Font.Bold = true;
-                        }
-
-                        string displayVal = !string.IsNullOrEmpty(r.ValueText) 
-                            ? r.ValueText 
-                            : FormatResultValue(r.Value, r.TestType);
-                        string unitStr = r.TestType.Unit ?? "";
-
-                        var valPara = row.Cells[1].AddParagraph();
-                        var valText = valPara.AddFormattedText(displayVal);
-
-                        if (shouldPrintGroupHeader)
-                        {
-                            valText.Bold = true;
-                        }
-
-                        if (r.IsAbnormal)
-                        {
-                            valText.Bold = true;
-                            valText.Color = Color.FromRgb(198, 40, 40); // Soft dark red for abnormal
-                            
-                            string flagStr = ReferenceRangeEvaluator.IsLow(r.Value, r.TestType, order.Patient) ? " Low" : " High";
-                            var flagText = valPara.AddFormattedText(flagStr, TextFormat.Bold);
-                            flagText.Color = Color.FromRgb(198, 40, 40);
-                            flagText.Size = 8.5;
-                        }
-
-                        var unitPara = row.Cells[2].AddParagraph(unitStr);
-                        if (shouldPrintGroupHeader)
-                        {
-                            unitPara.Format.Font.Bold = true;
-                        }
-
-                        string refRangeStr = ReferenceRangeEvaluator.FormatRange(r.TestType, order.Patient);
-                        var refPara = row.Cells[3].AddParagraph(refRangeStr);
-                        if (shouldPrintGroupHeader)
-                        {
-                            refPara.Format.Font.Bold = true;
-                        }
-                    }
-
-                    // Method note underneath table
-                    if (!string.IsNullOrEmpty(method))
-                    {
-                        var methodRow = table.AddRow();
-                        methodRow.Height = "0.8cm";
-                        var methodCell = methodRow.Cells[0];
-                        methodCell.MergeRight = 3;
-                        var methodPara = methodCell.AddParagraph("(Method:- " + method.ToUpper() + ")");
-                        methodPara.Format.Font.Size = 8.5;
-                        methodPara.Format.Font.Italic = true;
-                        methodPara.Format.Font.Color = Colors.DarkGray;
-                    }
-
+                    
                     bool isCbc = groupName != null && (groupName.IndexOf("CBC", StringComparison.OrdinalIgnoreCase) >= 0 || groupName.IndexOf("Complete Blood Count", StringComparison.OrdinalIgnoreCase) >= 0);
+
                     if (isCbc)
                     {
-                        var instRow = table.AddRow();
-                        instRow.Height = "0.8cm";
+                        currentRegularTable = null;
+                        regularHeaderAdded = false;
+
+                        var cbcHeaderPara = section.AddParagraph("Complete Blood Count (CBC)");
+                        cbcHeaderPara.Format.Alignment = ParagraphAlignment.Center;
+                        cbcHeaderPara.Format.Font.Bold = true;
+                        cbcHeaderPara.Format.Font.Size = 13.0;
+                        cbcHeaderPara.Format.SpaceBefore = "0.1cm";
+                        cbcHeaderPara.Format.SpaceAfter = "0.1cm";
+
+                        var cbcTable = section.AddTable();
+                        cbcTable.Borders.Width = 0;
+                        cbcTable.AddColumn("6.5cm"); // Investigation
+                        cbcTable.AddColumn("3.0cm"); // Result
+                        cbcTable.AddColumn("5.0cm"); // Reference Value
+                        cbcTable.AddColumn("3.5cm"); // Unit
+
+                        var headerRow = cbcTable.AddRow();
+                        headerRow.HeadingFormat = true;
+                        headerRow.Height = "0.8cm";
+                        headerRow.VerticalAlignment = VerticalAlignment.Center;
+                        headerRow.Borders.Top.Width = 0.5;
+                        headerRow.Borders.Top.Color = Colors.LightGray;
+                        headerRow.Borders.Bottom.Width = 0.5;
+                        headerRow.Borders.Bottom.Color = Colors.LightGray;
+
+                        headerRow.Cells[0].AddParagraph("Investigation").Format.Font.Bold = true;
+                        headerRow.Cells[1].AddParagraph("Result").Format.Font.Bold = true;
+                        headerRow.Cells[2].AddParagraph("Reference Value").Format.Font.Bold = true;
+                        headerRow.Cells[3].AddParagraph("Unit").Format.Font.Bold = true;
+
+                        var sampleTypeRow = cbcTable.AddRow();
+                        sampleTypeRow.Height = "0.6cm";
+                        sampleTypeRow.VerticalAlignment = VerticalAlignment.Center;
+                        sampleTypeRow.Cells[0].AddParagraph("Primary Sample Type :");
+                        sampleTypeRow.Cells[1].AddParagraph("Blood");
+                        sampleTypeRow.Cells[1].MergeRight = 2;
+                        sampleTypeRow.Borders.Bottom.Width = 0.5;
+                        sampleTypeRow.Borders.Bottom.Color = Colors.LightGray;
+                        sampleTypeRow.Format.SpaceAfter = "0.1cm";
+
+                        var cbcSections = new Dictionary<string, List<string>>
+                        {
+                            { "HEMOGLOBIN", new List<string> { "Hemoglobin (Hb)" } },
+                            { "RBC COUNT", new List<string> { "Total RBC count" } },
+                            { "BLOOD INDICES", new List<string> { "Packed Cell Volume (PCV)", "Mean Corpuscular Volume (MCV)", "MCH", "MCHC", "RDW" } },
+                            { "WBC COUNT", new List<string> { "Total WBC count" } },
+                            { "DIFFERENTIAL WBC COUNT", new List<string> { "Neutrophils", "Lymphocytes", "Eosinophils", "Monocytes", "Basophils" } },
+                            { "PLATELET COUNT", new List<string> { "Platelet Count" } }
+                        };
+
+                        foreach (var sec in cbcSections)
+                        {
+                            var secTests = sortedResults.Where(r => sec.Value.Contains(r.TestType.Name)).ToList();
+                            if (secTests.Count == 0) continue;
+
+                            var secRow = cbcTable.AddRow();
+                            secRow.Height = "0.65cm";
+                            secRow.VerticalAlignment = VerticalAlignment.Bottom;
+                            var secPara = secRow.Cells[0].AddParagraph(sec.Key);
+                            secPara.Format.Font.Bold = true;
+                            secPara.Format.Font.Color = Color.FromRgb(100, 100, 100);
+                            secPara.Format.SpaceBefore = "0.25cm";
+
+                            foreach (var r in secTests)
+                            {
+                                var row = cbcTable.AddRow();
+                                row.Height = "0.6cm";
+                                row.VerticalAlignment = VerticalAlignment.Center;
+
+                                var testNamePara = row.Cells[0].AddParagraph(r.TestType.Name);
+                                if (r.TestType.Name == "Mean Corpuscular Volume (MCV)" || r.TestType.Name == "MCH" || r.TestType.Name == "MCHC")
+                                {
+                                    var calcPara = row.Cells[0].AddParagraph("Calculated");
+                                    calcPara.Format.Font.Size = 7;
+                                    calcPara.Format.Font.Color = Colors.Gray;
+                                }
+
+                                string displayVal = !string.IsNullOrEmpty(r.ValueText) ? r.ValueText : FormatResultValue(r.Value, r.TestType);
+                                var valPara = row.Cells[1].AddParagraph();
+                                var valText = valPara.AddFormattedText(displayVal);
+
+                                string flagStr = "";
+                                Color flagColor = Colors.Black;
+                                bool hasFlag = false;
+
+                                var matchingRange = ReferenceRangeEvaluator.FindMatchingRange(r.TestType, order.Patient);
+                                double? lowBound = matchingRange != null ? matchingRange.RangeLow : r.TestType.ReferenceRangeLow;
+                                double? highBound = matchingRange != null ? matchingRange.RangeHigh : r.TestType.ReferenceRangeHigh;
+
+                                if (r.Value.HasValue)
+                                {
+                                    double val = r.Value.Value;
+                                    if (lowBound.HasValue && val < lowBound.Value)
+                                    {
+                                        flagStr = " Low";
+                                        flagColor = Color.FromRgb(41, 128, 185); // Steel Blue
+                                        hasFlag = true;
+                                    }
+                                    else if (highBound.HasValue && val > highBound.Value)
+                                    {
+                                        flagStr = " High";
+                                        flagColor = Color.FromRgb(198, 40, 40); // Red
+                                        hasFlag = true;
+                                    }
+                                    else if ((lowBound.HasValue && val == lowBound.Value) || (highBound.HasValue && val == highBound.Value))
+                                    {
+                                        flagStr = " Borderline";
+                                        flagColor = Color.FromRgb(230, 126, 34); // Orange
+                                        hasFlag = true;
+                                    }
+                                }
+
+                                if (hasFlag)
+                                {
+                                    valText.Bold = true;
+                                    valText.Color = flagColor;
+
+                                    var flagText = valPara.AddFormattedText(flagStr, TextFormat.Bold);
+                                    flagText.Color = flagColor;
+                                    flagText.Size = 8.5;
+                                }
+
+                                string refRangeStr = ReferenceRangeEvaluator.FormatRange(r.TestType, order.Patient);
+                                row.Cells[2].AddParagraph(refRangeStr);
+
+                                string unitStr = r.TestType.Unit ?? "";
+                                row.Cells[3].AddParagraph(unitStr);
+                            }
+                        }
+
+                        // Spacer row to separate bottom metadata fields from the test values
+                        var spacerRow = cbcTable.AddRow();
+                        spacerRow.Height = "0.4cm";
+
+                        // Method (dynamically fetched from test catalog database method)
+                        if (!string.IsNullOrEmpty(method))
+                        {
+                            var methodRow = cbcTable.AddRow();
+                            methodRow.Height = "0.55cm";
+                            var methodCell = methodRow.Cells[0];
+                            methodCell.MergeRight = 3;
+                            var methodPara = methodCell.AddParagraph();
+                            methodPara.Format.Font.Size = 8.5;
+                            methodPara.AddFormattedText("Method: ", TextFormat.Bold);
+                            methodPara.AddText(method);
+                        }
+
+                        // Instrument (dynamically fetched from test catalog database, fallback to ERBA H-360)
+                        string instrument = null;
+                        var rWithInst = sortedResults.FirstOrDefault(r => r.TestType != null && !string.IsNullOrEmpty(r.TestType.Instrument));
+                        if (rWithInst != null)
+                        {
+                            instrument = rWithInst.TestType.Instrument;
+                        }
+                        if (string.IsNullOrEmpty(instrument))
+                        {
+                            instrument = "Fully automated cell counter ERBA H-360";
+                        }
+                        var instRow = cbcTable.AddRow();
+                        instRow.Height = "0.55cm";
                         var instCell = instRow.Cells[0];
                         instCell.MergeRight = 3;
-                        var instPara = instCell.AddParagraph("Instruments : Fully automated cell counter ERBA H-360");
+                        var instPara = instCell.AddParagraph();
                         instPara.Format.Font.Size = 8.5;
-                        instPara.Format.Font.Italic = true;
-                        instPara.Format.Font.Color = Colors.DarkGray;
-                    }
+                        instPara.AddFormattedText("Instruments: ", TextFormat.Bold);
+                        instPara.AddText(instrument);
 
-                    // Interpretations removed from report per user request
+                        var endPara = section.AddParagraph("****End of Report****");
+                        endPara.Format.Alignment = ParagraphAlignment.Center;
+                        endPara.Format.Font.Size = 8.5;
+                        endPara.Format.SpaceBefore = "0.2cm";
+                    }
+                    else if (group.Key == "ABO GROUPING & RH TYPING")
+                    {
+                        var serologyTable = section.AddTable();
+                        serologyTable.Borders.Width = 0;
+                        serologyTable.AddColumn("8.0cm");
+                        serologyTable.AddColumn("5.0cm");
+                        serologyTable.AddColumn("5.0cm");
+
+                        var headerRow = serologyTable.AddRow();
+                        headerRow.HeadingFormat = true;
+                        headerRow.Height = "0.8cm";
+                        headerRow.VerticalAlignment = VerticalAlignment.Center;
+                        headerRow.Borders.Bottom.Width = 0.5;
+                        headerRow.Borders.Bottom.Color = Colors.LightGray;
+
+                        headerRow.Cells[0].AddParagraph("Parameter").Format.Font.Bold = true;
+                        headerRow.Cells[1].AddParagraph("Result Values").Format.Font.Bold = true;
+                        headerRow.Cells[2].AddParagraph("Normal Values").Format.Font.Bold = true;
+
+                        var catRow = serologyTable.AddRow();
+                        catRow.Height = "0.7cm";
+                        catRow.VerticalAlignment = VerticalAlignment.Bottom;
+                        var catPara = catRow.Cells[0].AddParagraph(categoryName.ToUpper());
+                        catPara.Format.Font.Bold = true;
+                        catPara.Format.Font.Underline = Underline.Single;
+                        catRow.Cells[0].MergeRight = 2;
+
+                        var groupRow = serologyTable.AddRow();
+                        groupRow.Height = "0.7cm";
+                        groupRow.VerticalAlignment = VerticalAlignment.Bottom;
+                        var groupPara = groupRow.Cells[0].AddParagraph(groupName.ToUpper());
+                        groupPara.Format.Font.Bold = true;
+                        groupRow.Cells[0].MergeRight = 2;
+
+                        foreach (var r in sortedResults)
+                        {
+                            var row = serologyTable.AddRow();
+                            row.Height = "0.6cm";
+                            row.VerticalAlignment = VerticalAlignment.Center;
+
+                            string testName = r.TestType.Name;
+                            string displayVal = !string.IsNullOrEmpty(r.ValueText) ? r.ValueText : FormatResultValue(r.Value, r.TestType);
+
+                            var namePara = row.Cells[0].AddParagraph();
+                            namePara.Format.TabStops.AddTabStop("3.2cm");
+                            namePara.AddFormattedText(testName, TextFormat.Bold);
+                            namePara.AddText("\t: ");
+                            namePara.AddFormattedText(displayVal, TextFormat.Bold);
+                        }
+                    }
+                    else
+                    {
+                        if (currentRegularTable == null)
+                        {
+                            currentRegularTable = section.AddTable();
+                            currentRegularTable.Borders.Width = 0;
+                            currentRegularTable.AddColumn("7.0cm");
+                            currentRegularTable.AddColumn("3.5cm");
+                            currentRegularTable.AddColumn("2.5cm");
+                            currentRegularTable.AddColumn("5.0cm");
+                            regularHeaderAdded = false;
+                        }
+
+                        bool shouldPrintGroupHeader = sortedResults.Count > 1 ||
+                                                      groupName.Contains("Profile") ||
+                                                      groupName.Contains("Panel") ||
+                                                      groupName.Contains("Electrolytes") ||
+                                                      groupName.Contains("Widal") ||
+                                                      groupName.Contains("Routine");
+
+                        if (shouldPrintGroupHeader)
+                        {
+                            var groupRow = currentRegularTable.AddRow();
+                            groupRow.Height = "0.9cm";
+                            groupRow.VerticalAlignment = VerticalAlignment.Center;
+                            var groupCell = groupRow.Cells[0];
+                            groupCell.MergeRight = 3;
+                            var groupPara = groupCell.AddParagraph(groupName.ToUpper());
+                            groupPara.Format.Font.Bold = true;
+                            groupPara.Format.Font.Underline = Underline.Single;
+                            groupPara.Format.Font.Size = 10.0;
+                        }
+
+                        if (!regularHeaderAdded)
+                        {
+                            var header = currentRegularTable.AddRow();
+                            header.HeadingFormat = true;
+                            header.Height = "0.9cm";
+                            header.VerticalAlignment = VerticalAlignment.Center;
+
+                            var cell0 = header.Cells[0].AddParagraph("Test Description");
+                            cell0.Format.Font.Bold = true;
+                            cell0.Format.Font.Underline = Underline.Single;
+                            cell0.Format.Font.Size = 10.0;
+
+                            var cell1 = header.Cells[1].AddParagraph("Result");
+                            cell1.Format.Font.Bold = true;
+                            cell1.Format.Font.Underline = Underline.Single;
+                            cell1.Format.Font.Size = 10.0;
+
+                            var cell2 = header.Cells[2].AddParagraph("Units");
+                            cell2.Format.Font.Bold = true;
+                            cell2.Format.Font.Underline = Underline.Single;
+                            cell2.Format.Font.Size = 10.0;
+
+                            var cell3 = header.Cells[3].AddParagraph("Normal");
+                            cell3.Format.Font.Bold = true;
+                            cell3.Format.Font.Underline = Underline.Single;
+                            cell3.Format.Font.Size = 10.0;
+                            
+                            regularHeaderAdded = true;
+                        }
+
+                        foreach (var r in sortedResults)
+                        {
+                            var row = currentRegularTable.AddRow();
+                            row.Height = "0.9cm";
+                            row.VerticalAlignment = VerticalAlignment.Center;
+
+                            string testName = r.TestType.Name;
+                            if (testName.EndsWith(" (KFT)", StringComparison.OrdinalIgnoreCase)) testName = testName.Substring(0, testName.Length - 6);
+                            if (testName.EndsWith(" (LFT)", StringComparison.OrdinalIgnoreCase)) testName = testName.Substring(0, testName.Length - 6);
+                            if (testName.EndsWith(" (TFT)", StringComparison.OrdinalIgnoreCase)) testName = testName.Substring(0, testName.Length - 6);
+
+                            if (string.Equals(testName, "Cholesterol, Total", StringComparison.OrdinalIgnoreCase)) testName = "Total Cholesterol";
+                            else if (string.Equals(testName, "Calcium, Total", StringComparison.OrdinalIgnoreCase)) testName = "Total Calcium";
+                            else if (string.Equals(testName, "Bilirubin Total", StringComparison.OrdinalIgnoreCase)) testName = "Total Bilirubin";
+                            else if (string.Equals(testName, "Glucose, Fasting (Plasma)", StringComparison.OrdinalIgnoreCase)) testName = "Glucose Fasting";
+                            else if (string.Equals(testName, "Glucose, Post Prandial (Plasma)", StringComparison.OrdinalIgnoreCase)) testName = "Glucose Post Prandial";
+                            else if (string.Equals(testName, "Glucose, Random (Plasma)", StringComparison.OrdinalIgnoreCase)) testName = "Glucose Random";
+
+                            var namePara = row.Cells[0].AddParagraph(testName.ToUpper());
+                            if (shouldPrintGroupHeader) namePara.Format.Font.Bold = true;
+
+                            string displayVal = !string.IsNullOrEmpty(r.ValueText) ? r.ValueText : FormatResultValue(r.Value, r.TestType);
+                            string unitStr = r.TestType.Unit ?? "";
+
+                            var valPara = row.Cells[1].AddParagraph();
+                            var valText = valPara.AddFormattedText(displayVal);
+
+                            if (shouldPrintGroupHeader) valText.Bold = true;
+
+                            if (r.IsAbnormal)
+                            {
+                                valText.Bold = true;
+                                valText.Color = Color.FromRgb(198, 40, 40); 
+                                
+                                string flagStr = ReferenceRangeEvaluator.IsLow(r.Value, r.TestType, order.Patient) ? " Low" : " High";
+                                var flagText = valPara.AddFormattedText(flagStr, TextFormat.Bold);
+                                flagText.Color = Color.FromRgb(198, 40, 40);
+                                flagText.Size = 8.5;
+                            }
+
+                            var unitPara = row.Cells[2].AddParagraph(unitStr);
+                            if (shouldPrintGroupHeader) unitPara.Format.Font.Bold = true;
+
+                            string refRangeStr = ReferenceRangeEvaluator.FormatRange(r.TestType, order.Patient);
+                            var refPara = row.Cells[3].AddParagraph(refRangeStr);
+                            if (shouldPrintGroupHeader) refPara.Format.Font.Bold = true;
+                        }
+
+                        if (!string.IsNullOrEmpty(method))
+                        {
+                            var methodRow = currentRegularTable.AddRow();
+                            methodRow.Height = "0.8cm";
+                            methodRow.Cells[0].MergeRight = 3;
+                            var methodPara = methodRow.Cells[0].AddParagraph("(Method:- " + method.ToUpper() + ")");
+                            methodPara.Format.Font.Size = 8.5;
+                            methodPara.Format.Font.Italic = true;
+                            methodPara.Format.Font.Color = Colors.DarkGray;
+                        }
+                    }
                 }
             }
 
