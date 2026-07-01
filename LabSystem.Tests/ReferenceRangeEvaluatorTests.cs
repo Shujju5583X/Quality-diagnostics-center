@@ -224,5 +224,21 @@ namespace LabSystem.Tests
             var range = ReferenceRangeEvaluator.FormatRange(testType, _malePatient);
             Assert.That(range, Is.EqualTo("negative"));
         }
+
+        [Test]
+        public void FormatRange_STyphi_Returns1_40()
+        {
+            var testType = new TestType { Name = "S. Typhi O Agglutination" };
+            var range = ReferenceRangeEvaluator.FormatRange(testType, _malePatient);
+            Assert.That(range, Is.EqualTo("1:40"));
+        }
+
+        [Test]
+        public void FormatRange_SParatyphi_Returns1_20()
+        {
+            var testType = new TestType { Name = "S. Paratyphi A(H) Agglutination" };
+            var range = ReferenceRangeEvaluator.FormatRange(testType, _malePatient);
+            Assert.That(range, Is.EqualTo("1:20"));
+        }
     }
 }

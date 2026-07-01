@@ -16,8 +16,33 @@ namespace LabSystem.UI.ViewModels
             {
                 _selectedCatalogTest = value;
                 OnPropertyChanged();
+                OnPropertyChanged("IsEditingCatalogTest");
+                OnPropertyChanged("IsNotEditingCatalogTest");
+                OnPropertyChanged("CatalogFormTitle");
                 PopulateCatalogEditFields();
             }
+        }
+
+        public bool IsEditingCatalogTest
+        {
+            get { return SelectedCatalogTest != null; }
+        }
+
+        public bool IsNotEditingCatalogTest
+        {
+            get { return !IsEditingCatalogTest; }
+        }
+
+        public string CatalogFormTitle
+        {
+            get { return IsEditingCatalogTest ? "Edit Test" : "Add New Test"; }
+        }
+
+        private Department _catalogTestDepartment;
+        public Department CatalogTestDepartment
+        {
+            get { return _catalogTestDepartment; }
+            set { _catalogTestDepartment = value; OnPropertyChanged(); }
         }
 
         public string CatalogTestName
@@ -102,6 +127,7 @@ namespace LabSystem.UI.ViewModels
                 CatalogTestInterpretation = string.Empty;
                 CatalogTestSortOrder = 0;
                 CatalogTestPrice = 0;
+                CatalogTestDepartment = SelectedDepartment;
                 return;
             }
 
@@ -116,6 +142,7 @@ namespace LabSystem.UI.ViewModels
             CatalogTestInterpretation = SelectedCatalogTest.Interpretation;
             CatalogTestSortOrder = SelectedCatalogTest.SortOrder;
             CatalogTestPrice = SelectedCatalogTest.Price;
+            CatalogTestDepartment = Departments.FirstOrDefault(d => d.DepartmentId == SelectedCatalogTest.DepartmentId);
         }
 
         private async Task ExecuteSaveCatalogTestAsync(object obj)
@@ -268,20 +295,10 @@ namespace LabSystem.UI.ViewModels
 
         private int? ResolveTargetDepartmentId()
         {
-            string categoryName = CatalogTestCategory != null ? CatalogTestCategory.Trim() : null;
-            if (!string.IsNullOrWhiteSpace(categoryName))
+            if (CatalogTestDepartment != null)
             {
-                var matchingDept = Departments.FirstOrDefault(d => string.Equals(d.Name, categoryName, StringComparison.OrdinalIgnoreCase));
-                if (matchingDept != null)
-                {
-                    CatalogTestCategory = matchingDept.Name;
-                    return matchingDept.DepartmentId;
-                }
-            }
-            else if (SelectedDepartment != null)
-            {
-                CatalogTestCategory = SelectedDepartment.Name;
-                return SelectedDepartment.DepartmentId;
+                CatalogTestCategory = CatalogTestDepartment.Name;
+                return CatalogTestDepartment.DepartmentId;
             }
             return null;
         }

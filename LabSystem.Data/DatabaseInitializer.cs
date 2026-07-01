@@ -138,6 +138,168 @@ namespace LabSystem.Data
                 SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
                 WHERE p.Name = 'Widal Test' 
                 AND t.Name IN ('S. Typhi O Agglutination', 'S. Typhi H Agglutination', 'S. Paratyphi A(H) Agglutination', 'S. Paratyphi B(H) Agglutination');
+            "),
+            new Migration(14, "Convert Widal tests to dropdown inputs and set ranges", @"
+                UPDATE TestTypes SET InputType = 3, ReferenceRangeHigh = 40.0 WHERE Name IN ('S. Typhi O Agglutination', 'S. Typhi H Agglutination');
+                UPDATE TestTypes SET InputType = 3, ReferenceRangeHigh = 20.0 WHERE Name IN ('S. Paratyphi A(H) Agglutination', 'S. Paratyphi B(H) Agglutination');
+            "),
+            new Migration(15, "Add missing CBC and Urine tests from sample reports", @"
+                -- CBC tests
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'Packed Cell Volume (PCV)', '%', 40.0, 50.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Measures percentage of red blood cells in blood.', 5, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Packed Cell Volume (PCV)');
+                
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'Mean Corpuscular Volume (MCV)', 'fL', 83.0, 101.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Measures average size of red blood cells.', 6, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Mean Corpuscular Volume (MCV)');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'MCH', 'pg', 27.0, 32.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Mean Corpuscular Hemoglobin - average hemoglobin per red cell.', 7, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'MCH');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'MCHC', 'g/dL', 32.5, 34.5, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Mean Corpuscular Hemoglobin Concentration.', 8, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'MCHC');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'RDW', '%', 11.6, 14.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Red cell distribution width; elevated in mixed anemias.', 9, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'RDW');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'Neutrophils', '%', 50.0, 62.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Differential WBC count - Neutrophils.', 10, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Neutrophils');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'Lymphocytes', '%', 20.0, 40.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Differential WBC count - Lymphocytes.', 11, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Lymphocytes');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'Monocytes', '%', 0.0, 10.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Differential WBC count - Monocytes.', 12, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Monocytes');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'Basophils', '%', 0.0, 2.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Differential WBC count - Basophils.', 13, 50.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Basophils');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, DepartmentId)
+                SELECT 'Platelet Count', 'cumm', 150000.0, 410000.0, 1, 'HEMATOLOGY', 'Complete Blood Count (CBC)', 'Fully automated cell counter', 'Borderline: 150000 - 410000 cumm. Low platelets may indicate thrombocytopenia.', 14, 100.00, 'Blood', DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Platelet Count');
+
+                -- Urine tests
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'Urine Volume', 'mL', NULL, NULL, 1, 'CLINICAL PATHOLOGY', 'Urine Routine', 'Visual', 'Volume of urine collected for examination.', 9, 50.00, 'Urine', 0, DepartmentId FROM Departments WHERE Name = 'CLINICAL PATHOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Urine Volume');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'Urine Blood', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Routine', 'Reagent Strip', '0 = Absent, 1 = Present.', 10, 50.00, 'Urine', 1, DepartmentId FROM Departments WHERE Name = 'CLINICAL PATHOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Urine Blood');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'Urine RBC', 'cells/HPF', 0.0, 2.0, 1, 'CLINICAL PATHOLOGY', 'Urine Routine', 'Microscopy', 'Normal: 0-2 RBCs per HPF. Higher counts suggest hematuria.', 11, 50.00, 'Urine', 0, DepartmentId FROM Departments WHERE Name = 'CLINICAL PATHOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Urine RBC');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'Urine Casts', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Routine', 'Microscopy', '0 = Absent, 1 = Present. Presence may indicate renal disease.', 12, 50.00, 'Urine', 1, DepartmentId FROM Departments WHERE Name = 'CLINICAL PATHOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Urine Casts');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'Urine Crystals', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Routine', 'Microscopy', '0 = Nil, 1 = Present.', 13, 50.00, 'Urine', 1, DepartmentId FROM Departments WHERE Name = 'CLINICAL PATHOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Urine Crystals');
+
+                INSERT INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId)
+                SELECT 'Urine Others', 'Qualitative', 0.0, 0.0, 1, 'CLINICAL PATHOLOGY', 'Urine Routine', 'Microscopy', 'Other microscopic findings.', 14, 50.00, 'Urine', 1, DepartmentId FROM Departments WHERE Name = 'CLINICAL PATHOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Urine Others');
+
+                -- Link to CBC Panel
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'CBC Panel' 
+                AND t.Name IN ('Packed Cell Volume (PCV)', 'Mean Corpuscular Volume (MCV)', 'MCH', 'MCHC', 'RDW', 'Neutrophils', 'Lymphocytes', 'Monocytes', 'Basophils', 'Platelet Count');
+            " ),
+            new Migration(16, "Add Complete Urine Examination Panel", @"
+                INSERT OR IGNORE INTO TestPanels (Name, Description, Price) VALUES
+                ('Complete Urine Examination Panel', 'Comprehensive physical, chemical, and microscopic examination of urine.', 300.00);
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'Complete Urine Examination Panel' 
+                AND t.Name IN ('Urine Color', 'Urine Appearance', 'Urine Volume', 'Urine Protein', 'Urine Sugar', 'Urine Ketone Bodies', 'Urine Bile Salts', 'Urine Bile Pigments', 'Urine Reaction', 'Urine Specific Gravity', 'Urine Blood', 'Urine Leukocyte Esterase', 'Urine Pus Cells', 'Urine Epithelial Cells', 'Urine RBC', 'Urine Casts', 'Urine Crystals', 'Urine Others');
+            "),
+            new Migration(17, "Add Dengue Profile Panel and tests", @"
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Dengue NS1 Antigen', '', 1, 'SEROLOGY', 'Dengue Serology', 'Immunochromatography', 'Reactive indicates presence of Dengue NS1 Antigen.', 1, 300.00, 'Blood', 3, DepartmentId FROM Departments WHERE Name = 'SEROLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Dengue NS1 Antigen');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Dengue IgG Antibody', '', 1, 'SEROLOGY', 'Dengue Serology', 'Immunochromatography', 'Reactive indicates past Dengue infection.', 2, 250.00, 'Blood', 3, DepartmentId FROM Departments WHERE Name = 'SEROLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Dengue IgG Antibody');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Dengue IgM Antibody', '', 1, 'SEROLOGY', 'Dengue Serology', 'Immunochromatography', 'Reactive indicates recent or acute Dengue infection.', 3, 250.00, 'Blood', 3, DepartmentId FROM Departments WHERE Name = 'SEROLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Dengue IgM Antibody');
+
+                INSERT OR IGNORE INTO TestPanels (Name, Description, Price) VALUES
+                ('Dengue Profile Panel', 'Comprehensive screening for Dengue including NS1 Antigen, IgG and IgM antibodies.', 700.00);
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'Dengue Profile Panel' 
+                AND t.Name IN ('Dengue NS1 Antigen', 'Dengue IgG Antibody', 'Dengue IgM Antibody');
+            "),
+            new Migration(18, "Add missing tests from gap analysis", @"
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'HIV 1 Antibody Screening', 'Index', 1, 'SEROLOGY', 'HIV Screening', 'Immunochromatography', 'Negative: < 1.0 (Non-reactive).', 1, 350.00, 'Blood', 3, DepartmentId FROM Departments WHERE Name = 'SEROLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'HIV 1 Antibody Screening');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'HIV 2 Antibody Screening', 'Index', 1, 'SEROLOGY', 'HIV Screening', 'Immunochromatography', 'Negative: < 1.0 (Non-reactive).', 2, 350.00, 'Blood', 3, DepartmentId FROM Departments WHERE Name = 'SEROLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'HIV 2 Antibody Screening');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Patient Prothrombin Time', 'seconds', 11.0, 16.0, 1, 'HEMATOLOGY', 'PT / INR', 'Coagulometric', 1, 300.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Patient Prothrombin Time');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Control Prothrombin Time', 'seconds', 12.0, 16.0, 1, 'HEMATOLOGY', 'PT / INR', 'Coagulometric', 2, 0.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Control Prothrombin Time');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'INR', 'Ratio', 0.8, 1.2, 1, 'HEMATOLOGY', 'PT / INR', 'Calculated', 3, 0.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'INR');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Serum Iron', 'µg/dL', 60.0, 170.0, 1, 'BIOCHEMISTRY', 'Iron Studies', 'Ferrozine', 1, 200.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Serum Iron');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Total Iron Binding Capacity (TIBC)', 'µg/dL', 250.0, 370.0, 1, 'BIOCHEMISTRY', 'Iron Studies', 'Ferrozine', 2, 200.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Total Iron Binding Capacity (TIBC)');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Transferrin Saturation', '%', 20.0, 50.0, 1, 'BIOCHEMISTRY', 'Iron Studies', 'Calculated', 3, 0.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Transferrin Saturation');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Vitamin B12', 'pg/mL', 211.0, 911.0, 1, 'BIOCHEMISTRY', 'Vitamin B12', 'CLIA', 1, 800.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Vitamin B12');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Vitamin D3 (25-Hydroxy)', 'ng/mL', 30.0, 100.0, 1, 'BIOCHEMISTRY', 'Vitamin D', 'CLIA', 'Deficient: <20, Insufficient: 20-29, Sufficient: 30-100, Toxic: >100', 1, 800.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Vitamin D3 (25-Hydroxy)');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, IsActive, Category, GroupName, Method, Interpretation, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Hemoglobin Solubility Test (HBSG)', 'Result', 1, 'HEMATOLOGY', 'Hemoglobin Solubility Test', 'Dithionite tube test', 'Negative: Normal. Positive: Suggests Hb S (sickle hemoglobin).', 1, 200.00, 'Blood', 3, DepartmentId FROM Departments WHERE Name = 'HEMATOLOGY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Hemoglobin Solubility Test (HBSG)');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'GGTP', 'U/L', 0.0, 55.0, 1, 'BIOCHEMISTRY', 'Liver Function Test (LFT)', 'IFCC', 3, 150.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'GGTP');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Total Protein (LFT)', 'g/dL', 6.0, 8.3, 1, 'BIOCHEMISTRY', 'Liver Function Test (LFT)', 'Biuret', 4, 150.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Total Protein (LFT)');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Albumin (LFT)', 'g/dL', 3.5, 5.0, 1, 'BIOCHEMISTRY', 'Liver Function Test (LFT)', 'BCG', 9, 150.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Albumin (LFT)');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'A : G Ratio', 'Ratio', 1.1, 2.5, 1, 'BIOCHEMISTRY', 'Liver Function Test (LFT)', 'Calculated', 10, 0.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'A : G Ratio');
+
+                INSERT OR IGNORE INTO TestTypes (Name, Unit, ReferenceRangeLow, ReferenceRangeHigh, IsActive, Category, GroupName, Method, SortOrder, Price, SampleType, InputType, DepartmentId) 
+                SELECT 'Blood Urea Nitrogen (BUN)', 'mg/dL', 7.0, 20.0, 1, 'BIOCHEMISTRY', 'Kidney Function Test (KFT)', 'Calculated (Urea / 2.14)', 4, 0.00, 'Blood', 0, DepartmentId FROM Departments WHERE Name = 'BIOCHEMISTRY' AND NOT EXISTS (SELECT 1 FROM TestTypes WHERE Name = 'Blood Urea Nitrogen (BUN)');
+
+                INSERT OR IGNORE INTO TestPanels (Name, Description, Price) VALUES
+                ('PT INR Panel', 'Prothrombin Time and INR.', 400.00),
+                ('Iron Profile Panel', 'Comprehensive assessment of Iron, TIBC, and Transferrin Saturation.', 500.00),
+                ('TSB Panel', 'Total Serum Bilirubin including Total, Direct, and Indirect Bilirubin.', 300.00);
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'PT INR Panel' AND t.Name IN ('Patient Prothrombin Time', 'Control Prothrombin Time', 'INR');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'Iron Profile Panel' AND t.Name IN ('Serum Iron', 'Total Iron Binding Capacity (TIBC)', 'Transferrin Saturation');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'TSB Panel' AND t.Name IN ('Bilirubin Total', 'Bilirubin Direct', 'Bilirubin Indirect');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'LFT Panel' AND t.Name IN ('GGTP', 'Total Protein (LFT)', 'Albumin (LFT)', 'A : G Ratio');
+
+                INSERT OR IGNORE INTO PanelTestTypes (PanelId, TypeId)
+                SELECT p.PanelId, t.TypeId FROM TestPanels p, TestTypes t 
+                WHERE p.Name = 'KFT Panel' AND t.Name IN ('Blood Urea Nitrogen (BUN)');
             ")
         };
 

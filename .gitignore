@@ -69,7 +69,8 @@ venv/
 ENV/
 
 # Application output PDFs
-[Ss]ample\ reports/*.pdf
+[Ss]ample\ reports/
+Sample reports/
 
 # Local configurations and secret templates
 appsettings.json

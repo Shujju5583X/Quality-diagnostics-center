@@ -3,12 +3,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:dboard="clr-namespace:LabSystem.UI.Views.Dashboard">
-    <Grid Margin="24" HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="600" Width="500">
-        <StackPanel>
-            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Settings &amp; Backup" FontSize="22" />
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="24" HorizontalAlignment="Stretch" VerticalAlignment="Top" MaxWidth="1400">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Style="{StaticResource SectionHeaderStyle}" Text="Settings &amp; Backup" FontSize="22" Margin="0 0 0 20" />
+
+        <Grid Grid.Row="1" Margin="0 0 0 20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
             <!-- Operator Info Card -->
-            <materialDesign:Card Style="{StaticResource ContentCardStyle}" Margin="0 0 0 20">
+            <materialDesign:Card Grid.Column="0" Style="{StaticResource ContentCardStyle}" Margin="0 0 10 0" VerticalAlignment="Top">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Operator Identity Settings" />
 
@@ -25,7 +37,7 @@
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 24" />
 
                     <Button Command="{Binding SaveSettingsCommand}"
-                            Style="{StaticResource PrimaryButtonStyle}" Height="40" HorizontalAlignment="Right">
+                            Style="{StaticResource PrimaryButtonStyle}" Height="44" HorizontalAlignment="Right">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
                             <TextBlock Text="SAVE SETTINGS" VerticalAlignment="Center" FontWeight="Bold" />
@@ -35,12 +47,19 @@
             </materialDesign:Card>
 
             <!-- Staff Management Card -->
-            <materialDesign:Card Style="{StaticResource ContentCardStyle}" Margin="0 0 0 20">
+            <materialDesign:Card Grid.Column="1" Style="{StaticResource ContentCardStyle}" Margin="10 0 0 0" VerticalAlignment="Stretch">
                 <dboard:StaffManagementView DataContext="{Binding StaffManagementVM}" />
             </materialDesign:Card>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
             <!-- Configuration Settings Card -->
-            <materialDesign:Card Style="{StaticResource ContentCardStyle}" Margin="0 0 0 20">
+            <materialDesign:Card Grid.Column="0" Style="{StaticResource ContentCardStyle}" Margin="0 0 10 0" VerticalAlignment="Top">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
@@ -104,7 +123,7 @@
             </materialDesign:Card>
 
             <!-- Database Backup Card -->
-            <materialDesign:Card Style="{StaticResource ContentCardStyle}">
+            <materialDesign:Card Grid.Column="1" Style="{StaticResource ContentCardStyle}" Margin="10 0 0 0" VerticalAlignment="Top">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="CSV Database Backup Engine" />
                     <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0 0 0 16"
@@ -140,6 +159,7 @@
                     </StackPanel>
                 </StackPanel>
             </materialDesign:Card>
-        </StackPanel>
+        </Grid>
     </Grid>
+    </ScrollViewer>
 </UserControl>

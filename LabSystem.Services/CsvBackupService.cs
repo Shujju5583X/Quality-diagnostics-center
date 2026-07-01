@@ -13,7 +13,7 @@ namespace LabSystem.Services
 {
     public class CsvBackupService : ICsvBackupService
     {
-        private readonly IRepository<Setting> _settingRepo;
+        private readonly ISettingRepository _settingRepo;
         private readonly IPatientRepository _patientRepo;
         private readonly IRepository<Doctor> _doctorRepo;
         private readonly IRepository<Department> _departmentRepo;
@@ -25,7 +25,7 @@ namespace LabSystem.Services
         private readonly IRepository<DoctorCommission> _commissionRepo;
 
         public CsvBackupService(
-            IRepository<Setting> settingRepo,
+            ISettingRepository settingRepo,
             IPatientRepository patientRepo,
             IRepository<Doctor> doctorRepo,
             IRepository<Department> departmentRepo,

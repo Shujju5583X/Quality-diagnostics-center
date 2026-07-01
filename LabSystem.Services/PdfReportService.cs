@@ -19,7 +19,7 @@ namespace LabSystem.Services
         private readonly IResultRepository _resultRepo;
         private readonly IRepository<TestType> _testTypeRepo;
         private readonly IRepository<TestPanel> _testPanelRepo;
-        private readonly IRepository<Setting> _settingRepo;
+        private readonly ISettingRepository _settingRepo;
         private readonly ITestOrderRepository _orderRepo;
         private string _letterheadPath;
         private string _labName;
@@ -31,7 +31,7 @@ namespace LabSystem.Services
             IResultRepository resultRepo, 
             IRepository<TestType> testTypeRepo, 
             IRepository<TestPanel> testPanelRepo, 
-            IRepository<Setting> settingRepo,
+            ISettingRepository settingRepo,
             ITestOrderRepository orderRepo)
         {
             _resultRepo = resultRepo;
@@ -218,7 +218,11 @@ namespace LabSystem.Services
             {
                 referredBy = order.ReferredBy;
             }
-            var refText = referredBy.StartsWith("Dr.", StringComparison.OrdinalIgnoreCase) ? referredBy : "Dr. " + referredBy;
+            var refText = referredBy;
+            if (!referredBy.Equals("SELF", StringComparison.OrdinalIgnoreCase) && !referredBy.StartsWith("Dr.", StringComparison.OrdinalIgnoreCase))
+            {
+                refText = "Dr. " + referredBy;
+            }
 
             var pr3 = patientTable.AddRow();
             pr3.Height = "0.6cm";
@@ -291,32 +295,7 @@ namespace LabSystem.Services
                 table.AddColumn("2.5cm"); // Units
                 table.AddColumn("5.0cm"); // Normal
 
-                // Headers row
-                var header = table.AddRow();
-                header.HeadingFormat = true;
-                header.Height = "0.6cm";
-                header.VerticalAlignment = VerticalAlignment.Center;
-
-                var cell0 = header.Cells[0].AddParagraph("Test Description");
-                cell0.Format.Font.Bold = true;
-                cell0.Format.Font.Underline = Underline.Single;
-                cell0.Format.Font.Size = 10.0;
-
-                var cell1 = header.Cells[1].AddParagraph("Result");
-                cell1.Format.Font.Bold = true;
-                cell1.Format.Font.Underline = Underline.Single;
-                cell1.Format.Font.Size = 10.0;
-
-                var cell2 = header.Cells[2].AddParagraph("Units");
-                cell2.Format.Font.Bold = true;
-                cell2.Format.Font.Underline = Underline.Single;
-                cell2.Format.Font.Size = 10.0;
-
-                var cell3 = header.Cells[3].AddParagraph("Normal");
-                cell3.Format.Font.Bold = true;
-                cell3.Format.Font.Underline = Underline.Single;
-                cell3.Format.Font.Size = 10.0;
-
+                // Parameter headings moved inside the group loop
                 var groupedResults = categoryGroup
                     .GroupBy(r => r.TestType.GroupName ?? "General")
                     .OrderBy(g => g.Key)
@@ -339,7 +318,7 @@ namespace LabSystem.Services
                     if (shouldPrintGroupHeader)
                     {
                         var groupRow = table.AddRow();
-                        groupRow.Height = "0.6cm";
+                        groupRow.Height = "0.9cm";
                         groupRow.VerticalAlignment = VerticalAlignment.Center;
                         var groupCell = groupRow.Cells[0];
                         groupCell.MergeRight = 3;
@@ -348,11 +327,36 @@ namespace LabSystem.Services
                         groupPara.Format.Font.Underline = Underline.Single;
                         groupPara.Format.Font.Size = 10.0;
                     }
+                    // Headers row
+                    var header = table.AddRow();
+                    header.HeadingFormat = true;
+                    header.Height = "0.9cm";
+                    header.VerticalAlignment = VerticalAlignment.Center;
+
+                    var cell0 = header.Cells[0].AddParagraph("Test Description");
+                    cell0.Format.Font.Bold = true;
+                    cell0.Format.Font.Underline = Underline.Single;
+                    cell0.Format.Font.Size = 10.0;
+
+                    var cell1 = header.Cells[1].AddParagraph("Result");
+                    cell1.Format.Font.Bold = true;
+                    cell1.Format.Font.Underline = Underline.Single;
+                    cell1.Format.Font.Size = 10.0;
+
+                    var cell2 = header.Cells[2].AddParagraph("Units");
+                    cell2.Format.Font.Bold = true;
+                    cell2.Format.Font.Underline = Underline.Single;
+                    cell2.Format.Font.Size = 10.0;
+
+                    var cell3 = header.Cells[3].AddParagraph("Normal");
+                    cell3.Format.Font.Bold = true;
+                    cell3.Format.Font.Underline = Underline.Single;
+                    cell3.Format.Font.Size = 10.0;
 
                     foreach (var r in sortedResults)
                     {
                         var row = table.AddRow();
-                        row.Height = "0.6cm";
+                        row.Height = "0.9cm";
                         row.VerticalAlignment = VerticalAlignment.Center;
 
                         // Clean up test name
@@ -425,7 +429,7 @@ namespace LabSystem.Services
                     if (!string.IsNullOrEmpty(method))
                     {
                         var methodRow = table.AddRow();
-                        methodRow.Height = "0.6cm";
+                        methodRow.Height = "0.8cm";
                         var methodCell = methodRow.Cells[0];
                         methodCell.MergeRight = 3;
                         var methodPara = methodCell.AddParagraph("(Method:- " + method.ToUpper() + ")");
@@ -438,7 +442,7 @@ namespace LabSystem.Services
                     if (isCbc)
                     {
                         var instRow = table.AddRow();
-                        instRow.Height = "0.6cm";
+                        instRow.Height = "0.8cm";
                         var instCell = instRow.Cells[0];
                         instCell.MergeRight = 3;
                         var instPara = instCell.AddParagraph("Instruments : Fully automated cell counter ERBA H-360");
@@ -515,10 +519,18 @@ namespace LabSystem.Services
                 if (val <= 0) return "No Agglutination";
                 return "Agglutination (1:" + (int)val + ")";
             }
-            if (testType.Unit == "Index" || testType.Unit == "Ratio" || testType.Name.Contains("Antibody") || testType.Name.Contains("HBsAg") || testType.Name.Contains("HCV") || testType.Name.Contains("VDRL") || testType.Name.Contains("HIV"))
+            if (testType.Unit == "Ratio")
+            {
+                return val.ToString("F2");
+            }
+            if (testType.Unit == "Index" || testType.Name.Contains("Antibody") || testType.Name.Contains("HBsAg") || testType.Name.Contains("HCV") || testType.Name.Contains("VDRL") || testType.Name.Contains("HIV"))
             {
                 if (val == 0.0) return "Negative";
                 return val.ToString("F2");
+            }
+            if (testType.Name.Contains("HBSG") || testType.Name.Contains("Hemoglobin Solubility"))
+            {
+                return val >= 1.0 ? "Positive" : "Negative";
             }
             return val.ToString();
         }

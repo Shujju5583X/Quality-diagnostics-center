@@ -41,7 +41,7 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Command="{Binding DataContext.DeleteDoctorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                            Style="{StaticResource DangerButtonStyle}" Padding="4" Height="28" Width="28" FontSize="11">
+                                            Style="{StaticResource DangerButtonStyle}" Padding="4" Height="24" Width="24" FontSize="11">
                                         <materialDesign:PackIcon Kind="Delete" Width="14" Height="14" />
                                     </Button>
                                 </DataTemplate>
@@ -82,7 +82,7 @@
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 24" />
 
                     <Button Command="{Binding SaveDoctorCommand}"
-                            Style="{StaticResource PrimaryButtonStyle}" Height="46">
+                            Style="{StaticResource PrimaryButtonStyle}" Height="44">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
                             <TextBlock Text="SAVE DOCTOR" VerticalAlignment="Center" FontWeight="Bold" />

@@ -28,7 +28,7 @@ namespace LabSystem.UI.ViewModels
         private readonly IRepository<TestPanel> _testPanelRepo;
         private readonly IRepository<Doctor> _doctorRepo;
         private readonly IRepository<Department> _departmentRepo;
-        private readonly IRepository<Setting> _settingRepo;
+        private readonly ISettingRepository _settingRepo;
         private readonly IPaymentRepository _paymentRepo;
         private readonly IRepository<DoctorCommission> _commissionRepo;
         private readonly IStaffService _staffService;
@@ -282,6 +282,7 @@ namespace LabSystem.UI.ViewModels
 
         // Catalog Management items
         public ObservableCollection<TestType> CatalogTestTypes { get; private set; }
+        public ObservableCollection<TestTypeSelection> PackageTestSelections { get; private set; }
 
         // Billing Items
         public ObservableCollection<Invoice> Invoices { get; private set; }
@@ -447,6 +448,8 @@ namespace LabSystem.UI.ViewModels
         public ICommand RefreshCommand { get; private set; }
         public ICommand SaveCatalogTestCommand { get; private set; }
         public ICommand AddCatalogTestCommand { get; private set; }
+        public ICommand ClearCatalogFormCommand { get; private set; }
+        public ICommand ClearTestPanelFormCommand { get; private set; }
         public ICommand PreviousPatientPageCommand { get; private set; }
         public ICommand NextPatientPageCommand { get; private set; }
         public ICommand PreviousOrderPageCommand { get; private set; }
@@ -511,7 +514,7 @@ namespace LabSystem.UI.ViewModels
             IBackupService backupService,
             IRepository<Doctor> doctorRepo,
             IRepository<Department> departmentRepo,
-            IRepository<Setting> settingRepo,
+            ISettingRepository settingRepo,
             IPaymentRepository paymentRepo,
             IRepository<DoctorCommission> commissionRepo,
             ICsvBackupService csvBackupService,
@@ -547,6 +550,7 @@ namespace LabSystem.UI.ViewModels
             TestTypes = new ObservableCollection<TestTypeSelection>();
             SelectedOrderResults = new ObservableCollection<ResultInput>();
             CatalogTestTypes = new ObservableCollection<TestType>();
+            PackageTestSelections = new ObservableCollection<TestTypeSelection>();
             Invoices = new ObservableCollection<Invoice>();
             Doctors = new ObservableCollection<Doctor>();
             Departments = new ObservableCollection<Department>();
@@ -568,6 +572,8 @@ namespace LabSystem.UI.ViewModels
             RefreshCommand = new AsyncRelayCommand(async o => await LoadDataAsync());
             SaveCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteSaveCatalogTestAsync(o));
             AddCatalogTestCommand = new AsyncRelayCommand(async o => await ExecuteAddCatalogTestAsync(o));
+            ClearCatalogFormCommand = new RelayCommand(o => { SelectedCatalogTest = null; });
+            ClearTestPanelFormCommand = new RelayCommand(o => { EditingTestPanel = null; });
             AddPaymentCashCommand = new AsyncRelayCommand(async o => await ExecuteAddPaymentAsync("Cash"));
             AddPaymentUpiCommand = new AsyncRelayCommand(async o => await ExecuteAddPaymentAsync("UPI"));
             ApplyDiscountTaxCommand = new AsyncRelayCommand(async o => await ExecuteApplyDiscountTaxAsync());
@@ -722,6 +728,24 @@ namespace LabSystem.UI.ViewModels
                             RefRangeMale = GetRangeString(t, "Male"),
                             RefRangeFemale = GetRangeString(t, "Female"),
                             OnSelectionChanged = OnTestSelectionChanged
+                        });
+                    }
+                }
+
+                // Load Test Types for Package Select
+                PackageTestSelections.Clear();
+                foreach (var t in testTypes.OrderBy(x => x.Name))
+                {
+                    if (t.IsActive)
+                    {
+                        PackageTestSelections.Add(new TestTypeSelection
+                        {
+                            TypeId = t.TypeId,
+                            Name = t.Name,
+                            GroupName = t.GroupName,
+                            Category = t.Category,
+                            Price = t.Price,
+                            IsSelected = false
                         });
                     }
                 }

@@ -182,7 +182,7 @@
 
                     <Button Command="{Binding GenerateBillCommand}"
                             IsEnabled="{Binding SelectedInvoice.IsPaid}"
-                            Style="{StaticResource PrimaryButtonStyle}" Height="46" Margin="0 8 0 0">
+                            Style="{StaticResource PrimaryButtonStyle}" Height="44" Margin="0 8 0 0">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="FileDocument" Width="20" Height="20" Margin="0 0 8 0" VerticalAlignment="Center" />
                             <TextBlock Text="GENERATE BILL PREVIEW" VerticalAlignment="Center" FontWeight="Bold" />

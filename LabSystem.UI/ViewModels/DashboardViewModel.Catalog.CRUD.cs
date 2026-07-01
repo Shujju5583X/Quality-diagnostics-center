@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using LabSystem.Core.Models;
+using LabSystem.Data.Repositories;
 using Serilog;
 
 namespace LabSystem.UI.ViewModels
@@ -143,7 +145,7 @@ namespace LabSystem.UI.ViewModels
         // ═══════════════ TEST PANEL / PACKAGE CRUD ═══════════════
 
         private TestPanel _editingTestPanel;
-        public TestPanel EditingTestPanel
+         public TestPanel EditingTestPanel
         {
             get { return _editingTestPanel; }
             set
@@ -151,17 +153,29 @@ namespace LabSystem.UI.ViewModels
                 _editingTestPanel = value;
                 OnPropertyChanged();
                 OnPropertyChanged("IsEditingTestPanel");
+                OnPropertyChanged("IsNotEditingTestPanel");
                 if (value != null)
                 {
                     NewTestPanelName = value.Name;
                     NewTestPanelDescription = value.Description ?? "";
                     NewTestPanelPrice = value.Price;
+
+                    var panelTestTypeIds = new HashSet<int>(value.TestTypes.Select(t => t.TypeId));
+                    foreach (var pts in PackageTestSelections)
+                    {
+                        pts.IsSelected = panelTestTypeIds.Contains(pts.TypeId);
+                    }
                 }
                 else
                 {
                     NewTestPanelName = "";
                     NewTestPanelDescription = "";
                     NewTestPanelPrice = 0;
+
+                    foreach (var pts in PackageTestSelections)
+                    {
+                        pts.IsSelected = false;
+                    }
                 }
             }
         }
@@ -169,6 +183,11 @@ namespace LabSystem.UI.ViewModels
         public bool IsEditingTestPanel
         {
             get { return EditingTestPanel != null; }
+        }
+
+        public bool IsNotEditingTestPanel
+        {
+            get { return !IsEditingTestPanel; }
         }
 
         private string _newTestPanelName;
@@ -218,11 +237,23 @@ namespace LabSystem.UI.ViewModels
                 };
 
                 await _testPanelRepo.AddAsync(panel);
+                
+                var panelRepo = _testPanelRepo as TestPanelRepository;
+                if (panelRepo != null)
+                {
+                    var selectedTypeIds = PackageTestSelections.Where(t => t.IsSelected).Select(t => t.TypeId).ToList();
+                    await panelRepo.UpdatePanelTestTypesAsync(panel.PanelId, selectedTypeIds);
+                }
+
                 Log.Information("Added test panel: {PanelName}", panel.Name);
 
                 NewTestPanelName = "";
                 NewTestPanelDescription = "";
                 NewTestPanelPrice = 0;
+                foreach (var pts in PackageTestSelections)
+                {
+                    pts.IsSelected = false;
+                }
 
                 await LoadTestPanelsCatalogAsync();
                 MessageBox.Show("Package added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -257,6 +288,14 @@ namespace LabSystem.UI.ViewModels
                     panel.Description = NewTestPanelDescription ?? "";
                     panel.Price = NewTestPanelPrice;
                     await _testPanelRepo.UpdateAsync(panel);
+
+                    var panelRepo = _testPanelRepo as TestPanelRepository;
+                    if (panelRepo != null)
+                    {
+                        var selectedTypeIds = PackageTestSelections.Where(t => t.IsSelected).Select(t => t.TypeId).ToList();
+                        await panelRepo.UpdatePanelTestTypesAsync(panel.PanelId, selectedTypeIds);
+                    }
+
                     Log.Information("Updated test panel: {PanelName} (ID: {PanelId})", panel.Name, panel.PanelId);
                 }
 
@@ -264,6 +303,10 @@ namespace LabSystem.UI.ViewModels
                 NewTestPanelName = "";
                 NewTestPanelDescription = "";
                 NewTestPanelPrice = 0;
+                foreach (var pts in PackageTestSelections)
+                {
+                    pts.IsSelected = false;
+                }
 
                 await LoadTestPanelsCatalogAsync();
                 MessageBox.Show("Package updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);

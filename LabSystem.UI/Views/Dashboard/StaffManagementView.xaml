@@ -1,7 +1,11 @@
 <UserControl x:Class="LabSystem.UI.Views.Dashboard.StaffManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:LabSystem.UI.Converters">
+    <UserControl.Resources>
+        <converters:LockoutStatusConverter x:Key="LockoutStatusConverter" />
+    </UserControl.Resources>
     <Grid Margin="0 16 0 0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="3*" />
@@ -40,12 +44,11 @@
                                 <TextBlock FontSize="11" FontWeight="SemiBold" Padding="6 2">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="Active" />
+                                            <Setter Property="Text" Value="{Binding LockoutEnd, Converter={StaticResource LockoutStatusConverter}}" />
                                             <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding LockoutEnd}" Value="{x:Null}">
-                                                    <Setter Property="Text" Value="Active" />
-                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                <DataTrigger Binding="{Binding LockoutEnd, Converter={StaticResource LockoutStatusConverter}}" Value="Locked">
+                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -121,18 +124,49 @@
 
                 <TextBox materialDesign:HintAssist.Hint="PIN (min 4 digits) *"
                          x:Name="StaffPinBox"
+                         Text="{Binding EditStaffPin, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                          Margin="0 0 0 24" />
 
-                <Button Command="{Binding UpdateStaffCommand}"
-                        Style="{StaticResource PrimaryButtonStyle}" Height="42">
+                <!-- ADD STAFF button (visible when adding) -->
+                <Button Command="{Binding AddStaffCommand}"
+                        Height="44">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsStaffSelected}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
                     <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
-                        <TextBlock Text="SAVE STAFF" VerticalAlignment="Center" FontWeight="Bold" />
+                        <materialDesign:PackIcon Kind="AccountPlus" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                        <TextBlock Text="ADD STAFF" VerticalAlignment="Center" FontWeight="Bold" />
                     </StackPanel>
                 </Button>
 
-                <Button Command="{Binding ClearSelectionCommand}" Margin="0 12 0 0" Height="38">
+                <!-- UPDATE STAFF button (visible when editing) -->
+                <Button Command="{Binding UpdateStaffCommand}"
+                        Height="44">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsStaffSelected}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ContentSave" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                        <TextBlock Text="UPDATE STAFF" VerticalAlignment="Center" FontWeight="Bold" />
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding ClearSelectionCommand}" Margin="0 12 0 0" Height="40">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource OutlinedButtonStyle}">
                             <Setter Property="Visibility" Value="Visible" />
@@ -158,6 +192,7 @@
                                FontWeight="SemiBold" Foreground="{StaticResource PrimaryDarkBrush}" Margin="0 0 0 8" />
                     <TextBox materialDesign:HintAssist.Hint="New PIN (min 4 digits)"
                              x:Name="ResetPinBox"
+                             Text="{Binding ResetPinValue, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 0 0 12" />
                     <Button Command="{Binding ResetPinCommand}"
                             Style="{StaticResource OutlinedButtonStyle}" Height="36" HorizontalAlignment="Left">

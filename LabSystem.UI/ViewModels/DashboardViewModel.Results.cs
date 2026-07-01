@@ -256,6 +256,7 @@ namespace LabSystem.UI.ViewModels
                             };
                             EvaluatePatientReferenceRange(ri, testType, SelectedOrder.Patient);
                             PopulateOptions(ri);
+                            ri.PropertyChanged += ResultInput_PropertyChanged;
                             SelectedOrderResults.Add(ri);
                         }
                     }
@@ -277,12 +278,13 @@ namespace LabSystem.UI.ViewModels
                             InputType = r.TestType != null ? r.TestType.InputType : ResultInputType.Numeric,
                             TestName = r.TestType != null ? r.TestType.Name ?? "Unknown Test" : "Unknown Test",
                             Unit = r.TestType != null ? r.TestType.Unit ?? "" : "",
-                            ValueText = r.Value == null ? "Sample Rejected" : r.Value.ToString(),
+                            ValueText = !string.IsNullOrEmpty(r.ValueText) ? r.ValueText : (r.Value == null ? "Sample Rejected" : r.Value.ToString()),
                             IsAbnormal = r.IsAbnormal,
                             IsReadOnly = true
                         };
                         EvaluatePatientReferenceRange(ri, r.TestType, SelectedOrder.Patient);
                         PopulateOptions(ri);
+                        ri.PropertyChanged += ResultInput_PropertyChanged;
                         SelectedOrderResults.Add(ri);
                     }
                 }
@@ -290,6 +292,34 @@ namespace LabSystem.UI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to load order results.");
+            }
+        }
+
+        private void ResultInput_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "ValueText")
+            {
+                var ri = sender as ResultInput;
+                if (ri != null && (ri.TestName == "Urea (KFT)" || ri.TestName == "Urea"))
+                {
+                    AutoCalculateBUN();
+                }
+            }
+        }
+
+        private void AutoCalculateBUN()
+        {
+            var ureaResult = SelectedOrderResults.FirstOrDefault(r => r.TestName == "Urea (KFT)" || r.TestName == "Urea");
+            var bunResult = SelectedOrderResults.FirstOrDefault(r => r.TestName == "Blood Urea Nitrogen (BUN)" || r.TestName == "Blood Urea Nitrogen");
+            
+            if (ureaResult != null && bunResult != null && !string.IsNullOrWhiteSpace(ureaResult.ValueText))
+            {
+                double ureaVal;
+                if (double.TryParse(ureaResult.ValueText, out ureaVal))
+                {
+                    double bunVal = ureaVal / 2.14;
+                    bunResult.ValueText = bunVal.ToString("F2");
+                }
             }
         }
 
@@ -316,10 +346,27 @@ namespace LabSystem.UI.ViewModels
                         ri.Options.Add(new ResultOption { Display = "pv pf- positive", Value = "pv pf- positive" });
                         ri.Options.Add(new ResultOption { Display = "negative", Value = "negative" });
                     }
+                    else if (ri.TestName.Contains("S. Typhi"))
+                    {
+                        ri.Options.Add(new ResultOption { Display = "1:40", Value = "1:40" });
+                        ri.Options.Add(new ResultOption { Display = "1:80", Value = "1:80" });
+                        ri.Options.Add(new ResultOption { Display = "1:160", Value = "1:160" });
+                        ri.Options.Add(new ResultOption { Display = "1:320", Value = "1:320" });
+                    }
+                    else if (ri.TestName.Contains("S. Paratyphi"))
+                    {
+                        ri.Options.Add(new ResultOption { Display = "1:20", Value = "1:20" });
+                    }
                     else if (ri.TestName.Contains("HBsAg") || ri.TestName.Contains("HCV") || ri.TestName.Contains("VDRL"))
                     {
                         ri.Options.Add(new ResultOption { Display = "Negative", Value = "0" });
                         ri.Options.Add(new ResultOption { Display = "Positive", Value = "1" });
+                    }
+                    else if (ri.TestName.Contains("Dengue"))
+                    {
+                        ri.Options.Add(new ResultOption { Display = "Select", Value = "" });
+                        ri.Options.Add(new ResultOption { Display = "Reactive", Value = "Reactive" });
+                        ri.Options.Add(new ResultOption { Display = "Non Reactive", Value = "Non Reactive" });
                     }
                     else
                     {

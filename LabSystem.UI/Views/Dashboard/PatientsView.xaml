@@ -92,16 +92,16 @@
                     <TextBox materialDesign:HintAssist.Hint="Full Name *"
                              Text="{Binding NewPatientName, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                             Margin="0 0 0 20" />
+                             Margin="0 0 0 16" />
 
                     <ComboBox materialDesign:HintAssist.Hint="Title *"
                               ItemsSource="{Binding Titles}"
                               SelectedValue="{Binding NewPatientTitle}"
-                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 20" />
+                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 16" />
 
                     <ComboBox materialDesign:HintAssist.Hint="Gender"
                               SelectedValue="{Binding NewPatientGender}" SelectedValuePath="Content"
-                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 20">
+                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0 0 0 16">
                         <ComboBoxItem Content="select gender" IsEnabled="False" Visibility="Collapsed" />
                         <ComboBoxItem Content="Male" />
                         <ComboBoxItem Content="Female" />
@@ -112,9 +112,9 @@
                              Text="{Binding NewPatientAgeYears, UpdateSourceTrigger=PropertyChanged}"
                              Visibility="{Binding IsSimpleAgeVisible, Converter={StaticResource BoolToVis}}"
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                             Margin="0 0 0 20" />
+                             Margin="0 0 0 16" />
 
-                    <Grid Visibility="{Binding IsDetailedAgeVisible, Converter={StaticResource BoolToVis}}" Margin="0 0 0 20">
+                    <Grid Visibility="{Binding IsDetailedAgeVisible, Converter={StaticResource BoolToVis}}" Margin="0 0 0 16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="12" />
@@ -136,14 +136,14 @@
                     <TextBox materialDesign:HintAssist.Hint="Contact Phone"
                              Text="{Binding NewPatientPhone, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                             Margin="0 0 0 20" />
+                             Margin="0 0 0 16" />
 
                     <TextBox materialDesign:HintAssist.Hint="Contact Email"
                              Text="{Binding NewPatientEmail, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                              Margin="0 0 0 32" />
 
-                    <Button Command="{Binding AddPatientCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="46">
+                    <Button Command="{Binding AddPatientCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="44">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="AccountOutline" Margin="0 0 8 0" VerticalAlignment="Center" Width="20" Height="20" />
                             <TextBlock Text="{Binding PatientFormButtonText}" VerticalAlignment="Center" FontWeight="Bold" />

@@ -66,7 +66,7 @@ namespace LabSystem.UI.ViewModels
 
             try
             {
-                await _settingRepo.DeleteAsync(setting.Key.GetHashCode());
+                await _settingRepo.DeleteByKeyAsync(setting.Key);
                 Log.Information("Deleted setting: {Key}", setting.Key);
 
                 // Refresh the settings collection and operator fields

@@ -105,7 +105,7 @@
                                HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
                 </Border>
 
-                <Button Grid.Row="6" Command="{Binding CreateOrderCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="46">
+                <Button Grid.Row="6" Command="{Binding CreateOrderCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="44">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Send" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
                         <TextBlock Text="SUBMIT ORDER" VerticalAlignment="Center" FontWeight="Bold" />
@@ -150,7 +150,7 @@
                                         <ControlTemplate TargetType="TabItem">
                                             <Border x:Name="Border"
                                                     Background="{TemplateBinding Background}"
-                                                    BorderThickness="0 0 0 2"
+                                                    BorderThickness="0 0 0 3"
                                                     BorderBrush="Transparent"
                                                     Padding="{TemplateBinding Padding}">
                                                 <ContentPresenter x:Name="ContentSite"
@@ -166,7 +166,7 @@
                                                 <Trigger Property="IsSelected" Value="True">
                                                     <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
                                                     <Setter Property="TextElement.Foreground" Value="{StaticResource PrimaryBrush}" />
-                                                    <Setter Property="TextElement.FontWeight" Value="Bold" />
+                                                    <Setter Property="TextElement.FontWeight" Value="SemiBold" />
                                                 </Trigger>
                                                 <Trigger Property="IsEnabled" Value="False">
                                                     <Setter Property="TextElement.Foreground" Value="{StaticResource TextDisabledBrush}" />

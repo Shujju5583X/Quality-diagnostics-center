@@ -23,5 +23,22 @@ namespace LabSystem.Data.Repositories
                          .Include(p => p.TestTypes)
                          .FirstOrDefaultAsync(p => p.PanelId == id, cancellationToken);
         }
+
+        public async Task UpdatePanelTestTypesAsync(int panelId, List<int> testTypeIds, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            await _context.Database.ExecuteSqlCommandAsync(
+                "DELETE FROM PanelTestTypes WHERE PanelId = @panelId",
+                new System.Data.SQLite.SQLiteParameter("@panelId", panelId)
+            );
+
+            foreach (var typeId in testTypeIds)
+            {
+                await _context.Database.ExecuteSqlCommandAsync(
+                    "INSERT INTO PanelTestTypes (PanelId, TypeId) VALUES (@panelId, @typeId)",
+                    new System.Data.SQLite.SQLiteParameter("@panelId", panelId),
+                    new System.Data.SQLite.SQLiteParameter("@typeId", typeId)
+                );
+            }
+        }
     }
 }

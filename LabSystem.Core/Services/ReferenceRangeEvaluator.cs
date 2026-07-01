@@ -88,6 +88,14 @@ namespace LabSystem.Core.Services
             {
                 return "A/B/O/AB Rh +/-";
             }
+            if (tt.Name != null && tt.Name.Contains("S. Typhi"))
+            {
+                return "1:40";
+            }
+            if (tt.Name != null && tt.Name.Contains("S. Paratyphi"))
+            {
+                return "1:20";
+            }
             if (tt.Unit == "Titer")
             {
                 return "No Agglutination";
@@ -100,7 +108,7 @@ namespace LabSystem.Core.Services
             {
                 return "negative";
             }
-            if (tt.Name != null && (tt.Name.Contains("HBsAg") || tt.Name.Contains("HCV") || tt.Name.Contains("VDRL")))
+            if (tt.Name != null && (tt.Name.Contains("HBsAg") || tt.Name.Contains("HCV") || tt.Name.Contains("VDRL") || tt.Name.Contains("HIV") || tt.Name.Contains("HBSG") || tt.Name.Contains("Hemoglobin Solubility")))
             {
                 return "Negative";
             }

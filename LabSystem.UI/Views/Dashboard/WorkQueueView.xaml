@@ -6,14 +6,14 @@
     <UserControl.Resources>
         <converters:InvertBoolConverter x:Key="InvertBool" />
     </UserControl.Resources>
-    <Grid Margin="12">
+    <Grid Margin="24">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="380" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!-- Left: Active Orders List -->
-        <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="0" UniformCornerRadius="10" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+        <materialDesign:Card Grid.Column="0" Margin="0 0 12 0" Padding="0" Style="{StaticResource ContentCardStyle}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -160,9 +160,9 @@
             </materialDesign:Card>
 
             <!-- Case 2: Result Entry Card when SelectedOrder is NOT null -->
-            <materialDesign:Card Padding="0" UniformCornerRadius="10" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+            <materialDesign:Card Padding="0">
                 <materialDesign:Card.Style>
-                    <Style TargetType="materialDesign:Card" BasedOn="{StaticResource {x:Type materialDesign:Card}}">
+                    <Style TargetType="materialDesign:Card" BasedOn="{StaticResource ContentCardStyle}">
                         <Setter Property="Visibility" Value="Visible" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding SelectedOrder}" Value="{x:Null}">

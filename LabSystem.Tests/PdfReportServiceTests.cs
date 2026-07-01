@@ -17,7 +17,7 @@ namespace LabSystem.Tests
     {
         private Mock<IResultRepository> _mockResultRepo;
         private Mock<IRepository<TestType>> _mockTestTypeRepo;
-        private Mock<IRepository<Setting>> _mockSettingRepo;
+        private Mock<ISettingRepository> _mockSettingRepo;
         private Mock<ITestOrderRepository> _mockOrderRepo;
         private PdfReportService _service;
 
@@ -26,7 +26,7 @@ namespace LabSystem.Tests
         {
             _mockResultRepo = new Mock<IResultRepository>();
             _mockTestTypeRepo = new Mock<IRepository<TestType>>();
-            _mockSettingRepo = new Mock<IRepository<Setting>>();
+            _mockSettingRepo = new Mock<ISettingRepository>();
             _mockSettingRepo.Setup(r => r.GetAllAsync(default(CancellationToken)))
                            .ReturnsAsync(new List<Setting>());
 

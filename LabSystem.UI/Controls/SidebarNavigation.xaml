@@ -214,8 +214,8 @@
                                              Foreground="{StaticResource SidebarIconBrush}"
                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" Margin="8 0 0 0" VerticalAlignment="Center">
-                        <TextBlock Text="Lab Technician" Foreground="White" FontSize="12" FontWeight="SemiBold" />
-                        <TextBlock Text="Single Operator Mode" Foreground="{StaticResource SidebarTextBrush}" FontSize="10" />
+                        <TextBlock Text="{Binding CurrentUserRole, FallbackValue='Lab Technician'}" Foreground="White" FontSize="12" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding SystemModeText, FallbackValue='Single Operator Mode'}" Foreground="{StaticResource SidebarTextBrush}" FontSize="10" />
                     </StackPanel>
                 </Grid>
             </Border>

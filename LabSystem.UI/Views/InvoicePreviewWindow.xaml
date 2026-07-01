@@ -18,9 +18,24 @@
         
         <WebBrowser x:Name="PdfWebViewer" Grid.Row="0" Margin="10" />
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
-            <Button Content="CLOSE" Click="Close_Click" Margin="0,0,10,0" Width="120" Height="40" Style="{StaticResource FlatButtonStyle}" />
-            <Button Content="SAVE AS PDF" Click="SavePdf_Click" Margin="0,0,10,0" Width="150" Height="40" Style="{StaticResource OutlinedButtonStyle}" />
-            <Button Content="PRINT DIRECTLY" Click="PrintPdf_Click" Width="150" Height="40" Style="{StaticResource PrimaryButtonStyle}"/>
+            <Button Click="Close_Click" Margin="0,0,10,0" Height="40" Padding="16,0" Style="{StaticResource FlatButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Close" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                    <TextBlock Text="CLOSE" VerticalAlignment="Center" FontWeight="Bold" />
+                </StackPanel>
+            </Button>
+            <Button Click="SavePdf_Click" Margin="0,0,10,0" Height="40" Padding="16,0" Style="{StaticResource OutlinedButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="FilePdfBox" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                    <TextBlock Text="SAVE AS PDF" VerticalAlignment="Center" FontWeight="Bold" />
+                </StackPanel>
+            </Button>
+            <Button Click="PrintPdf_Click" Height="40" Padding="16,0" Style="{StaticResource PrimaryButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Printer" Margin="0 0 8 0" VerticalAlignment="Center" Width="18" Height="18" />
+                    <TextBlock Text="PRINT DIRECTLY" VerticalAlignment="Center" FontWeight="Bold" />
+                </StackPanel>
+            </Button>
         </StackPanel>
     </Grid>
 </Window>

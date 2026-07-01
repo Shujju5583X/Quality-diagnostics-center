@@ -116,6 +116,7 @@ namespace LabSystem.UI
             Container.Register<IStaffRepository, StaffRepository>(Lifestyle.Transient);
             Container.Register<IInvoiceRepository, InvoiceRepository>(Lifestyle.Transient);
             Container.Register<IPaymentRepository, PaymentRepository>(Lifestyle.Transient);
+            Container.Register<ISettingRepository, SettingRepository>(Lifestyle.Transient);
             // Fallback for any other IRepository<T>
             Container.RegisterConditional(typeof(IRepository<>), typeof(Repository<>), Lifestyle.Transient, c => !c.Handled);
 
@@ -143,7 +144,7 @@ namespace LabSystem.UI
                 Container.GetInstance<IBackupService>(),
                 Container.GetInstance<IRepository<Doctor>>(),
                 Container.GetInstance<IRepository<Department>>(),
-                Container.GetInstance<IRepository<Setting>>(),
+                Container.GetInstance<ISettingRepository>(),
                 Container.GetInstance<IPaymentRepository>(),
                 Container.GetInstance<IRepository<DoctorCommission>>(),
                 Container.GetInstance<ICsvBackupService>(),
